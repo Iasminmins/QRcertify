@@ -155,7 +155,7 @@ $empPct   = $empLimit > 0 ? min(100, round($empCount / $empLimit * 100)) : 0;
       <h2 class="text-xl font-bold text-gray-900 mb-2">Enterprise</h2>
       <p class="text-sm text-gray-500 mb-4">Acima de 800 funcionários, com suporte dedicado e valor escalável.</p>
     </div>
-    <a href="mailto:contato@qrcertify.com.br?subject=Interesse+Enterprise" class="btn btn-secondary text-sm text-center">Falar com vendas</a>
+    <a href="mailto:qrcertify@gmail.com?subject=Interesse+Enterprise" class="btn btn-secondary text-sm text-center">Falar com vendas</a>
   </div>
 </div>
 

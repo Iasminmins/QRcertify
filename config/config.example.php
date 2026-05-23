@@ -21,7 +21,7 @@ if ($host && strpos($host, 'localhost') !== false) {
 
 define('SITE_NAME', envValue('SITE_NAME', 'QRCertify'));
 
-define('MAIL_FROM',      envValue('MAIL_FROM', 'noreply@seudominio.com.br'));
+define('MAIL_FROM',      envValue('MAIL_FROM', 'qrcertify@gmail.com'));
 define('MAIL_FROM_NAME', envValue('MAIL_FROM_NAME', 'QRCertify'));
 define('CERT_ALERT_DAYS', (int) envValue('CERT_ALERT_DAYS', '30'));
 

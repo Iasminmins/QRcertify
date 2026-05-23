@@ -124,8 +124,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                     $asaasCustomerId = $chResp['id'];
 
-                    // 2) Cria assinatura com 7 dias de trial
-                    $trialEnd = (new \DateTime('+7 days'))->format('Y-m-d');
+                    // 2) Cria assinatura com 30 dias de trial
+                    $trialEnd = (new \DateTime('+30 days'))->format('Y-m-d');
                     $subPayload = [
                         'customer'          => $asaasCustomerId,
                         'billingType'       => 'CREDIT_CARD',
@@ -166,10 +166,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 // E-mail de boas-vindas
                 $welcomeHtml = '<h2>Bem-vindo, ' . htmlspecialchars($userName) . '!</h2>'
-                    . '<p>Sua conta do <strong>QRCertify</strong> foi criada com sucesso. Seu período de 7 dias grátis começa agora.</p>'
+                    . '<p>Sua conta do <strong>QRCertify</strong> foi criada com sucesso. Seu período de 30 dias grátis começa agora.</p>'
                     . '<p>Acesse o sistema e comece cadastrando seus funcionários e certificados.</p>'
                     . '<a class="btn" href="' . BASE_URL . '/login.php">Acessar o sistema</a>';
-                @sendMail($email, 'Bem-vindo ao QRCertify — 7 dias grátis', $welcomeHtml);
+                @sendMail($email, 'Bem-vindo ao QRCertify — 30 dias grátis', $welcomeHtml);
 
                 auditLog('register', "company#{$companyId}", json_encode([
                     'plan'           => $plan,
@@ -178,7 +178,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'asaas_sub'      => $asaasSubscriptionId,
                 ]));
 
-                setFlash('success', 'Conta criada! Seu período de 7 dias grátis começou.');
+                setFlash('success', 'Conta criada! Seu período de 30 dias grátis começou.');
                 $params = http_build_query([
                     'nome'  => $userName,
                     'plano' => $plan,
@@ -283,7 +283,7 @@ tailwind.config = {
   <!-- ─── STEP 1: Plano ─────────────────────────────────── -->
   <div id="step1" class="step-panel">
     <h1 class="text-2xl font-bold mb-1" style="font-family:'Bricolage Grotesque',sans-serif">Escolha seu plano</h1>
-    <p class="text-gray-500 text-sm mb-6">7 dias grátis em qualquer plano. Cancele quando quiser.</p>
+    <p class="text-gray-500 text-sm mb-6">30 dias grátis em qualquer plano. Cancele quando quiser.</p>
 
     <div class="space-y-3">
       <?php foreach ($plans as $key => $p): ?>
@@ -306,9 +306,9 @@ tailwind.config = {
           <div class="text-right">
             <div class="font-bold text-gray-900 text-sm"><?= htmlspecialchars($p['label']) ?></div>
             <?php if ($key !== 'starter'): ?>
-              <div class="text-xs text-gray-400">após 7 dias</div>
+              <div class="text-xs text-gray-400">após 30 dias</div>
             <?php else: ?>
-              <div class="text-xs text-gray-400">após 7 dias</div>
+              <div class="text-xs text-gray-400">após 30 dias</div>
             <?php endif; ?>
           </div>
         </div>
@@ -388,7 +388,7 @@ tailwind.config = {
   <!-- ─── STEP 3: Pagamento ─────────────────────────────── -->
   <div id="step3" class="step-panel hidden">
     <h1 class="text-2xl font-bold mb-1" style="font-family:'Bricolage Grotesque',sans-serif">Dados de pagamento</h1>
-    <p class="text-gray-500 text-sm mb-6" id="paySubtitle">Você não será cobrado durante os 7 dias grátis.</p>
+    <p class="text-gray-500 text-sm mb-6" id="paySubtitle">Você não será cobrado durante os 30 dias grátis.</p>
 
     <!-- Resumo do plano -->
     <div class="bg-gray-50 rounded-xl border border-gray-200 p-4 mb-5" id="orderSummary">
@@ -396,7 +396,7 @@ tailwind.config = {
         <span class="font-medium text-gray-700">Plano <span id="summaryPlanName">Pro</span></span>
         <span class="font-bold text-gray-900" id="summaryPrice">R$ 99/mês</span>
       </div>
-      <div class="text-xs text-gray-500 mt-1">7 dias grátis · após isso, cobrança automática</div>
+      <div class="text-xs text-gray-500 mt-1">30 dias grátis · após isso, cobrança automática</div>
     </div>
 
     <!-- Card fields (oculto para Starter) -->
@@ -437,7 +437,7 @@ tailwind.config = {
     <div class="flex gap-3 mt-6">
       <button type="button" onclick="goStep(2)" class="px-5 py-3 border border-gray-200 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors">← Voltar</button>
       <button type="submit" class="flex-1 bg-industrial-blue text-white font-bold py-3.5 rounded-xl hover:bg-blue-900 transition-colors text-sm">
-        Ativar 7 dias grátis →
+        Ativar 30 dias grátis →
       </button>
     </div>
 
@@ -508,7 +508,7 @@ function selectPlan(key) {
 
   // Todos os planos exigem cartão
   if (cardFields) cardFields.classList.remove('hidden');
-  if (paySubtitle) paySubtitle.textContent = 'Você não será cobrado durante os 7 dias grátis.';
+  if (paySubtitle) paySubtitle.textContent = 'Você não será cobrado durante os 30 dias grátis.';
 }
 
 function validateStep2() {

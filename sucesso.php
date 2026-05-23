@@ -118,7 +118,7 @@ $label = $planoLabel[$plano] ?? ucfirst($plano);
       <span class="text-industrial-blue">Sua jornada começa agora.</span>
     </h1>
     <p class="text-gray-500 text-lg mb-10">
-      Sua conta QRCertify foi criada. Você tem <strong class="text-gray-700">7 dias grátis</strong> para explorar tudo sem pagar nada.
+      Sua conta QRCertify foi criada. Você tem <strong class="text-gray-700">30 dias grátis</strong> para explorar tudo sem pagar nada.
     </p>
   </div>
 
