@@ -35,6 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $cnpj       = preg_replace('/\D/', '', $_POST['cnpj'] ?? '');
         $coPhone    = preg_replace('/\D/', '', $_POST['company_phone'] ?? '');
         $cep        = preg_replace('/\D/', '', $_POST['cep'] ?? '');
+        $address    = trim($_POST['address'] ?? '');
         $addrNumber = trim($_POST['address_number'] ?? '');
         $userName   = trim($_POST['user_name'] ?? '');
         $email      = strtolower(trim($_POST['email'] ?? ''));
@@ -48,6 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($coName === '')   $errors[] = 'Nome da empresa é obrigatório.';
         if (!$coPhone)        $errors[] = 'Telefone é obrigatório.';
         if (strlen($cep) < 8) $errors[] = 'CEP inválido.';
+        if ($address === '')  $errors[] = 'Endereço é obrigatório.';
         if ($addrNumber === '') $errors[] = 'Número do endereço é obrigatório.';
         if ($userName === '') $errors[] = 'Seu nome é obrigatório.';
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) $errors[] = 'E-mail inválido.';
@@ -114,6 +116,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         'cpfCnpj'       => $cnpj ?: null,
                         'phone'         => $coPhone ?: null,
                         'postalCode'    => $cep ?: null,
+                        'address'       => $address ?: null,
                         'addressNumber' => $addrNumber ?: null,
                     ], static fn($value) => $value !== null && $value !== '');
                     $checkoutPayload = [
@@ -362,6 +365,11 @@ tailwind.config = {
                  value="<?= htmlspecialchars($_POST['address_number'] ?? '') ?>" required>
         </div>
       </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Endereço *</label>
+        <input type="text" name="address" class="input-field" placeholder="Rua, avenida ou estrada"
+               value="<?= htmlspecialchars($_POST['address'] ?? '') ?>" required>
+      </div>
       <hr class="border-gray-100">
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Seu nome completo *</label>
@@ -495,7 +503,7 @@ function selectPlan(key) {
 }
 
 function validateStep2() {
-  const fields = ['company_name','user_name','email','password','password2'];
+  const fields = ['company_name','company_phone','cep','address','address_number','user_name','email','password','password2'];
   let ok = true;
   fields.forEach(f => {
     const el = document.querySelector('[name="' + f + '"]');
