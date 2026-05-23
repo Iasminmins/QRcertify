@@ -114,6 +114,11 @@ function requireLogin(): void {
             $stmt = $db->prepare('SELECT subscription_status FROM companies WHERE id = ?');
             $stmt->execute([$user['company_id']]);
             $status = $stmt->fetchColumn();
+            if ($status === 'pending_checkout') {
+                session_destroy();
+                setFlash('error', 'Finalize o checkout seguro do Asaas para ativar seus 30 dias gratis.');
+                redirect('/login.php');
+            }
             if ($status === 'canceled') {
                 session_destroy();
                 setFlash('error', 'Sua assinatura foi cancelada. Entre em contato ou assine novamente.');

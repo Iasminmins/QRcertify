@@ -132,8 +132,8 @@ require_once __DIR__ . '/../includes/sidebar.php';
                         <td class="px-5 py-3 text-sm">
                           <?php
                             $sub = $c['subscription_status'] ?? 'trialing';
-                            $subColors = ['active'=>'green','trialing'=>'blue','overdue'=>'red','canceled'=>'gray'];
-                            $subLabels = ['active'=>'Ativo','trialing'=>'Trial','overdue'=>'Inadimplente','canceled'=>'Cancelado'];
+                            $subColors = ['active'=>'green','trialing'=>'blue','pending_checkout'=>'gray','overdue'=>'red','canceled'=>'gray'];
+                            $subLabels = ['active'=>'Ativo','trialing'=>'Trial','pending_checkout'=>'Checkout pendente','overdue'=>'Inadimplente','canceled'=>'Cancelado'];
                             $sc = $subColors[$sub] ?? 'gray';
                           ?>
                           <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium

@@ -38,55 +38,103 @@ if (!$payload || !isset($payload['event'])) {
 }
 
 $event = $payload['event'];
-$data = $payload['payment'] ?? $payload['subscription'] ?? [];
+$data = $payload['payment'] ?? $payload['subscription'] ?? $payload['checkout'] ?? [];
 
 error_log("[Asaas Webhook] Event: {$event}");
 
 $db = getDB();
+
+$extractId = static function ($value): ?string {
+    if (is_array($value)) {
+        return isset($value['id']) ? (string) $value['id'] : null;
+    }
+    return $value ? (string) $value : null;
+};
+
+$subscriptionId = $extractId($data['subscription'] ?? null);
+$customerId = $extractId($data['customer'] ?? null);
+$externalReference = $data['externalReference']
+    ?? ($payload['checkout']['externalReference'] ?? null)
+    ?? ($payload['payment']['externalReference'] ?? null)
+    ?? ($payload['subscription']['externalReference'] ?? null)
+    ?? null;
+
+$companyIdFromRef = null;
+$planFromRef = null;
+if (is_string($externalReference) && preg_match('/^company_(\d+)_plan_([a-z0-9_-]+)$/i', $externalReference, $m)) {
+    $companyIdFromRef = (int) $m[1];
+    $planFromRef = strtolower($m[2]);
+}
 
 $statusMap = [
     'PAYMENT_RECEIVED'         => 'active',
     'PAYMENT_CONFIRMED'        => 'active',
     'PAYMENT_OVERDUE'          => 'overdue',
     'PAYMENT_DELETED'          => 'canceled',
+    'CHECKOUT_PAID'            => 'trialing',
+    'CHECKOUT_CANCELED'        => 'canceled',
+    'CHECKOUT_EXPIRED'         => 'canceled',
     'SUBSCRIPTION_INACTIVATED' => 'canceled',
     'SUBSCRIPTION_DELETED'     => 'canceled',
 ];
 
 $newStatus = $statusMap[$event] ?? null;
 
-if ($newStatus && !empty($data['subscription'])) {
-    $subscriptionId = is_array($data['subscription'])
-        ? ($data['subscription']['id'] ?? null)
-        : $data['subscription'];
+if ($newStatus) {
+    $updatedCompanyId = null;
 
     if ($subscriptionId) {
         $stmt = $db->prepare(
-            'UPDATE companies SET subscription_status = ? WHERE asaas_subscription_id = ?'
+            'UPDATE companies
+                SET subscription_status = ?,
+                    asaas_customer_id = COALESCE(asaas_customer_id, ?)
+              WHERE asaas_subscription_id = ?'
         );
-        $stmt->execute([$newStatus, $subscriptionId]);
+        $stmt->execute([$newStatus, $customerId, $subscriptionId]);
 
-        if (in_array($newStatus, ['canceled', 'overdue'], true)) {
+        if ($stmt->rowCount() > 0) {
             $stmtCo = $db->prepare(
                 'SELECT id FROM companies WHERE asaas_subscription_id = ?'
             );
             $stmtCo->execute([$subscriptionId]);
             $company = $stmtCo->fetch();
-
             if ($company) {
-                $stmt2 = $db->prepare(
-                    'INSERT INTO audit_log (company_id, action, target, detail, ip)
-                     VALUES (?, ?, ?, ?, ?)'
-                );
-                $stmt2->execute([
-                    $company['id'],
-                    'subscription.' . $newStatus,
-                    'asaas_subscription',
-                    json_encode(['event' => $event, 'subscription' => $subscriptionId]),
-                    $_SERVER['REMOTE_ADDR'] ?? null,
-                ]);
+                $updatedCompanyId = (int) $company['id'];
             }
         }
+    }
+
+    if (!$updatedCompanyId && $companyIdFromRef) {
+        $stmt = $db->prepare(
+            'UPDATE companies
+                SET subscription_status = ?,
+                    plan = COALESCE(?, plan),
+                    asaas_customer_id = COALESCE(asaas_customer_id, ?),
+                    asaas_subscription_id = COALESCE(asaas_subscription_id, ?)
+              WHERE id = ?'
+        );
+        $stmt->execute([$newStatus, $planFromRef, $customerId, $subscriptionId, $companyIdFromRef]);
+        if ($stmt->rowCount() > 0) {
+            $updatedCompanyId = $companyIdFromRef;
+        }
+    }
+
+    if ($updatedCompanyId && in_array($newStatus, ['canceled', 'overdue', 'trialing', 'active'], true)) {
+        $stmt2 = $db->prepare(
+            'INSERT INTO audit_log (company_id, action, target, detail, ip)
+             VALUES (?, ?, ?, ?, ?)'
+        );
+        $stmt2->execute([
+            $updatedCompanyId,
+            'subscription.' . $newStatus,
+            'asaas_webhook',
+            json_encode([
+                'event' => $event,
+                'subscription' => $subscriptionId,
+                'externalReference' => $externalReference,
+            ]),
+            $_SERVER['REMOTE_ADDR'] ?? null,
+        ]);
     }
 }
 

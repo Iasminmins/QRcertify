@@ -172,8 +172,8 @@ require_once __DIR__ . '/../includes/sidebar.php';
         <h2 class="font-bold text-gray-900 mb-4">Últimas empresas cadastradas</h2>
         <div class="space-y-3">
             <?php foreach (array_slice($topCompanies, 0, 5) as $co):
-                $subColors = ['trialing'=>'blue','active'=>'green','overdue'=>'red','canceled'=>'gray'];
-                $subLabels = ['trialing'=>'Trial','active'=>'Ativo','overdue'=>'Inadimplente','canceled'=>'Cancelado'];
+                $subColors = ['trialing'=>'blue','active'=>'green','pending_checkout'=>'gray','overdue'=>'red','canceled'=>'gray'];
+                $subLabels = ['trialing'=>'Trial','active'=>'Ativo','pending_checkout'=>'Checkout pendente','overdue'=>'Inadimplente','canceled'=>'Cancelado'];
                 $sc = $subColors[$co['subscription_status']] ?? 'gray';
             ?>
             <div class="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">

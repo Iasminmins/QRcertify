@@ -20,6 +20,7 @@ $upgradePlans   = $plans;
 $currentPlan    = normalizePlanKey($currentPlan);
 
 $statusLabels = [
+    'pending_checkout' => ['label' => 'Checkout pendente', 'color' => 'gray'],
     'trialing' => ['label' => 'Trial gratuito', 'color' => 'blue'],
     'active'   => ['label' => 'Ativo',          'color' => 'green'],
     'overdue'  => ['label' => 'Inadimplente',   'color' => 'red'],

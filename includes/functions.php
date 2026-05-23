@@ -396,20 +396,28 @@ function renderLandingPage(): void {
     $html = file_get_contents($file);
     $base = rtrim(BASE_URL, '/');
 
-    $search = [
-        'href="index.php"',
-        'href="login.php"',
-        'href="checkout.php"',
-        'href="admin/suporte/',
-    ];
-    $replace = [
-        'href="' . $base . '/"',
-        'href="' . $base . '/login.php"',
-        'href="' . $base . '/checkout.php"',
-        'href="' . $base . '/admin/suporte/',
-    ];
+    $html = str_replace(
+        [
+            'href="index.php"',
+            'href="login.php"',
+        ],
+        [
+            'href="' . $base . '/"',
+            'href="' . $base . '/login.php"',
+        ],
+        $html
+    );
 
-    echo str_replace($search, $replace, $html);
+    // checkout.php e checkout.php?plan=pro etc.
+    $html = preg_replace(
+        '#href="checkout\.php([^"]*)"#',
+        'href="' . $base . '/checkout.php$1"',
+        $html
+    );
+
+    $html = str_replace('href="admin/suporte/', 'href="' . $base . '/admin/suporte/', $html);
+
+    echo $html;
 }
 
 function asaasRequest(string $method, string $endpoint, array $body = []): array {
@@ -446,4 +454,8 @@ function asaasRequest(string $method, string $endpoint, array $body = []): array
         error_log("[Asaas] {$method} {$endpoint} → HTTP {$code}: {$raw}");
     }
     return $decoded;
+}
+
+function buildAsaasCheckoutUrl(string $checkoutId): string {
+    return 'https://asaas.com/checkoutSession/show?id=' . rawurlencode($checkoutId);
 }

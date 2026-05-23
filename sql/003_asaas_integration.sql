@@ -6,4 +6,4 @@ ALTER TABLE companies
     ADD COLUMN IF NOT EXISTS asaas_customer_id     VARCHAR(50)  DEFAULT NULL,
     ADD COLUMN IF NOT EXISTS asaas_subscription_id VARCHAR(50)  DEFAULT NULL,
     ADD COLUMN IF NOT EXISTS subscription_status   VARCHAR(20)  DEFAULT 'trialing';
--- subscription_status: trialing | active | overdue | canceled
+-- subscription_status: pending_checkout | trialing | active | overdue | canceled

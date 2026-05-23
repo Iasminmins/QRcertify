@@ -9,6 +9,7 @@ if (isLoggedIn()) {
 
 $errors  = [];
 $success = false;
+$activeStepOnError = 1;
 
 $plans = [];
 foreach (['starter', 'pro', 'business'] as $planKey) {
@@ -28,6 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!csrfCheck()) {
         $errors[] = 'Token de segurança inválido.';
     } else {
+        $activeStepOnError = 2;
         $plan       = $_POST['plan'] ?? 'pro';
         $coName     = trim($_POST['company_name'] ?? '');
         $cnpj       = preg_replace('/\D/', '', $_POST['cnpj'] ?? '');
@@ -38,11 +40,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $email      = strtolower(trim($_POST['email'] ?? ''));
         $password   = $_POST['password'] ?? '';
         $password2  = $_POST['password2'] ?? '';
-        $cardName   = trim($_POST['card_name'] ?? '');
-        $cardNumber = preg_replace('/\D/', '', $_POST['card_number'] ?? '');
-        $cardExpiry = trim($_POST['card_expiry'] ?? '');
-        $cardCvv    = trim($_POST['card_cvv'] ?? '');
         $terms      = $_POST['terms'] ?? '';
+
+        if (!isset($plans[$plan])) $errors[] = 'Plano invalido.';
 
         // Validações
         if ($coName === '')   $errors[] = 'Nome da empresa é obrigatório.';
@@ -56,14 +56,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         if ($password !== $password2) $errors[] = 'As senhas não coincidem.';
         if (!$terms) $errors[] = 'Você precisa aceitar os termos de uso.';
-
-        // Cartão obrigatório para planos pagos
-        if (in_array($plan, ['starter', 'pro', 'business'])) {
-            if (strlen($cardNumber) < 13) $errors[] = 'Número do cartão inválido.';
-            if ($cardName === '')         $errors[] = 'Nome no cartão é obrigatório.';
-            if (!preg_match('/^\d{2}\/\d{2}$/', $cardExpiry)) $errors[] = 'Validade do cartão inválida (MM/AA).';
-            if (strlen($cardCvv) < 3)     $errors[] = 'CVV inválido.';
-        }
 
         if (empty($errors)) {
             $db = getDB();
@@ -95,100 +87,114 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmtU->execute([$companyId, $userName, $email, $hash]);
                 $userId = (int) $db->lastInsertId();
 
-                // ── Integração Asaas (planos pagos) ──────────────────────
-                $asaasCustomerId    = null;
+                // ── Integração Asaas Checkout recorrente (sem cartão no servidor) ──
+                $asaasCustomerId     = null;
                 $asaasSubscriptionId = null;
+                $checkoutId          = null;
+                $checkoutUrl         = null;
 
                 $planPrices = array_map(
                     fn(array $p) => $p['price'],
                     getPlansCatalog()
                 );
 
-                if (in_array($plan, ['starter', 'pro', 'business', 'enterprise'])) {
+                if (in_array($plan, ['starter', 'pro', 'business', 'enterprise'], true)) {
 
-                    // 1) Cria cliente no Asaas
-                    $customerPayload = [
-                        'name'              => $userName,
-                        'email'             => $email,
-                        'cpfCnpj'           => $cnpj ?: null,
-                        'phone'             => $coPhone ?: null,
-                        'externalReference' => "company_{$companyId}",
-                    ];
-                    $chResp = asaasRequest('POST', '/customers', $customerPayload);
-                    if (empty($chResp['id'])) {
-                        $asaasErr = $chResp['errors'][0]['description'] ?? 'Erro desconhecido';
-                        if (strpos($asaasErr, 'inv\u00e1lida') !== false || strpos($asaasErr, 'inválida') !== false || strpos($asaasErr, 'invalid_access_token') !== false) {
-                            throw new \Exception('Erro de configuração do gateway de pagamento. Contate o suporte.');
-                        }
-                        throw new \Exception('Não foi possível processar o pagamento: ' . $asaasErr);
-                    }
-                    $asaasCustomerId = $chResp['id'];
-
-                    // 2) Cria assinatura com 30 dias de trial
+                    // 1) Checkout recorrente: o Asaas coleta o cartão e cria a assinatura.
                     $trialEnd = (new \DateTime('+30 days'))->format('Y-m-d');
-                    $subPayload = [
-                        'customer'          => $asaasCustomerId,
-                        'billingType'       => 'CREDIT_CARD',
-                        'value'             => $planPrices[$plan],
-                        'nextDueDate'       => $trialEnd,
-                        'cycle'             => 'MONTHLY',
-                        'description'       => 'Plano ' . ucfirst($plan) . ' — QRCertify',
-                        'externalReference' => "company_{$companyId}_plan_{$plan}",
-                        'creditCard'        => [
-                            'holderName'  => $cardName,
-                            'number'      => $cardNumber,
-                            'expiryMonth' => explode('/', $cardExpiry)[0],
-                            'expiryYear'  => '20' . explode('/', $cardExpiry)[1],
-                            'ccv'         => $cardCvv,
+                    $successQuery = http_build_query([
+                        'nome'  => $userName,
+                        'plano' => $plan,
+                        'email' => $email,
+                    ]);
+                    $externalReference = "company_{$companyId}_plan_{$plan}";
+                    $customerData = array_filter([
+                        'name'          => $userName,
+                        'email'         => $email,
+                        'cpfCnpj'       => $cnpj ?: null,
+                        'phone'         => $coPhone ?: null,
+                        'postalCode'    => $cep ?: null,
+                        'addressNumber' => $addrNumber ?: null,
+                    ], static fn($value) => $value !== null && $value !== '');
+                    $checkoutPayload = [
+                        'billingTypes'      => ['CREDIT_CARD'],
+                        'chargeTypes'       => ['RECURRENT'],
+                        'minutesToExpire'   => 1440,
+                        'externalReference' => $externalReference,
+                        'callback'          => [
+                            'successUrl' => BASE_URL . '/sucesso.php?' . $successQuery,
+                            'cancelUrl'  => BASE_URL . '/checkout.php?status=cancelado',
+                            'expiredUrl' => BASE_URL . '/checkout.php?status=expirado',
                         ],
-                        'creditCardHolderInfo' => [
-                            'name'          => $cardName,
-                            'email'         => $email,
-                            'cpfCnpj'       => $cnpj ?: '00000000000',
-                            'phone'         => $coPhone ?: '00000000000',
-                            'postalCode'    => $cep,
-                            'addressNumber' => $addrNumber,
+                        'items' => [[
+                            'name'        => 'Plano ' . ucfirst($plan) . ' - QRCertify',
+                            'description' => 'Assinatura mensal QRCertify com 30 dias grátis',
+                            'quantity'    => 1,
+                            'value'       => $planPrices[$plan],
+                        ]],
+                        'customerData' => $customerData,
+                        'subscription' => [
+                            'cycle'       => 'MONTHLY',
+                            'nextDueDate' => $trialEnd,
                         ],
                     ];
-                    $subResp = asaasRequest('POST', '/subscriptions', $subPayload);
-                    if (empty($subResp['id'])) {
-                        $asaasErr = $subResp['errors'][0]['description'] ?? 'Erro desconhecido';
-                        throw new \Exception('Não foi possível criar a assinatura: ' . $asaasErr);
-                    }
-                    $asaasSubscriptionId = $subResp['id'];
 
-                    // 3) Salva IDs do Asaas na empresa
-                    $db->prepare('UPDATE companies SET asaas_customer_id = ?, asaas_subscription_id = ?, plan = ? WHERE id = ?')
-                       ->execute([$asaasCustomerId, $asaasSubscriptionId, $plan, $companyId]);
+                    $checkoutResp = asaasRequest('POST', '/checkouts', $checkoutPayload);
+                    if (empty($checkoutResp['id'])) {
+                        $asaasErr = $checkoutResp['errors'][0]['description'] ?? 'Erro desconhecido';
+                        throw new \Exception('Não foi possível gerar o checkout seguro: ' . $asaasErr);
+                    }
+
+                    $checkoutId = $checkoutResp['id'];
+                    $checkoutUrl = $checkoutResp['link']
+                        ?? $checkoutResp['url']
+                        ?? buildAsaasCheckoutUrl($checkoutId);
+
+                    // 2) Salva o plano localmente; liberacao e IDs chegam via webhook.
+                    $db->prepare(
+                        'UPDATE companies SET plan = ?, subscription_status = "pending_checkout" WHERE id = ?'
+                    )->execute([$plan, $companyId]);
                 }
 
                 $db->commit();
-
-                // E-mail de boas-vindas
-                $welcomeHtml = '<h2>Bem-vindo, ' . htmlspecialchars($userName) . '!</h2>'
-                    . '<p>Sua conta do <strong>QRCertify</strong> foi criada com sucesso. Seu período de 30 dias grátis começa agora.</p>'
-                    . '<p>Acesse o sistema e comece cadastrando seus funcionários e certificados.</p>'
-                    . '<a class="btn" href="' . BASE_URL . '/login.php">Acessar o sistema</a>';
-                @sendMail($email, 'Bem-vindo ao QRCertify — 30 dias grátis', $welcomeHtml);
 
                 auditLog('register', "company#{$companyId}", json_encode([
                     'plan'           => $plan,
                     'email'          => $email,
                     'asaas_customer' => $asaasCustomerId,
                     'asaas_sub'      => $asaasSubscriptionId,
+                    'asaas_checkout' => $checkoutId,
                 ]));
 
+                if ($checkoutUrl) {
+                    $welcomeHtml = '<h2>Bem-vindo, ' . htmlspecialchars($userName) . '!</h2>'
+                        . '<p>Sua conta do <strong>QRCertify</strong> foi criada. Complete o checkout seguro do Asaas para ativar a assinatura.</p>'
+                        . '<p>Seu período de <strong>30 dias grátis</strong> começa agora. A primeira cobrança será após esse período.</p>'
+                        . '<a class="btn" href="' . BASE_URL . '/login.php">Acessar o sistema</a>';
+                    @sendMail($email, 'Bem-vindo ao QRCertify — 30 dias grátis', $welcomeHtml);
+
+                    header('Location: ' . $checkoutUrl);
+                    exit;
+                }
+
+                // Fallback se plano não exigir Asaas (não deve ocorrer nos planos atuais)
+                $welcomeHtml = '<h2>Bem-vindo, ' . htmlspecialchars($userName) . '!</h2>'
+                    . '<p>Sua conta do <strong>QRCertify</strong> foi criada com sucesso. Seu período de 30 dias grátis começa agora.</p>'
+                    . '<p>Acesse o sistema e comece cadastrando seus funcionários e certificados.</p>'
+                    . '<a class="btn" href="' . BASE_URL . '/login.php">Acessar o sistema</a>';
+                @sendMail($email, 'Bem-vindo ao QRCertify — 30 dias grátis', $welcomeHtml);
+
                 setFlash('success', 'Conta criada! Seu período de 30 dias grátis começou.');
-                $params = http_build_query([
+                header('Location: ' . BASE_URL . '/sucesso.php?' . http_build_query([
                     'nome'  => $userName,
                     'plano' => $plan,
                     'email' => $email,
-                ]);
-                header('Location: ' . BASE_URL . '/sucesso.php?' . $params);
+                ]));
                 exit;
 
             } catch (\Exception $e) {
                 $db->rollBack();
+                $activeStepOnError = 3;
                 $errors[] = 'Erro ao criar conta: ' . $e->getMessage();
             }
         }
@@ -385,10 +391,12 @@ tailwind.config = {
     </div>
   </div>
 
-  <!-- ─── STEP 3: Pagamento ─────────────────────────────── -->
+  <!-- ─── STEP 3: Pagamento (checkout hospedado no Asaas) ─── -->
   <div id="step3" class="step-panel hidden">
-    <h1 class="text-2xl font-bold mb-1" style="font-family:'Bricolage Grotesque',sans-serif">Dados de pagamento</h1>
-    <p class="text-gray-500 text-sm mb-6" id="paySubtitle">Você não será cobrado durante os 30 dias grátis.</p>
+    <h1 class="text-2xl font-bold mb-1" style="font-family:'Bricolage Grotesque',sans-serif">Forma de pagamento</h1>
+    <p class="text-gray-500 text-sm mb-6" id="paySubtitle">
+      Na próxima etapa você define como deseja pagar. Hoje não há cobrança — os 30 dias grátis começam agora.
+    </p>
 
     <!-- Resumo do plano -->
     <div class="bg-gray-50 rounded-xl border border-gray-200 p-4 mb-5" id="orderSummary">
@@ -396,36 +404,19 @@ tailwind.config = {
         <span class="font-medium text-gray-700">Plano <span id="summaryPlanName">Pro</span></span>
         <span class="font-bold text-gray-900" id="summaryPrice">R$ 99/mês</span>
       </div>
-      <div class="text-xs text-gray-500 mt-1">30 dias grátis · após isso, cobrança automática</div>
+      <div class="text-xs text-gray-500 mt-1">30 dias grátis · após isso, cobrança automática mensal</div>
     </div>
 
-    <!-- Card fields (oculto para Starter) -->
-    <div id="cardFields" class="space-y-4">
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Número do cartão *</label>
-        <input type="text" name="card_number" id="cardNumber" class="input-field font-mono" placeholder="0000 0000 0000 0000" maxlength="19"
-               value="<?= htmlspecialchars($_POST['card_number'] ?? '') ?>">
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Nome no cartão *</label>
-        <input type="text" name="card_name" class="input-field uppercase" placeholder="AMANDA SILVA"
-               value="<?= htmlspecialchars($_POST['card_name'] ?? '') ?>" style="text-transform:uppercase">
-      </div>
-      <div class="grid grid-cols-2 gap-3">
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Validade (MM/AA) *</label>
-          <input type="text" name="card_expiry" id="cardExpiry" class="input-field" placeholder="12/28" maxlength="5"
-                 value="<?= htmlspecialchars($_POST['card_expiry'] ?? '') ?>">
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">CVV *</label>
-          <input type="text" name="card_cvv" class="input-field" placeholder="123" maxlength="4"
-                 value="<?= htmlspecialchars($_POST['card_cvv'] ?? '') ?>">
-        </div>
-      </div>
-      <div class="flex items-center gap-2 text-xs text-gray-500 bg-gray-50 rounded-lg p-3">
+    <div class="space-y-2 text-sm text-gray-600 bg-gray-50 border border-gray-200 rounded-xl p-4 mb-2">
+      <p class="font-medium text-gray-800">Próximos passos</p>
+      <ol class="list-decimal list-inside space-y-1.5 text-gray-600">
+        <li>Criamos sua conta no QRCertify.</li>
+        <li>Você escolhe a forma de pagamento na página segura do <strong>Asaas</strong>.</li>
+        <li>Em seguida, voltamos você para confirmar que está tudo certo.</li>
+      </ol>
+      <div class="flex items-center gap-2 text-xs text-gray-500 pt-2 border-t border-gray-200 mt-2">
         <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-        Pagamento seguro. Seus dados são criptografados.
+        Cobrança processada com segurança pelo Asaas, nosso parceiro de pagamentos.
       </div>
     </div>
 
@@ -437,11 +428,11 @@ tailwind.config = {
     <div class="flex gap-3 mt-6">
       <button type="button" onclick="goStep(2)" class="px-5 py-3 border border-gray-200 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors">← Voltar</button>
       <button type="submit" class="flex-1 bg-industrial-blue text-white font-bold py-3.5 rounded-xl hover:bg-blue-900 transition-colors text-sm">
-        Ativar 30 dias grátis →
+        Criar conta e ir para pagamento →
       </button>
     </div>
 
-    <p class="text-xs text-gray-400 text-center mt-4">Sem cobrança hoje. Cancele quando quiser.</p>
+    <p class="text-xs text-gray-400 text-center mt-4">Sem cobrança hoje · Cancele quando quiser</p>
   </div>
 
 </form>
@@ -451,7 +442,7 @@ let currentStep = 1;
 
 // Vai para step inicial correto se houve erro no POST
 <?php if (!empty($errors) && !empty($_POST)): ?>
-currentStep = <?= !empty($_POST['card_number']) || !empty($_POST['card_name']) ? 3 : (!empty($_POST['user_name']) ? 2 : 1) ?>;
+currentStep = <?= (int) $activeStepOnError ?>;
 <?php endif; ?>
 
 function goStep(n) {
@@ -495,20 +486,12 @@ function selectPlan(key) {
   if (radio) radio.className = 'w-4 h-4 rounded-full border-2 border-industrial-blue bg-industrial-blue';
   document.getElementById('planInput').value = key;
 
-  // Atualiza resumo e campos de cartão
   const prices = { starter: 'R$ 49/mês', pro: 'R$ 179/mês', business: 'R$ 349/mês' };
   const names  = { starter: 'Starter', pro: 'Pro', business: 'Business' };
   const el = document.getElementById('summaryPlanName');
   const pr = document.getElementById('summaryPrice');
   if (el) el.textContent = names[key] || key;
   if (pr) pr.textContent = prices[key] || '';
-
-  const cardFields  = document.getElementById('cardFields');
-  const paySubtitle = document.getElementById('paySubtitle');
-
-  // Todos os planos exigem cartão
-  if (cardFields) cardFields.classList.remove('hidden');
-  if (paySubtitle) paySubtitle.textContent = 'Você não será cobrado durante os 30 dias grátis.';
 }
 
 function validateStep2() {
@@ -545,15 +528,6 @@ function maskPhone(v){
   if(v.length>2)    return v.replace(/(\d{2})(\d+)/,'($1) $2');
   return v;
 }
-function maskCard(v){
-  return v.replace(/\D/g,'').slice(0,16).replace(/(.{4})/g,'$1 ').trim();
-}
-function maskExpiry(v){
-  v=v.replace(/\D/g,'').slice(0,4);
-  if(v.length>2) return v.slice(0,2)+'/'+v.slice(2);
-  return v;
-}
-
 document.getElementById('cnpj')?.addEventListener('input', function(){ this.value=maskCnpj(this.value); });
 document.getElementById('co_phone')?.addEventListener('input', function(){ this.value=maskPhone(this.value); });
 document.getElementById('cep')?.addEventListener('input', function(){
@@ -561,8 +535,6 @@ document.getElementById('cep')?.addEventListener('input', function(){
   if(v.length > 5) v = v.slice(0,5) + '-' + v.slice(5);
   this.value = v;
 });
-document.getElementById('cardNumber')?.addEventListener('input', function(){ this.value=maskCard(this.value); });
-document.getElementById('cardExpiry')?.addEventListener('input', function(){ this.value=maskExpiry(this.value); });
 
 // Inicia no step correto
 goStep(currentStep);

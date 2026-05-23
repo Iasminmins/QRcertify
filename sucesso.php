@@ -111,14 +111,14 @@ $label = $planoLabel[$plano] ?? ucfirst($plano);
   <div class="anim-fade delay-1">
     <div class="inline-flex items-center gap-2 bg-green-50 text-green-700 text-xs font-semibold px-3 py-1.5 rounded-full mb-4">
       <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-      Pagamento confirmado · Plano <?= htmlspecialchars($label) ?>
+      Conta criada · Plano <?= htmlspecialchars($label) ?>
     </div>
     <h1 class="text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight leading-tight mb-4">
       Parabéns, <?= htmlspecialchars(explode(' ', $nome)[0]) ?>!<br>
       <span class="text-industrial-blue">Sua jornada começa agora.</span>
     </h1>
     <p class="text-gray-500 text-lg mb-10">
-      Sua conta QRCertify foi criada. Você tem <strong class="text-gray-700">30 dias grátis</strong> para explorar tudo sem pagar nada.
+      Sua conta QRCertify foi criada. Se você concluiu o checkout seguro do Asaas, seus <strong class="text-gray-700">30 dias grátis</strong> já estão em ativação.
     </p>
   </div>
 
