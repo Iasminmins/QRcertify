@@ -11,7 +11,7 @@ $isEdit = $id > 0;
 $errors = [];
 
 $employee = [
-    'name' => '', 'email' => '', 'cpf' => '', 'role' => '',
+    'name' => '', 'email' => '', 'cpf' => '', 'role' => '', 'department' => '',
     'phone' => '', 'photo' => '', 'status' => 'active',
     'cep' => '', 'address' => '', 'number' => '',
     'complement' => '', 'neighborhood' => '', 'city' => '', 'state' => '',
@@ -39,7 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 redirect('/admin/employees.php');
             }
         }
-        $fields = ['name','email','cpf','role','phone','photo','status',
+        $fields = ['name','email','cpf','role','department','phone','photo','status',
                    'cep','address','number','complement','neighborhood','city','state'];
         foreach ($fields as $f) {
             $employee[$f] = trim($_POST[$f] ?? '');
@@ -79,13 +79,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($isEdit) {
                 $stmt = $db->prepare(
                     'UPDATE employees
-                     SET name=?,email=?,cpf=?,role=?,phone=?,photo=?,status=?,
+                     SET name=?,email=?,cpf=?,role=?,department=?,phone=?,photo=?,status=?,
                          cep=?,address=?,number=?,complement=?,neighborhood=?,city=?,state=?
                      WHERE id=? AND company_id=?'
                 );
                 $stmt->execute([
                     $employee['name'],$employee['email'],$employee['cpf'],
-                    $employee['role'],$employee['phone']?:null,$employee['photo']?:null,$employee['status'],
+                    $employee['role'],$employee['department']?:null,
+                    $employee['phone']?:null,$employee['photo']?:null,$employee['status'],
                     $employee['cep']?:null,$employee['address']?:null,$employee['number']?:null,
                     $employee['complement']?:null,$employee['neighborhood']?:null,
                     $employee['city']?:null,$employee['state']?:null,
@@ -97,13 +98,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $publicHash = generateHash();
                 $stmt = $db->prepare(
                     'INSERT INTO employees
-                       (company_id,name,email,cpf,role,phone,photo,public_hash,status,
+                       (company_id,name,email,cpf,role,department,phone,photo,public_hash,status,
                         cep,address,number,complement,neighborhood,city,state)
-                     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'
+                     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'
                 );
                 $stmt->execute([
                     $companyId,$employee['name'],$employee['email'],$employee['cpf'],
-                    $employee['role'],$employee['phone']?:null,$employee['photo']?:null,$publicHash,$employee['status'],
+                    $employee['role'],$employee['department']?:null,
+                    $employee['phone']?:null,$employee['photo']?:null,$publicHash,$employee['status'],
                     $employee['cep']?:null,$employee['address']?:null,$employee['number']?:null,
                     $employee['complement']?:null,$employee['neighborhood']?:null,
                     $employee['city']?:null,$employee['state']?:null,
@@ -201,6 +203,13 @@ require_once __DIR__ . '/../includes/sidebar.php';
                 <input type="text" name="role" value="<?= e($employee['role']) ?>" required placeholder="Ex: Eletricista"
                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-industrial-blue outline-none">
             </div>
+        </div>
+
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Setor / Departamento</label>
+            <input type="text" name="department" value="<?= e($employee['department'] ?? '') ?>"
+                   placeholder="Ex: Manutenção, Operações, RH..."
+                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-industrial-blue outline-none">
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">

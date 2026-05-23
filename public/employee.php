@@ -75,6 +75,13 @@ $pageUrl    = $employee ? getEmployeePublicUrl($employeeId) : '';
 $selfQrUrl  = $pageUrl ? generateQRCodeUrl($pageUrl, 200) : '';
 $verifiedAt = date('d/m/Y \à\s H:i');
 
+// Mascara CPF para exibição pública: ***.456.789-**
+function maskCpf(?string $cpf): string {
+    $d = preg_replace('/\D/', '', $cpf ?? '');
+    if (strlen($d) !== 11) return '***.***.***-**';
+    return '***.' . substr($d, 3, 3) . '.' . substr($d, 6, 3) . '-**';
+}
+
 $backUrl = BASE_URL . '/';
 if (isLoggedIn()) {
     $role = currentUser()['role'] ?? '';
@@ -142,7 +149,12 @@ if (isLoggedIn()) {
                     <div class="min-w-0">
                         <h1 class="text-lg font-bold truncate"><?= e($employee['name']) ?></h1>
                         <p class="text-sm text-white/80"><?= e($employee['role']) ?></p>
-                        <p class="text-xs text-white/60 mt-0.5"><?= e($employee['company_name']) ?></p>
+                        <p class="text-xs text-white/60 mt-0.5">
+                            <?= e($employee['company_name']) ?>
+                            <?php if (!empty($employee['cpf'])): ?>
+                                · CPF <?= maskCpf($employee['cpf']) ?>
+                            <?php endif; ?>
+                        </p>
                     </div>
                 </div>
             </div>

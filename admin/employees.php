@@ -147,12 +147,21 @@ require_once __DIR__ . '/../includes/sidebar.php';
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                       d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
             </svg>
-            <p class="font-medium text-gray-500">Nenhum colaborador encontrado</p>
-            <p class="text-sm mt-1">
-                <a href="<?= BASE_URL ?>/admin/employee-form.php" class="text-industrial-blue hover:underline">
-                    Cadastre o primeiro
-                </a>
-            </p>
+            <?php if ($search || $statusFilter): ?>
+                <p class="font-medium text-gray-500">Nenhum colaborador encontrado para os filtros aplicados</p>
+                <p class="text-sm mt-1">
+                    <a href="<?= BASE_URL ?>/admin/employees.php" class="text-industrial-blue hover:underline">
+                        Limpar filtros
+                    </a>
+                </p>
+            <?php else: ?>
+                <p class="font-medium text-gray-500">Nenhum colaborador cadastrado ainda</p>
+                <p class="text-sm mt-1">
+                    <a href="<?= BASE_URL ?>/admin/employee-form.php" class="text-industrial-blue hover:underline">
+                        Cadastre o primeiro
+                    </a>
+                </p>
+            <?php endif; ?>
         </div>
     </div>
 <?php else: ?>
@@ -180,7 +189,13 @@ require_once __DIR__ . '/../includes/sidebar.php';
         </div>
         <div style="flex:1;min-width:0">
             <div style="font-weight:700;color:#0f172a;font-size:1rem;truncate"><?= e($emp['name']) ?></div>
-            <div style="font-size:.8rem;color:#94a3b8">ID: <?= (int)$emp['id'] ?> · <?= e($emp['role']) ?></div>
+            <div style="font-size:.8rem;color:#94a3b8">
+                ID: <?= (int)$emp['id'] ?> · <?= e($emp['role']) ?>
+                <?php if (!empty($emp['department'])): ?>
+                    <span style="color:#cbd5e1"> · </span>
+                    <span style="color:#64748b"><?= e($emp['department']) ?></span>
+                <?php endif; ?>
+            </div>
         </div>
         <?php if ($emp['status'] === 'inactive'): ?>
             <span class="badge badge-inactive">Inativo</span>

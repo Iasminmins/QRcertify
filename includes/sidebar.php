@@ -60,7 +60,7 @@ $base = BASE_URL;
         <?php elseif ($role === 'admin'): ?>
             <div class="nav-section-label">Gestão</div>
             <?php navLink("{$base}/admin/dashboard.php",    $icons['dashboard'],    'Dashboard') ?>
-            <?php navLink("{$base}/admin/employees.php",    $icons['employees'],    'Funcionários') ?>
+            <?php navLink("{$base}/admin/employees.php",    $icons['employees'],    'Colaboradores') ?>
             <?php navLink("{$base}/admin/certificates.php", $icons['certificates'], 'Certificados') ?>
             <div class="nav-section-label" style="margin-top:.75rem">Ferramentas</div>
             <?php navLink("{$base}/admin/notify-expiring.php",    $icons['notify'],  'Notificações') ?>

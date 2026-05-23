@@ -6,20 +6,23 @@ $user      = currentUser();
 $companyId = $user['company_id'];
 $db        = getDB();
 
-if (!companyHasFeature($companyId, 'export_reports')) {
-    setFlash('error', 'Exportação de relatórios está disponível nos planos Pro, Business e Enterprise.');
-    redirect('/admin/dashboard.php');
-}
+$canExport = companyHasFeature($companyId, 'export_reports');
 
-$type   = $_GET['type']   ?? '';   // 'employees' | 'certificates'
-$format = $_GET['format'] ?? '';   // 'csv' | 'print'
+$type   = $_GET['type']   ?? '';
+$format = $_GET['format'] ?? '';
+
+// Bloqueia exportação real se não tiver plano
+if (!$canExport && ($format === 'csv' || $format === 'print')) {
+    setFlash('error', 'Faça upgrade para exportar relatórios.');
+    redirect('/admin/export.php');
+}
 
 // ── EXPORT CSV ───────────────────────────────────────────────
 if ($format === 'csv' && in_array($type, ['employees','certificates'])) {
 
     if ($type === 'employees') {
         $stmt = $db->prepare(
-            'SELECT e.name, e.email, e.cpf, e.role, e.phone, e.status,
+            'SELECT e.name, e.email, e.cpf, e.role, e.department, e.phone, e.status,
                     e.cep, e.address, e.number, e.neighborhood, e.city, e.state,
                     COUNT(c.id) AS total_certs,
                     SUM(c.status="valid")    AS certs_validos,
@@ -35,7 +38,7 @@ if ($format === 'csv' && in_array($type, ['employees','certificates'])) {
         $stmt->execute([$companyId]);
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
-        $headers = ['Nome','E-mail','CPF','Cargo','Telefone','Status',
+        $headers = ['Nome','E-mail','CPF','Cargo','Setor/Departamento','Telefone','Status',
                     'CEP','Logradouro','Número','Bairro','Cidade','UF',
                     'Total Certificados','Válidos','Expirando','Expirados','Cadastrado em'];
         $filename = 'funcionarios_' . date('Y-m-d') . '.csv';
@@ -44,6 +47,7 @@ if ($format === 'csv' && in_array($type, ['employees','certificates'])) {
                 $r['name'], $r['email'],
                 preg_replace('/(\d{3})(\d{3})(\d{3})(\d{2})/', '$1.$2.$3-$4', $r['cpf'] ?? ''),
                 $r['role'],
+                $r['department'] ?? '',
                 $r['phone'] ? '(' . substr($r['phone'],0,2) . ') ' . substr($r['phone'],2) : '',
                 $r['status'] === 'active' ? 'Ativo' : 'Inativo',
                 $r['cep'] ? substr($r['cep'],0,5).'-'.substr($r['cep'],5) : '',
@@ -115,6 +119,29 @@ require_once __DIR__ . '/../includes/sidebar.php';
 
 <?php renderFlashes(); ?>
 
+<?php if (!$canExport): ?>
+<div class="mb-6 bg-amber-50 border border-amber-200 rounded-xl p-6 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+    <div class="h-12 w-12 flex-shrink-0 bg-amber-100 rounded-xl flex items-center justify-center">
+        <svg class="h-6 w-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+        </svg>
+    </div>
+    <div class="flex-1">
+        <p class="font-semibold text-amber-900">Exportação disponível nos planos Pro, Business e Enterprise</p>
+        <p class="text-sm text-amber-700 mt-1">
+            Faça upgrade para baixar planilhas CSV dos seus funcionários e certificados,
+            ou gerar relatórios para impressão e PDF.
+        </p>
+    </div>
+    <a href="<?= BASE_URL ?>/admin/plano.php"
+       class="flex-shrink-0 inline-flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white
+              font-semibold px-5 py-2.5 rounded-lg transition text-sm whitespace-nowrap">
+        Ver planos e fazer upgrade →
+    </a>
+</div>
+<?php endif; ?>
+
 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
 
     <!-- FUNCIONÁRIOS -->
@@ -135,6 +162,7 @@ require_once __DIR__ . '/../includes/sidebar.php';
             Exporta nome, e-mail, CPF, cargo, telefone, endereço e contagem de certificados.
         </p>
         <div class="flex gap-2">
+            <?php if ($canExport): ?>
             <a href="?type=employees&format=csv"
                class="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium transition">
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -151,6 +179,12 @@ require_once __DIR__ . '/../includes/sidebar.php';
                 </svg>
                 Imprimir / PDF
             </a>
+            <?php else: ?>
+            <a href="<?= BASE_URL ?>/admin/plano.php"
+               class="inline-flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-md text-sm font-medium transition">
+                🔒 Fazer upgrade para exportar
+            </a>
+            <?php endif; ?>
         </div>
     </div>
 
@@ -172,6 +206,7 @@ require_once __DIR__ . '/../includes/sidebar.php';
             Exporta funcionário, CPF, certificado, tipo, emissão, validade e status.
         </p>
         <div class="flex gap-2">
+            <?php if ($canExport): ?>
             <a href="?type=certificates&format=csv"
                class="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium transition">
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -188,6 +223,12 @@ require_once __DIR__ . '/../includes/sidebar.php';
                 </svg>
                 Imprimir / PDF
             </a>
+            <?php else: ?>
+            <a href="<?= BASE_URL ?>/admin/plano.php"
+               class="inline-flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-md text-sm font-medium transition">
+                🔒 Fazer upgrade para exportar
+            </a>
+            <?php endif; ?>
         </div>
     </div>
 
@@ -202,7 +243,7 @@ require_once __DIR__ . '/../includes/sidebar.php';
 
     if ($type === 'employees') {
         $stmt = $db->prepare(
-            'SELECT e.name, e.cpf, e.role, e.phone, e.status,
+            'SELECT e.name, e.cpf, e.role, e.department, e.phone, e.status,
                     SUM(c.status="valid") AS v, SUM(c.status="expiring") AS x, SUM(c.status="expired") AS e2
              FROM employees e LEFT JOIN certificates c ON c.employee_id=e.id
              WHERE e.company_id=? GROUP BY e.id ORDER BY e.name'
@@ -242,6 +283,7 @@ require_once __DIR__ . '/../includes/sidebar.php';
                         <th class="px-3 py-2 text-left">Nome</th>
                         <th class="px-3 py-2 text-left">CPF</th>
                         <th class="px-3 py-2 text-left">Cargo</th>
+                        <th class="px-3 py-2 text-left">Setor</th>
                         <th class="px-3 py-2 text-left">Status</th>
                         <th class="px-3 py-2 text-center">Válidos</th>
                         <th class="px-3 py-2 text-center">Expirando</th>
@@ -265,6 +307,7 @@ require_once __DIR__ . '/../includes/sidebar.php';
                         <td class="px-3 py-2"><?= e($r['name']) ?></td>
                         <td class="px-3 py-2 font-mono text-xs"><?= e(preg_replace('/(\d{3})(\d{3})(\d{3})(\d{2})/','$1.$2.$3-$4',$r['cpf']??'')) ?></td>
                         <td class="px-3 py-2"><?= e($r['role']) ?></td>
+                        <td class="px-3 py-2 text-xs text-gray-600"><?= e($r['department'] ?? '—') ?></td>
                         <td class="px-3 py-2"><?= $r['status']==='active'?'Ativo':'Inativo' ?></td>
                         <td class="px-3 py-2 text-center text-green-700 font-medium"><?= (int)$r['v'] ?></td>
                         <td class="px-3 py-2 text-center text-amber-600 font-medium"><?= (int)$r['x'] ?></td>

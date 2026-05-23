@@ -14,12 +14,12 @@ if (isset($_GET['template'])) {
     echo "\xEF\xBB\xBF";
     $out = fopen('php://output', 'w');
     fputcsv($out, [
-        'nome','email','cpf','cargo','telefone',
+        'nome','email','cpf','cargo','departamento','telefone',
         'cep','logradouro','numero','complemento','bairro','cidade','uf','status'
     ], ';');
     // Linha de exemplo
     fputcsv($out, [
-        'João da Silva','joao@empresa.com','123.456.789-00','Eletricista','(11) 91234-5678',
+        'João da Silva','joao@empresa.com','123.456.789-00','Eletricista','Manutenção','(11) 91234-5678',
         '01310-100','Av. Paulista','1000','Sala 5','Bela Vista','São Paulo','SP','ativo'
     ], ';');
     fclose($out);
@@ -75,6 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'email'        => ['email','e-mail','email'],
                     'cpf'          => ['cpf'],
                     'cargo'        => ['cargo','role','funcao','função'],
+                    'departamento' => ['departamento','setor','department','sector'],
                     'telefone'     => ['telefone','phone','fone','celular'],
                     'cep'          => ['cep'],
                     'logradouro'   => ['logradouro','rua','endereco','endereço','address'],
@@ -105,9 +106,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $stmtChk  = $db->prepare('SELECT id FROM employees WHERE (email=? OR cpf=?) AND company_id=?');
                     $stmtIns  = $db->prepare(
                         'INSERT INTO employees
-                           (company_id,name,email,cpf,role,phone,public_hash,status,
+                           (company_id,name,email,cpf,role,department,phone,public_hash,status,
                             cep,address,number,complement,neighborhood,city,state)
-                         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'
+                         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'
                     );
 
                     $db->beginTransaction();
@@ -124,6 +125,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             $email  = strtolower($get('email'));
                             $cpf    = preg_replace('/\D/', '', $get('cpf'));
                             $role   = $get('cargo');
+                            $dept   = $get('departamento');
                             $phone  = preg_replace('/\D/', '', $get('telefone'));
                             $cep    = preg_replace('/\D/', '', $get('cep'));
                             $addr   = $get('logradouro');
@@ -161,6 +163,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                             $stmtIns->execute([
                                 $companyId, $name, $email, $cpf, $role,
+                                $dept ?: null,
                                 $phone ?: null, generateHash(), $status,
                                 $cep ?: null, $addr ?: null, $num ?: null,
                                 $comp ?: null, $neigh ?: null,
