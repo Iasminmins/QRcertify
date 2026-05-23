@@ -1,0 +1,449 @@
+<?php
+/**
+ * Funções utilitárias do sistema
+ */
+
+/**
+ * Escapa string para output seguro em HTML.
+ */
+function e(?string $str): string {
+    return htmlspecialchars($str ?? '', ENT_QUOTES, 'UTF-8');
+}
+
+/**
+ * Redireciona para outra URL e encerra o script.
+ */
+function redirect(string $path): void {
+    header('Location: ' . BASE_URL . $path);
+    exit;
+}
+
+/**
+ * Formata uma data (yyyy-mm-dd) para o formato brasileiro (dd/mm/yyyy).
+ */
+function formatDate(?string $date): string {
+    if (empty($date)) return '-';
+    $ts = strtotime($date);
+    return $ts ? date('d/m/Y', $ts) : '-';
+}
+
+/**
+ * Calcula o status de um certificado baseado na data de validade.
+ */
+function getCertStatus(string $expiryDate): string {
+    $expiry = strtotime($expiryDate);
+    $now = time();
+    $diffDays = ($expiry - $now) / (60 * 60 * 24);
+
+    if ($diffDays <= 0) return 'expired';
+    if ($diffDays <= 30) return 'expiring';
+    return 'valid';
+}
+
+/**
+ * Retorna o label em português e a classe CSS de um status.
+ */
+function getStatusBadge(string $status): array {
+    switch ($status) {
+        case 'valid':
+            return ['label' => 'Válido', 'class' => 'bg-green-100 text-green-800 border-green-200'];
+        case 'expired':
+            return ['label' => 'Expirado', 'class' => 'bg-red-100 text-red-800 border-red-200'];
+        case 'expiring':
+            return ['label' => 'Expirando', 'class' => 'bg-amber-100 text-amber-800 border-amber-200'];
+        case 'active':
+            return ['label' => 'Ativo', 'class' => 'bg-green-100 text-green-800 border-green-200'];
+        case 'inactive':
+            return ['label' => 'Inativo', 'class' => 'bg-gray-100 text-gray-800 border-gray-200'];
+        default:
+            return ['label' => 'Indefinido', 'class' => 'bg-gray-100 text-gray-800'];
+    }
+}
+
+/**
+ * Gera URL pública para validação de certificado via QR Code.
+ */
+function getCertificatePublicUrl(string $hash): string {
+    return BASE_URL . '/public/certificate.php?hash=' . urlencode($hash);
+}
+
+/**
+ * Garante hash público da carteira do funcionário.
+ */
+function ensureEmployeePublicHash(int $employeeId): ?string {
+    try {
+        $db = getDB();
+        $stmt = $db->prepare('SELECT public_hash FROM employees WHERE id = ? LIMIT 1');
+        $stmt->execute([$employeeId]);
+        $hash = $stmt->fetchColumn();
+        if (is_string($hash) && strlen($hash) >= 32) {
+            return $hash;
+        }
+
+        try {
+            $hash = generateHash();
+            $upd = $db->prepare('UPDATE employees SET public_hash = ? WHERE id = ?');
+            $upd->execute([$hash, $employeeId]);
+            return $hash;
+        } catch (\Exception $e) {
+            return null;
+        }
+    } catch (\Exception $e) {
+        return null;
+    }
+}
+
+/**
+ * Gera URL pública da carteira digital de um funcionário (todos os certs).
+ */
+function getEmployeePublicUrl(int $employeeId): string {
+    $hash = ensureEmployeePublicHash($employeeId);
+    if ($hash) {
+        return BASE_URL . '/public/employee.php?hash=' . urlencode($hash);
+    }
+    return BASE_URL . '/public/employee.php?id=' . $employeeId;
+}
+
+/**
+ * Gera URL da imagem de um QR Code usando a API gratuita do qrserver.com.
+ * Não precisa instalar nada, funciona em qualquer hospedagem com PHP.
+ */
+function generateQRCodeUrl(string $data, int $size = 200): string {
+    $params = http_build_query([
+        'data' => $data,
+        'size' => $size . 'x' . $size,
+        'margin' => 1,
+    ]);
+    return 'https://api.qrserver.com/v1/create-qr-code/?' . $params;
+}
+
+/**
+ * Define uma mensagem flash (aparece na próxima requisição e some).
+ */
+function setFlash(string $type, string $message): void {
+    $_SESSION['flash'][$type] = $message;
+}
+
+/**
+ * Recupera e remove a mensagem flash.
+ */
+function getFlash(string $type): ?string {
+    if (isset($_SESSION['flash'][$type])) {
+        $msg = $_SESSION['flash'][$type];
+        unset($_SESSION['flash'][$type]);
+        return $msg;
+    }
+    return null;
+}
+
+/**
+ * Mostra todas as mensagens flash em HTML.
+ */
+function renderFlashes(): void {
+    foreach (['success', 'error', 'info', 'warning'] as $type) {
+        $msg = getFlash($type);
+        if ($msg) {
+            echo '<div class="flash flash-' . $type . '">' . e($msg) . '</div>';
+        }
+    }
+}
+
+/**
+ * Gera e valida tokens CSRF para proteção de formulários.
+ */
+function csrfToken(): string {
+    if (empty($_SESSION['csrf_token'])) {
+        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+    }
+    return $_SESSION['csrf_token'];
+}
+
+function csrfField(): string {
+    return '<input type="hidden" name="csrf_token" value="' . csrfToken() . '">';
+}
+
+function csrfCheck(): bool {
+    $token = $_POST['csrf_token'] ?? '';
+    return !empty($_SESSION['csrf_token']) && hash_equals($_SESSION['csrf_token'], $token);
+}
+
+/**
+ * Gera um hash único para um certificado (usado no QR Code).
+ */
+function generateHash(): string {
+    return bin2hex(random_bytes(32));
+}
+
+/**
+ * Valida CPF com cálculo dos dígitos verificadores.
+ */
+function validarCpf(string $cpf): bool {
+    $cpf = preg_replace('/\D/', '', $cpf);
+    if (strlen($cpf) !== 11) return false;
+    if (preg_match('/^(\d)\1{10}$/', $cpf)) return false; // todos iguais (ex: 111.111.111-11)
+
+    // 1º dígito verificador
+    $sum = 0;
+    for ($i = 0; $i < 9; $i++) $sum += (int)$cpf[$i] * (10 - $i);
+    $r1 = $sum % 11 < 2 ? 0 : 11 - ($sum % 11);
+    if ((int)$cpf[9] !== $r1) return false;
+
+    // 2º dígito verificador
+    $sum = 0;
+    for ($i = 0; $i < 10; $i++) $sum += (int)$cpf[$i] * (11 - $i);
+    $r2 = $sum % 11 < 2 ? 0 : 11 - ($sum % 11);
+    return (int)$cpf[10] === $r2;
+}
+
+/**
+ * Formata telefone brasileiro: (11) 91234-5678 ou (11) 1234-5678
+ */
+function formatPhone(?string $phone): string {
+    if (empty($phone)) return '-';
+    $d = preg_replace('/\D/', '', $phone);
+    if (strlen($d) === 11) {
+        return '(' . substr($d,0,2) . ') ' . substr($d,2,5) . '-' . substr($d,7,4);
+    }
+    if (strlen($d) === 10) {
+        return '(' . substr($d,0,2) . ') ' . substr($d,2,4) . '-' . substr($d,6,4);
+    }
+    return $phone;
+}
+
+/**
+ * Formata CEP: 12345-678
+ */
+function formatCep(?string $cep): string {
+    if (empty($cep)) return '-';
+    $d = preg_replace('/\D/', '', $cep);
+    if (strlen($d) === 8) {
+        return substr($d,0,5) . '-' . substr($d,5,3);
+    }
+    return $cep;
+}
+
+/**
+ * Paginação simples.
+ * Retorna ['items' => array slice, 'total' => int, 'pages' => int,
+ *          'page' => int, 'perPage' => int, 'html' => string]
+ *
+ * Uso:
+ *   $pag = paginate($allRows, (int)($_GET['page']??1), 20);
+ *   foreach ($pag['items'] as $row) { ... }
+ *   echo $pag['html'];
+ */
+function paginate(array $items, int $page = 1, int $perPage = 20): array {
+    $total  = count($items);
+    $pages  = max(1, (int) ceil($total / $perPage));
+    $page   = max(1, min($page, $pages));
+    $offset = ($page - 1) * $perPage;
+    $slice  = array_slice($items, $offset, $perPage);
+
+    // Monta HTML da paginação
+    $html = '';
+    if ($pages > 1) {
+        // Preserva todos os parâmetros GET exceto 'page'
+        $qs = $_GET;
+        $html .= '<nav class="flex items-center justify-between mt-4 text-sm">';
+        $html .= '<span class="text-gray-500">'.($offset+1).'-'.min($offset+$perPage,$total).' de '.$total.'</span>';
+        $html .= '<div class="flex items-center gap-1">';
+
+        // Anterior
+        if ($page > 1) {
+            $qs['page'] = $page - 1;
+            $html .= '<a href="?'.http_build_query($qs).'" class="px-3 py-1.5 border border-gray-300 rounded-md hover:bg-gray-50 text-gray-700">‹</a>';
+        }
+
+        // Números
+        $range = 2;
+        for ($i = 1; $i <= $pages; $i++) {
+            if ($i === 1 || $i === $pages || abs($i - $page) <= $range) {
+                $qs['page'] = $i;
+                $active = $i === $page
+                    ? 'bg-industrial-blue text-white border-industrial-blue'
+                    : 'border-gray-300 text-gray-700 hover:bg-gray-50';
+                $html .= '<a href="?'.http_build_query($qs).'" class="px-3 py-1.5 border rounded-md '.$active.'">'.$i.'</a>';
+            } elseif (abs($i - $page) === $range + 1) {
+                $html .= '<span class="px-2 text-gray-400">…</span>';
+            }
+        }
+
+        // Próximo
+        if ($page < $pages) {
+            $qs['page'] = $page + 1;
+            $html .= '<a href="?'.http_build_query($qs).'" class="px-3 py-1.5 border border-gray-300 rounded-md hover:bg-gray-50 text-gray-700">›</a>';
+        }
+
+        $html .= '</div></nav>';
+    }
+
+    return compact('slice', 'total', 'pages', 'page', 'perPage', 'html') +
+           ['items' => $slice];
+}
+
+/**
+ * Faz upload de um arquivo validado.
+ *
+ * @param array  $fileInput   $_FILES['campo']
+ * @param string $type        'photo' | 'certificate'
+ * @param string|null $oldPath Caminho anterior (para deletar)
+ * @return array ['ok' => bool, 'path' => string|null, 'error' => string|null]
+ */
+function uploadFile(array $fileInput, string $type, ?string $oldPath = null): array {
+    if (empty($fileInput['tmp_name']) || $fileInput['error'] === UPLOAD_ERR_NO_FILE) {
+        return ['ok' => true, 'path' => null, 'error' => null]; // sem arquivo — ok
+    }
+
+    if ($fileInput['error'] !== UPLOAD_ERR_OK) {
+        return ['ok' => false, 'path' => null, 'error' => 'Erro no upload (código ' . $fileInput['error'] . ').'];
+    }
+
+    $config = [
+        'photo' => [
+            'dir'      => __DIR__ . '/../uploads/photos/',
+            'maxBytes' => 3 * 1024 * 1024,        // 3 MB
+            'mimes'    => ['image/jpeg','image/png','image/webp','image/gif'],
+            'exts'     => ['jpg','jpeg','png','webp','gif'],
+        ],
+        'certificate' => [
+            'dir'      => __DIR__ . '/../uploads/certificates/',
+            'maxBytes' => 10 * 1024 * 1024,       // 10 MB
+            'mimes'    => ['application/pdf'],
+            'exts'     => ['pdf'],
+        ],
+    ];
+
+    if (!isset($config[$type])) {
+        return ['ok' => false, 'path' => null, 'error' => 'Tipo de upload inválido.'];
+    }
+
+    $c    = $config[$type];
+    $size = $fileInput['size'];
+    $ext  = strtolower(pathinfo($fileInput['name'], PATHINFO_EXTENSION));
+
+    // Valida tamanho
+    if ($size > $c['maxBytes']) {
+        $mb = round($c['maxBytes'] / 1024 / 1024);
+        return ['ok' => false, 'path' => null, 'error' => "Arquivo muito grande (máximo {$mb} MB)."];
+    }
+
+    // Valida extensão
+    if (!in_array($ext, $c['exts'], true)) {
+        return ['ok' => false, 'path' => null, 'error' => 'Extensão não permitida: .' . $ext];
+    }
+
+    // Valida MIME real (lê o arquivo, não confia no cliente)
+    $finfo    = new \finfo(FILEINFO_MIME_TYPE);
+    $realMime = $finfo->file($fileInput['tmp_name']);
+    if (!in_array($realMime, $c['mimes'], true)) {
+        return ['ok' => false, 'path' => null, 'error' => 'Tipo de arquivo não permitido.'];
+    }
+
+    // Gera nome único e move
+    $filename = bin2hex(random_bytes(16)) . '.' . $ext;
+    $destPath = $c['dir'] . $filename;
+
+    if (!move_uploaded_file($fileInput['tmp_name'], $destPath)) {
+        return ['ok' => false, 'path' => null, 'error' => 'Falha ao salvar o arquivo. Verifique as permissões da pasta.'];
+    }
+
+    // Remove arquivo antigo se existir
+    if ($oldPath) {
+        $oldFull = __DIR__ . '/../' . ltrim($oldPath, '/');
+        if (file_exists($oldFull)) @unlink($oldFull);
+    }
+
+    // Retorna caminho relativo (a partir da raiz do projeto)
+    $relPath = 'uploads/' . $type . 's/' . $filename;
+    return ['ok' => true, 'path' => $relPath, 'error' => null];
+}
+
+/**
+ * Registra uma entrada no log de auditoria.
+ */
+function auditLog(string $action, string $target = '', string $detail = ''): void {
+    try {
+        $db = getDB();
+        $user      = currentUser();
+        $userId    = is_array($user) ? ($user['id']         ?? null) : null;
+        $companyId = is_array($user) ? ($user['company_id'] ?? null) : null;
+        $ip = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'] ?? null;
+        $stmt = $db->prepare(
+            'INSERT INTO audit_log (user_id, company_id, action, target, detail, ip)
+             VALUES (?, ?, ?, ?, ?, ?)'
+        );
+        $stmt->execute([$userId, $companyId, $action, $target, $detail ?: null, $ip]);
+    } catch (\Exception $e) {
+        // Não deixa o log quebrar o fluxo principal
+    }
+}
+
+/**
+ * Faz uma requisição autenticada à API do Asaas.
+ * Retorna o array decodificado do JSON de resposta.
+ */
+/**
+ * Renderiza a landing com URLs absolutas (BASE_URL).
+ */
+function renderLandingPage(): void {
+    $file = __DIR__ . '/../landing.html';
+    if (!is_readable($file)) {
+        http_response_code(500);
+        echo 'Página inicial não encontrada.';
+        return;
+    }
+
+    $html = file_get_contents($file);
+    $base = rtrim(BASE_URL, '/');
+
+    $search = [
+        'href="index.php"',
+        'href="login.php"',
+        'href="checkout.php"',
+        'href="admin/suporte/',
+    ];
+    $replace = [
+        'href="' . $base . '/"',
+        'href="' . $base . '/login.php"',
+        'href="' . $base . '/checkout.php"',
+        'href="' . $base . '/admin/suporte/',
+    ];
+
+    echo str_replace($search, $replace, $html);
+}
+
+function asaasRequest(string $method, string $endpoint, array $body = []): array {
+    $apiKey = (defined('ASAAS_ENV') && ASAAS_ENV === 'production' && defined('ASAAS_KEY_PROD'))
+        ? ASAAS_KEY_PROD
+        : ASAAS_KEY;
+
+    if (empty($apiKey)) {
+        error_log('[Asaas] API key nao configurada.');
+        return ['errors' => [['description' => 'Gateway de pagamento nao configurado.']]];
+    }
+
+    $url = ASAAS_URL . $endpoint;
+    $ch  = curl_init($url);
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT        => 30,
+        CURLOPT_HTTPHEADER     => [
+            'Content-Type: application/json',
+            'access_token: ' . $apiKey,
+            'User-Agent: QRCertify/1.0',
+        ],
+        CURLOPT_CUSTOMREQUEST  => $method,
+    ]);
+    if ($method !== 'GET' && !empty($body)) {
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($body));
+    }
+    $raw  = curl_exec($ch);
+    $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    $decoded = json_decode($raw ?: '{}', true) ?: [];
+    // Loga erros da API para debug
+    if ($code >= 400) {
+        error_log("[Asaas] {$method} {$endpoint} → HTTP {$code}: {$raw}");
+    }
+    return $decoded;
+}

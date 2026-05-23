@@ -1,0 +1,25 @@
+# ── Arquivos sensíveis — NUNCA commitar ──────────────────────
+config/config.php
+config/database.php
+.env
+.env.*
+
+# ── Uploads de usuários ───────────────────────────────────────
+uploads/certificates/*
+uploads/photos/*
+!uploads/certificates/.gitkeep
+!uploads/photos/.gitkeep
+
+# ── Cache / logs ──────────────────────────────────────────────
+*.log
+*.cache
+
+# ── Sistema operacional ───────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── IDEs ─────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp

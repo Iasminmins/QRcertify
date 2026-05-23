@@ -1,0 +1,32 @@
+# Habilita reescrita de URL
+RewriteEngine On
+
+# Bloqueia acesso direto a diretorios internos
+RewriteRule ^(config|includes|sql)(/|$) - [F,L]
+
+# Bloqueia acesso direto a arquivos sensiveis
+<FilesMatch "^(\.env|composer\.(json|lock)|.*\.(sql|log|md|json|lock))$">
+    Require all denied
+</FilesMatch>
+
+# Bloqueia listagem de diretorios
+Options -Indexes
+
+# Define charset padrao
+AddDefaultCharset UTF-8
+
+# Headers de seguranca
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set X-XSS-Protection "1; mode=block"
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+# PHP - forca UTF-8
+<IfModule mod_php.c>
+    php_value default_charset "UTF-8"
+</IfModule>
+
+# Pagina de erro padrao
+ErrorDocument 404 /landing.html

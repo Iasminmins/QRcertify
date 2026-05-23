@@ -1,0 +1,352 @@
+<?php
+require_once __DIR__ . '/../config/config.php';
+requireRole('admin');
+
+$user = currentUser();
+$companyId = $user['company_id'];
+$db = getDB();
+
+$id = (int) ($_GET['id'] ?? $_POST['id'] ?? 0);
+$isEdit = $id > 0;
+$errors = [];
+
+$employee = [
+    'name' => '', 'email' => '', 'cpf' => '', 'role' => '',
+    'phone' => '', 'photo' => '', 'status' => 'active',
+    'cep' => '', 'address' => '', 'number' => '',
+    'complement' => '', 'neighborhood' => '', 'city' => '', 'state' => '',
+];
+
+if ($isEdit) {
+    $stmt = $db->prepare('SELECT * FROM employees WHERE id = ? AND company_id = ?');
+    $stmt->execute([$id, $companyId]);
+    $row = $stmt->fetch();
+    if (!$row) {
+        setFlash('error', 'Funcionário não encontrado.');
+        redirect('/admin/employees.php');
+    }
+    $employee = array_merge($employee, $row);
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!csrfCheck()) {
+        $errors[] = 'Token de segurança inválido.';
+    } else {
+        if (!$isEdit) {
+            $capacity = checkEmployeeCapacity($companyId, 1);
+            if (!$capacity['ok']) {
+                setFlash('error', $capacity['message']);
+                redirect('/admin/employees.php');
+            }
+        }
+        $fields = ['name','email','cpf','role','phone','photo','status',
+                   'cep','address','number','complement','neighborhood','city','state'];
+        foreach ($fields as $f) {
+            $employee[$f] = trim($_POST[$f] ?? '');
+        }
+        // Remove máscaras — salva só dígitos
+        $employee['phone'] = preg_replace('/\D/', '', $employee['phone']);
+        $employee['cep']   = preg_replace('/\D/', '', $employee['cep']);
+        $employee['cpf']   = preg_replace('/\D/', '', $employee['cpf']);
+
+        // Upload de foto (substitui campo URL antigo)
+        if (!empty($_FILES['photo_upload']['name'])) {
+            $up = uploadFile($_FILES['photo_upload'], 'photo', $employee['photo'] ?: null);
+            if (!$up['ok']) {
+                $errors[] = $up['error'];
+            } elseif ($up['path']) {
+                $employee['photo'] = $up['path'];
+            }
+        }
+
+        if ($employee['name'] === '')  $errors[] = 'Nome é obrigatório.';
+        if (!filter_var($employee['email'], FILTER_VALIDATE_EMAIL)) $errors[] = 'E-mail inválido.';
+        if (!validarCpf($employee['cpf'])) $errors[] = 'CPF inválido (dígito verificador incorreto).';
+        if ($employee['role'] === '')  $errors[] = 'Cargo é obrigatório.';
+        if (!in_array($employee['status'], ['active','inactive'], true)) $errors[] = 'Status inválido.';
+        if ($employee['cep'] !== '' && strlen($employee['cep']) !== 8) $errors[] = 'CEP inválido.';
+
+        if (empty($errors)) {
+            $check = $db->prepare(
+                'SELECT id FROM employees
+                 WHERE company_id = ? AND (email = ? OR cpf = ?) AND id <> ?'
+            );
+            $check->execute([$companyId, $employee['email'], $employee['cpf'], $id]);
+            if ($check->fetch()) $errors[] = 'Já existe um funcionário com este e-mail ou CPF.';
+        }
+
+        if (empty($errors)) {
+            if ($isEdit) {
+                $stmt = $db->prepare(
+                    'UPDATE employees
+                     SET name=?,email=?,cpf=?,role=?,phone=?,photo=?,status=?,
+                         cep=?,address=?,number=?,complement=?,neighborhood=?,city=?,state=?
+                     WHERE id=? AND company_id=?'
+                );
+                $stmt->execute([
+                    $employee['name'],$employee['email'],$employee['cpf'],
+                    $employee['role'],$employee['phone']?:null,$employee['photo']?:null,$employee['status'],
+                    $employee['cep']?:null,$employee['address']?:null,$employee['number']?:null,
+                    $employee['complement']?:null,$employee['neighborhood']?:null,
+                    $employee['city']?:null,$employee['state']?:null,
+                    $id,$companyId
+                ]);
+                auditLog('employee.update',"employee #{$id}",json_encode(['name'=>$employee['name']]));
+                setFlash('success','Funcionário atualizado com sucesso!');
+            } else {
+                $publicHash = generateHash();
+                $stmt = $db->prepare(
+                    'INSERT INTO employees
+                       (company_id,name,email,cpf,role,phone,photo,public_hash,status,
+                        cep,address,number,complement,neighborhood,city,state)
+                     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'
+                );
+                $stmt->execute([
+                    $companyId,$employee['name'],$employee['email'],$employee['cpf'],
+                    $employee['role'],$employee['phone']?:null,$employee['photo']?:null,$publicHash,$employee['status'],
+                    $employee['cep']?:null,$employee['address']?:null,$employee['number']?:null,
+                    $employee['complement']?:null,$employee['neighborhood']?:null,
+                    $employee['city']?:null,$employee['state']?:null,
+                ]);
+                auditLog('employee.create',"employee #".$db->lastInsertId(),json_encode(['name'=>$employee['name']]));
+                setFlash('success','Funcionário cadastrado com sucesso!');
+            }
+            redirect('/admin/employees.php');
+        }
+    }
+}
+
+// Formata para exibição nos inputs mascarados
+function fmtCpf(?string $v): string {
+    $d = preg_replace('/\D/','',$v??'');
+    return strlen($d)===11 ? preg_replace('/(\d{3})(\d{3})(\d{3})(\d{2})/',"$1.$2.$3-$4",$d) : $v??'';
+}
+function fmtPhone(?string $v): string {
+    $d = preg_replace('/\D/','',$v??'');
+    if(strlen($d)===11) return '('.substr($d,0,2).') '.substr($d,2,5).'-'.substr($d,7,4);
+    if(strlen($d)===10) return '('.substr($d,0,2).') '.substr($d,2,4).'-'.substr($d,6,4);
+    return $v??'';
+}
+function fmtCep(?string $v): string {
+    $d = preg_replace('/\D/','',$v??'');
+    return strlen($d)===8 ? substr($d,0,5).'-'.substr($d,5,3) : $v??'';
+}
+
+$states = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG',
+           'PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'];
+
+$pageTitle = $isEdit ? 'Editar Funcionário' : 'Novo Funcionário';
+require_once __DIR__ . '/../includes/header.php';
+require_once __DIR__ . '/../includes/sidebar.php';
+?>
+
+<div class="mb-6">
+    <a href="<?= BASE_URL ?>/admin/employees.php"
+       class="text-sm text-gray-600 hover:text-industrial-blue inline-flex items-center gap-1">
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+        </svg>
+        Voltar
+    </a>
+    <h1 class="text-2xl font-bold text-gray-900 mt-2">
+        <?= $isEdit ? 'Editar Funcionário' : 'Novo Funcionário' ?>
+    </h1>
+</div>
+
+<?php if (!empty($errors)): ?>
+    <div class="mb-4 bg-red-50 border border-red-200 text-red-800 rounded-lg p-3 text-sm space-y-1">
+        <?php foreach ($errors as $e): ?><div>• <?= e($e) ?></div><?php endforeach; ?>
+    </div>
+<?php endif; ?>
+
+<form method="POST" enctype="multipart/form-data" class="space-y-5 max-w-2xl" id="empForm">
+    <?= csrfField() ?>
+    <?php if ($isEdit): ?>
+        <input type="hidden" name="id" value="<?= (int)$id ?>">
+    <?php endif; ?>
+
+    <!-- DADOS PESSOAIS -->
+    <div class="bg-white rounded-lg shadow-sm border p-6 space-y-4">
+        <h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wide pb-2 border-b">Dados Pessoais</h2>
+
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Nome completo *</label>
+            <input type="text" name="name" value="<?= e($employee['name']) ?>" required
+                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-industrial-blue outline-none">
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">E-mail *</label>
+                <input type="email" name="email" value="<?= e($employee['email']) ?>" required
+                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-industrial-blue outline-none">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Telefone</label>
+                <input type="text" name="phone" id="inp_phone" value="<?= e(fmtPhone($employee['phone'])) ?>"
+                       placeholder="(11) 91234-5678" maxlength="15"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-industrial-blue outline-none">
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">CPF *</label>
+                <input type="text" name="cpf" id="inp_cpf" value="<?= e(fmtCpf($employee['cpf'])) ?>" required
+                       placeholder="000.000.000-00" maxlength="14"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-industrial-blue outline-none">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Cargo / Função *</label>
+                <input type="text" name="role" value="<?= e($employee['role']) ?>" required placeholder="Ex: Eletricista"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-industrial-blue outline-none">
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Foto do Funcionário</label>
+                <?php if (!empty($employee['photo'])): ?>
+                    <div class="mb-2 flex items-center gap-3">
+                        <img id="photoPreview" src="<?= BASE_URL . '/' . e($employee['photo']) ?>"
+                             alt="Foto atual" class="h-14 w-14 rounded-full object-cover border">
+                        <span class="text-xs text-gray-400">Foto atual — envie outra para substituir</span>
+                    </div>
+                <?php else: ?>
+                    <div class="mb-2">
+                        <img id="photoPreview" src="" alt="" class="h-14 w-14 rounded-full object-cover border hidden">
+                    </div>
+                <?php endif; ?>
+                <input type="file" name="photo_upload" id="photo_upload"
+                       accept="image/jpeg,image/png,image/webp,image/gif"
+                       class="w-full text-sm text-gray-600 border border-gray-300 rounded-md px-3 py-1.5 file:mr-3 file:py-1 file:px-3 file:rounded file:border-0 file:text-sm file:bg-blue-50 file:text-industrial-blue hover:file:bg-blue-100"
+                       onchange="previewPhoto(this)">
+                <p class="text-xs text-gray-400 mt-1">JPG, PNG ou WebP • máx. 3 MB</p>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Status *</label>
+                <select name="status" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-industrial-blue outline-none">
+                    <option value="active"   <?= $employee['status']==='active'   ? 'selected':'' ?>>Ativo</option>
+                    <option value="inactive" <?= $employee['status']==='inactive' ? 'selected':'' ?>>Inativo</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- ENDEREÇO -->
+    <div class="bg-white rounded-lg shadow-sm border p-6 space-y-4">
+        <h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wide pb-2 border-b">Endereço (opcional)</h2>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">CEP</label>
+                <input type="text" name="cep" id="inp_cep" value="<?= e(fmtCep($employee['cep'])) ?>"
+                       placeholder="00000-000" maxlength="9"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-industrial-blue outline-none">
+            </div>
+            <div class="sm:col-span-2">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Logradouro</label>
+                <input type="text" name="address" value="<?= e($employee['address']) ?>"
+                       placeholder="Rua, Avenida, Travessa..."
+                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-industrial-blue outline-none">
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Número</label>
+                <input type="text" name="number" value="<?= e($employee['number']) ?>" placeholder="123"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-industrial-blue outline-none">
+            </div>
+            <div class="sm:col-span-2">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Complemento</label>
+                <input type="text" name="complement" value="<?= e($employee['complement']) ?>"
+                       placeholder="Apto 12, Bloco B..."
+                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-industrial-blue outline-none">
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Bairro</label>
+                <input type="text" name="neighborhood" value="<?= e($employee['neighborhood']) ?>"
+                       placeholder="Centro"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-industrial-blue outline-none">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Cidade</label>
+                <input type="text" name="city" value="<?= e($employee['city']) ?>" placeholder="São Paulo"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-industrial-blue outline-none">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">UF</label>
+                <select name="state" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-industrial-blue outline-none">
+                    <option value="">—</option>
+                    <?php foreach ($states as $uf): ?>
+                        <option value="<?= $uf ?>" <?= $employee['state']===$uf ? 'selected':'' ?>><?= $uf ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div class="flex gap-3">
+        <button type="submit"
+                class="bg-industrial-blue hover:bg-blue-800 text-white px-5 py-2 rounded-md font-medium transition">
+            <?= $isEdit ? 'Salvar Alterações' : 'Cadastrar Funcionário' ?>
+        </button>
+        <a href="<?= BASE_URL ?>/admin/employees.php"
+           class="px-5 py-2 border border-gray-300 rounded-md font-medium hover:bg-gray-50 transition">
+            Cancelar
+        </a>
+    </div>
+</form>
+
+<!-- Máscaras de campo via JS puro (sem biblioteca) -->
+<script>
+function maskCpf(v){
+    v=v.replace(/\D/g,'').slice(0,11);
+    if(v.length>9) return v.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/,'$1.$2.$3-$4');
+    if(v.length>6) return v.replace(/(\d{3})(\d{3})(\d+)/,'$1.$2.$3');
+    if(v.length>3) return v.replace(/(\d{3})(\d+)/,'$1.$2');
+    return v;
+}
+function maskPhone(v){
+    v=v.replace(/\D/g,'').slice(0,11);
+    if(v.length===11) return v.replace(/(\d{2})(\d{5})(\d{4})/,'($1) $2-$3');
+    if(v.length>=10)  return v.replace(/(\d{2})(\d{4})(\d{4})/,'($1) $2-$3');
+    if(v.length>6)    return v.replace(/(\d{2})(\d{4})(\d+)/,'($1) $2-$3');
+    if(v.length>2)    return v.replace(/(\d{2})(\d+)/,'($1) $2');
+    return v;
+}
+function maskCep(v){
+    v=v.replace(/\D/g,'').slice(0,8);
+    if(v.length>5) return v.replace(/(\d{5})(\d+)/,'$1-$2');
+    return v;
+}
+function applyMask(id,fn){
+    const el=document.getElementById(id);
+    if(!el) return;
+    el.addEventListener('input',function(){
+        const pos=this.selectionStart;
+        this.value=fn(this.value);
+    });
+}
+applyMask('inp_cpf',   maskCpf);
+applyMask('inp_phone', maskPhone);
+applyMask('inp_cep',   maskCep);
+
+function previewPhoto(input) {
+    const img = document.getElementById('photoPreview');
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = e => {
+            img.src = e.target.result;
+            img.classList.remove('hidden');
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+</script>
+
+<?php require_once __DIR__ . '/../includes/footer.php'; ?>

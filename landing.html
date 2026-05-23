@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Gerencie certificados de NR com QR Code, alertas autom&aacute;ticos e valida&ccedil;&atilde;o p&uacute;blica. Sem papel, sem planilha, sem multa do MTE.">
+<title>QRCertify &mdash; Gest&atilde;o de Certificados de NR</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: { 'industrial-blue': '#1e3a8a', 'industrial-yellow': '#facc15' },
+      fontFamily: { display: ['Bricolage Grotesque','sans-serif'], body: ['IBM Plex Sans','sans-serif'] }
+    }
+  }
+}
+</script>
+<style>
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { font-family: 'IBM Plex Sans', sans-serif; color: #0a0a0a; background: #fff; }
+h1,h2,h3,h4 { font-family: 'Bricolage Grotesque', sans-serif; }
+.grid-bg {
+  background-image:
+    linear-gradient(rgba(30,58,138,.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(30,58,138,.04) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+.em-dia { position:relative; display:inline-block; color:#0a0a0a; }
+.em-dia::after {
+  content:''; position:absolute; left:0; right:0; bottom:2px;
+  height:10px; background:#facc15; z-index:-1;
+  border-radius:2px; transform:skewX(-2deg);
+}
+.nav-link { font-size:.9rem; font-weight:500; color:#374151; transition:color .15s; }
+.nav-link:hover { color:#1e3a8a; }
+.phone {
+  width:220px; height:420px; border:3px solid #1e3a8a; border-radius:36px;
+  background:#f8faff; overflow:hidden; position:relative;
+  box-shadow:0 24px 60px rgba(30,58,138,.18), 0 4px 12px rgba(0,0,0,.08);
+}
+.phone::before {
+  content:''; position:absolute; top:10px; left:50%; transform:translateX(-50%);
+  width:60px; height:6px; background:#1e3a8a; border-radius:3px; opacity:.3;
+}
+.phone-screen { padding:28px 14px 14px; }
+.qr-block {
+  background:#fff; border-radius:14px; padding:12px;
+  box-shadow:0 2px 12px rgba(0,0,0,.07); margin-bottom:10px;
+}
+.feat-card { transition:transform .2s ease, box-shadow .2s ease; }
+.feat-card:hover { transform:translateY(-4px); box-shadow:0 16px 40px rgba(30,58,138,.12); }
+.pricing-pro {
+  background:#1e3a8a; color:#fff; position:relative;
+  transform:scale(1.03); box-shadow:0 20px 60px rgba(30,58,138,.25);
+}
+.step-num {
+  font-family:'Bricolage Grotesque',sans-serif; font-size:7rem; font-weight:800;
+  line-height:1; color:rgba(30,58,138,.06); position:absolute;
+  top:-1rem; left:-1rem; user-select:none; pointer-events:none;
+}
+.faq-answer { display:none; }
+.faq-answer.open { display:block; }
+.faq-icon { transition:transform .2s; }
+.faq-item.open .faq-icon { transform:rotate(45deg); }
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<header class="sticky top-0 z-50 bg-white/95 backdrop-blur border-b border-gray-100">
+  <div class="max-w-6xl mx-auto px-5 h-16 flex items-center justify-between">
+    <a href="index.php" class="flex items-center gap-2.5">
+      <div class="w-8 h-8 rounded-full bg-industrial-blue flex items-center justify-center flex-shrink-0"><div class="w-3 h-3 rounded-full bg-industrial-yellow"></div></div>
+      <span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:1rem" class="text-gray-900">QRCertify</span>
+    </a>
+    <nav class="hidden md:flex items-center gap-8">
+      <a href="#recursos" class="nav-link">Recursos</a>
+      <a href="#precos" class="nav-link">Pre&ccedil;os</a>
+      <a href="#faq" class="nav-link">FAQ</a>
+      <a href="#contato" class="nav-link">Contato</a>
+    </nav>
+    <div class="hidden md:flex items-center gap-4">
+      <a href="login.php" class="nav-link">Entrar</a>
+      <a href="checkout.php" class="bg-industrial-blue text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-blue-900 transition-colors">Come&ccedil;ar gr&aacute;tis</a>
+    </div>
+    <button id="menu-btn" class="md:hidden p-2 rounded-lg hover:bg-gray-100" aria-label="Abrir menu" aria-expanded="false">
+      <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75"><line x1="3" y1="6" x2="19" y2="6"/><line x1="3" y1="11" x2="19" y2="11"/><line x1="3" y1="16" x2="19" y2="16"/></svg>
+    </button>
+  </div>
+  <div id="mobile-menu" class="md:hidden hidden border-t border-gray-100 bg-white px-5 py-4 space-y-3">
+    <a href="#recursos" class="block py-2 text-sm font-medium text-gray-700 mobile-close">Recursos</a>
+    <a href="#precos" class="block py-2 text-sm font-medium text-gray-700 mobile-close">Pre&ccedil;os</a>
+    <a href="#faq" class="block py-2 text-sm font-medium text-gray-700 mobile-close">FAQ</a>
+    <a href="#contato" class="block py-2 text-sm font-medium text-gray-700 mobile-close">Contato</a>
+    <div class="pt-3 border-t border-gray-100 flex flex-col gap-2">
+      <a href="login.php" class="text-sm font-medium text-gray-700 py-2">Entrar</a>
+      <a href="checkout.php" class="bg-industrial-blue text-white text-sm font-medium px-4 py-2.5 rounded-lg text-center">Come&ccedil;ar gr&aacute;tis</a>
+    </div>
+  </div>
+</header>
+
+<!-- HERO -->
+<section class="grid-bg min-h-[90vh] flex items-center py-20 overflow-hidden">
+  <div class="max-w-6xl mx-auto px-5 w-full">
+    <div class="grid md:grid-cols-2 gap-12 items-center">
+      <div>
+        <div class="inline-flex items-center gap-2 bg-yellow-50 border border-yellow-200 text-yellow-800 text-xs font-semibold px-3 py-1.5 rounded-full mb-6">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          Adeus papelada, ol&aacute; QR Code
+        </div>
+        <h1 class="font-display text-5xl md:text-6xl lg:text-[5rem] font-extrabold leading-[1.05] tracking-tight mb-6">
+          Certificados<br>de NR sempre<br><span class="em-dia">em dia.</span>
+        </h1>
+        <p class="text-gray-600 text-lg leading-relaxed mb-8 max-w-lg">Gerencie carteiras digitais, valide com QR Code e receba alertas antes de qualquer certificado vencer. Sem planilha, sem papel, sem multa do MTE.</p>
+        <div class="flex flex-col sm:flex-row gap-3 mb-4">
+          <a href="checkout.php" class="bg-industrial-blue text-white font-semibold px-6 py-3.5 rounded-xl hover:bg-blue-900 transition-colors text-center text-sm">Come&ccedil;ar gr&aacute;tis por 7 dias</a>
+          <a href="#como-funciona" class="text-gray-700 font-medium px-6 py-3.5 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors text-center text-sm">Ver demonstra&ccedil;&atilde;o &rarr;</a>
+        </div>
+        <p class="text-xs text-gray-400">Cancele quando quiser</p>
+      </div>
+      <div class="flex justify-center md:justify-end">
+        <div class="relative">
+          <div class="phone" aria-hidden="true">
+            <div class="phone-screen">
+              <div class="text-[10px] font-semibold text-industrial-blue mb-2">Carlos Oliveira</div>
+              <div class="text-[9px] text-gray-500 mb-3">Eletricista &middot; Ind&uacute;stria Exemplo</div>
+              <div class="qr-block">
+                <div class="text-[8px] font-semibold text-gray-700 mb-1">NR-10 &middot; V&Aacute;LIDO</div>
+                <div class="text-[7px] text-gray-400 mb-2">V&aacute;lido at&eacute; 15/01/2026</div>
+                <div style="width:88px;height:88px;margin:0 auto 6px;background:repeating-linear-gradient(0deg,#1e3a8a 0px,#1e3a8a 6px,transparent 6px,transparent 12px),repeating-linear-gradient(90deg,#1e3a8a 0px,#1e3a8a 6px,transparent 6px,transparent 12px);background-size:12px 12px;border-radius:4px;opacity:.85;"></div>
+                <div class="flex items-center gap-1.5 justify-center"><div class="w-2 h-2 rounded-full bg-green-400"></div><span class="text-[7px] text-green-600 font-semibold">Autenticado</span></div>
+              </div>
+              <div class="qr-block" style="opacity:.7"><div class="text-[8px] font-semibold text-gray-700">NR-35 &middot; V&Aacute;LIDO</div><div class="text-[7px] text-gray-400">V&aacute;lido at&eacute; 20/03/2026</div></div>
+              <div class="qr-block" style="opacity:.5;background:#fff5f5"><div class="text-[8px] font-semibold text-red-600">NR-11 &middot; VENCENDO</div><div class="text-[7px] text-red-400">Vence em 10/12/2025</div></div>
+            </div>
+          </div>
+          <div class="absolute -right-4 top-1/3 bg-white rounded-xl shadow-lg px-3 py-2 border border-gray-100 text-xs font-medium text-gray-700 whitespace-nowrap"><span class="text-green-500 font-bold">&#10003;</span> Certificado validado</div>
+          <div class="absolute -left-8 bottom-1/4 bg-industrial-yellow rounded-xl shadow-lg px-3 py-2 text-xs font-semibold text-gray-900 whitespace-nowrap">30 dias p/ vencer &mdash; renovar agora</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PROVA SOCIAL -->
+<section class="border-y border-gray-100 bg-gray-50 py-10">
+  <div class="max-w-6xl mx-auto px-5">
+    <p class="text-center text-sm font-medium text-gray-500 mb-8 uppercase tracking-widest">J&aacute; em uso em mais de 500 ind&uacute;strias no Brasil</p>
+    <div class="flex flex-wrap items-center justify-center gap-10 opacity-40 grayscale">
+      <svg width="90" height="28" viewBox="0 0 90 28" fill="none"><rect x="0" y="8" width="36" height="12" rx="2" fill="#374151"/><rect x="42" y="4" width="48" height="20" rx="3" fill="#374151"/></svg>
+      <svg width="80" height="28" viewBox="0 0 80 28" fill="none"><circle cx="14" cy="14" r="11" fill="#374151"/><rect x="32" y="9" width="48" height="10" rx="2" fill="#374151"/></svg>
+      <svg width="100" height="28" viewBox="0 0 100 28" fill="none"><rect x="0" y="5" width="20" height="18" rx="3" fill="#374151"/><rect x="26" y="5" width="74" height="8" rx="2" fill="#374151"/><rect x="26" y="17" width="50" height="6" rx="2" fill="#374151"/></svg>
+      <svg width="76" height="28" viewBox="0 0 76 28" fill="none"><path d="M6 22 L14 6 L22 22 Z" fill="#374151"/><rect x="30" y="7" width="46" height="14" rx="3" fill="#374151"/></svg>
+      <svg width="88" height="28" viewBox="0 0 88 28" fill="none"><rect x="0" y="3" width="28" height="22" rx="4" fill="#374151"/><rect x="36" y="10" width="52" height="8" rx="2" fill="#374151"/></svg>
+    </div>
+  </div>
+</section>
+
+<!-- COMO FUNCIONA -->
+<section id="como-funciona" class="py-28">
+  <div class="max-w-6xl mx-auto px-5">
+    <div class="mb-16">
+      <p class="text-xs font-semibold uppercase tracking-widest text-industrial-blue mb-3">Como funciona</p>
+      <h2 class="font-display text-4xl md:text-5xl font-extrabold tracking-tight">Tr&ecirc;s passos.<br>Sem enrola&ccedil;&atilde;o.</h2>
+    </div>
+    <div class="grid md:grid-cols-3 gap-8">
+      <div class="relative p-8 bg-white rounded-2xl border border-gray-100">
+        <span class="step-num">01</span>
+        <div class="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center mb-5">
+          <svg width="24" height="24" fill="none" stroke="#1e3a8a" stroke-width="1.5" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <h3 class="font-display text-xl font-bold mb-2">Cadastre funcion&aacute;rios e certificados</h3>
+        <p class="text-gray-500 text-sm leading-relaxed">Importe em massa via CSV ou cadastre manualmente. NR-10, NR-35, CIPA &mdash; todos os tipos suportados.</p>
+      </div>
+      <div class="relative p-8 bg-white rounded-2xl border border-gray-100">
+        <span class="step-num">02</span>
+        <div class="w-12 h-12 bg-yellow-50 rounded-xl flex items-center justify-center mb-5">
+          <svg width="24" height="24" fill="none" stroke="#b45309" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h.01M18 14h.01M14 18h.01M18 18h.01"/></svg>
+        </div>
+        <h3 class="font-display text-xl font-bold mb-2">Gere QR Codes &uacute;nicos para cada NR</h3>
+        <p class="text-gray-500 text-sm leading-relaxed">Cada certificado recebe um QR Code inviolável. Fiscal escaneia &mdash; sistema confirma autenticidade em 2 segundos.</p>
+      </div>
+      <div class="relative p-8 bg-white rounded-2xl border border-gray-100">
+        <span class="step-num">03</span>
+        <div class="w-12 h-12 bg-green-50 rounded-xl flex items-center justify-center mb-5">
+          <svg width="24" height="24" fill="none" stroke="#15803d" stroke-width="1.5" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        </div>
+        <h3 class="font-display text-xl font-bold mb-2">Acompanhe vencimentos e fiscalize</h3>
+        <p class="text-gray-500 text-sm leading-relaxed">Dashboard em tempo real. Alertas por e-mail 30, 15 e 7 dias antes. O fiscal pede, o trabalhador mostra no celular.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section id="recursos" class="py-28 bg-gray-50 grid-bg">
+  <div class="max-w-6xl mx-auto px-5">
+    <div class="mb-16 max-w-xl">
+      <p class="text-xs font-semibold uppercase tracking-widest text-industrial-blue mb-3">Recursos</p>
+      <h2 class="font-display text-4xl md:text-5xl font-extrabold tracking-tight">Tudo que o seu time de SST precisa.</h2>
+    </div>
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+      <div class="feat-card bg-white rounded-2xl p-7 border border-gray-100">
+        <div class="w-11 h-11 bg-blue-50 rounded-xl flex items-center justify-center mb-5"><svg width="22" height="22" fill="none" stroke="#1e3a8a" stroke-width="1.5" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg></div>
+        <h3 class="font-display text-base font-bold mb-2">Carteira digital no celular</h3>
+        <p class="text-gray-500 text-sm leading-relaxed">Colaborador acessa todos os certificados em 1 toque, sem app para instalar. Funciona em qualquer navegador.</p>
+      </div>
+      <div class="feat-card bg-white rounded-2xl p-7 border border-gray-100">
+        <div class="w-11 h-11 bg-yellow-50 rounded-xl flex items-center justify-center mb-5"><svg width="22" height="22" fill="none" stroke="#b45309" stroke-width="1.5" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div>
+        <h3 class="font-display text-base font-bold mb-2">Valida&ccedil;&atilde;o por QR Code</h3>
+        <p class="text-gray-500 text-sm leading-relaxed">Fiscal escaneia e confirma autenticidade em 2 segundos. Sem acesso ao sistema, sem login.</p>
+      </div>
+      <div class="feat-card bg-white rounded-2xl p-7 border border-gray-100">
+        <div class="w-11 h-11 bg-orange-50 rounded-xl flex items-center justify-center mb-5"><svg width="22" height="22" fill="none" stroke="#c2410c" stroke-width="1.5" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
+        <h3 class="font-display text-base font-bold mb-2">Alertas inteligentes</h3>
+        <p class="text-gray-500 text-sm leading-relaxed">Notifica&ccedil;&atilde;o por e-mail 30, 15 e 7 dias antes de cada vencimento. Nunca mais seja pego de surpresa.</p>
+      </div>
+      <div class="feat-card bg-white rounded-2xl p-7 border border-gray-100">
+        <div class="w-11 h-11 bg-green-50 rounded-xl flex items-center justify-center mb-5"><svg width="22" height="22" fill="none" stroke="#15803d" stroke-width="1.5" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div>
+        <h3 class="font-display text-base font-bold mb-2">Dashboard em tempo real</h3>
+        <p class="text-gray-500 text-sm leading-relaxed">Status de todas as NRs num s&oacute; lugar. V&aacute;lidas, expirando e vencidas &mdash; em n&uacute;meros e gr&aacute;ficos.</p>
+      </div>
+      <div class="feat-card bg-white rounded-2xl p-7 border border-gray-100">
+        <div class="w-11 h-11 bg-purple-50 rounded-xl flex items-center justify-center mb-5"><svg width="22" height="22" fill="none" stroke="#7c3aed" stroke-width="1.5" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
+        <h3 class="font-display text-base font-bold mb-2">Multi-empresa</h3>
+        <p class="text-gray-500 text-sm leading-relaxed">Gest&atilde;o centralizada por filial, obra ou cliente. Cada empresa v&ecirc; apenas seus pr&oacute;prios dados.</p>
+      </div>
+      <div class="feat-card bg-white rounded-2xl p-7 border border-gray-100">
+        <div class="w-11 h-11 bg-gray-100 rounded-xl flex items-center justify-center mb-5"><svg width="22" height="22" fill="none" stroke="#374151" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+        <h3 class="font-display text-base font-bold mb-2">LGPD em foco</h3>
+        <p class="text-gray-500 text-sm leading-relaxed">Dados protegidos com boas pr&aacute;ticas de seguran&ccedil;a. Termos de uso e pol&iacute;tica de privacidade dispon&iacute;veis no site.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PARA QUEM E -->
+<section class="py-28">
+  <div class="max-w-6xl mx-auto px-5">
+    <div class="mb-16">
+      <p class="text-xs font-semibold uppercase tracking-widest text-industrial-blue mb-3">Para quem &eacute;</p>
+      <h2 class="font-display text-4xl md:text-5xl font-extrabold tracking-tight">Feito para quem vive<br>dentro da norma.</h2>
+    </div>
+    <div class="grid md:grid-cols-3 gap-6">
+      <div class="p-8 rounded-2xl border-2 border-gray-100 hover:border-industrial-blue transition-colors group">
+        <div class="text-3xl mb-4 font-display font-extrabold text-gray-200 group-hover:text-industrial-blue transition-colors">01</div>
+        <h3 class="font-display text-xl font-bold mb-3">Ind&uacute;strias</h3>
+        <p class="text-gray-500 text-sm leading-relaxed mb-4">Metal&uacute;rgicas, qu&iacute;micas, alimentos. Centenas de funcion&aacute;rios, dezenas de NRs. O MTE aplicou R$&nbsp;78 milh&otilde;es em multas em 2024.</p>
+        <ul class="space-y-2 text-sm text-gray-600">
+          <li class="flex items-center gap-2"><span class="text-industrial-blue font-bold">+</span> NR-10, 12, 13, 33, 35</li>
+          <li class="flex items-center gap-2"><span class="text-industrial-blue font-bold">+</span> Importa&ccedil;&atilde;o CSV em massa</li>
+          <li class="flex items-center gap-2"><span class="text-industrial-blue font-bold">+</span> Relat&oacute;rio de conformidade</li>
+        </ul>
+      </div>
+      <div class="p-8 rounded-2xl border-2 border-gray-100 hover:border-industrial-blue transition-colors group">
+        <div class="text-3xl mb-4 font-display font-extrabold text-gray-200 group-hover:text-industrial-blue transition-colors">02</div>
+        <h3 class="font-display text-xl font-bold mb-3">Constru&ccedil;&atilde;o Civil</h3>
+        <p class="text-gray-500 text-sm leading-relaxed mb-4">Obras com alta rotatividade e m&uacute;ltiplas NRs por trabalhador. Fiscal aparece sem avisar &mdash; todo mundo precisa estar em dia.</p>
+        <ul class="space-y-2 text-sm text-gray-600">
+          <li class="flex items-center gap-2"><span class="text-industrial-blue font-bold">+</span> NR-18, NR-35 (altura)</li>
+          <li class="flex items-center gap-2"><span class="text-industrial-blue font-bold">+</span> Carteira no celular do pe&atilde;o</li>
+          <li class="flex items-center gap-2"><span class="text-industrial-blue font-bold">+</span> QR Code sem app</li>
+        </ul>
+      </div>
+      <div class="p-8 rounded-2xl border-2 border-gray-100 hover:border-industrial-blue transition-colors group">
+        <div class="text-3xl mb-4 font-display font-extrabold text-gray-200 group-hover:text-industrial-blue transition-colors">03</div>
+        <h3 class="font-display text-xl font-bold mb-3">Terceirizadas</h3>
+        <p class="text-gray-500 text-sm leading-relaxed mb-4">Empresas que prestam servi&ccedil;o em outras e precisam comprovar conformidade na entrada da planta.</p>
+        <ul class="space-y-2 text-sm text-gray-600">
+          <li class="flex items-center gap-2"><span class="text-industrial-blue font-bold">+</span> Link p&uacute;blico de valida&ccedil;&atilde;o</li>
+          <li class="flex items-center gap-2"><span class="text-industrial-blue font-bold">+</span> Enviar para contratante</li>
+          <li class="flex items-center gap-2"><span class="text-industrial-blue font-bold">+</span> Multi-empresa inclu&iacute;do</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRECOS -->
+<section id="precos" class="py-28 bg-gray-50 grid-bg">
+  <div class="max-w-6xl mx-auto px-5">
+    <div class="text-center mb-16">
+      <p class="text-xs font-semibold uppercase tracking-widest text-industrial-blue mb-3">Pre&ccedil;os</p>
+      <h2 class="font-display text-4xl md:text-5xl font-extrabold tracking-tight">Sem surpresa na fatura.</h2>
+      <p class="text-gray-500 mt-4">Todos os planos com 7 dias gr&aacute;tis.</p>
+    </div>
+    <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6 items-start">
+      <!-- Starter -->
+      <div class="bg-white rounded-2xl border border-gray-200 p-8">
+        <h3 class="font-display text-xl font-bold mb-1">Starter</h3>
+        <p class="text-sm text-gray-500 mb-4">Para testar e empresas pequenas</p>
+        <div class="flex items-baseline gap-1 mb-6"><span class="text-4xl font-display font-extrabold">R$&nbsp;49</span><span class="text-gray-400 text-sm">/m&ecirc;s</span></div>
+        <ul class="space-y-3 mb-8 text-sm">
+          <li class="flex items-center gap-2.5 text-gray-700"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1e3a8a" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>At&eacute; 10 funcion&aacute;rios</li>
+          <li class="flex items-center gap-2.5 text-gray-700"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1e3a8a" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>QR Code de valida&ccedil;&atilde;o</li>
+          <li class="flex items-center gap-2.5 text-gray-700"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1e3a8a" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Dashboard b&aacute;sico</li>
+          <li class="flex items-center gap-2.5 text-gray-400"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>Alertas por e-mail</li>
+          <li class="flex items-center gap-2.5 text-gray-400"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>Importa&ccedil;&atilde;o CSV</li>
+        </ul>
+        <a href="checkout.php?plan=starter" class="block text-center border-2 border-industrial-blue text-industrial-blue font-semibold py-2.5 rounded-xl hover:bg-blue-50 transition-colors text-sm">Come&ccedil;ar 7 dias gr&aacute;tis</a>
+      </div>
+      <!-- Pro -->
+      <div class="pricing-pro rounded-2xl p-8 relative">
+        <div class="absolute -top-4 left-1/2 -translate-x-1/2"><span class="bg-industrial-yellow text-gray-900 text-xs font-bold px-4 py-1.5 rounded-full shadow">&#11088; Mais popular</span></div>
+        <h3 class="font-display text-xl font-bold mb-1 text-white">Pro</h3>
+        <p class="text-sm text-blue-200 mb-4">Para times de SST que levam a s&eacute;rio</p>
+        <div class="flex items-baseline gap-1 mb-6"><span class="text-4xl font-display font-extrabold text-white">R$&nbsp;179</span><span class="text-blue-300 text-sm">/m&ecirc;s</span></div>
+        <ul class="space-y-3 mb-8 text-sm">
+          <li class="flex items-center gap-2.5 text-blue-100"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#facc15" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>At&eacute; 100 funcion&aacute;rios</li>
+          <li class="flex items-center gap-2.5 text-blue-100"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#facc15" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>QR Code de valida&ccedil;&atilde;o</li>
+          <li class="flex items-center gap-2.5 text-blue-100"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#facc15" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Dashboard completo</li>
+          <li class="flex items-center gap-2.5 text-blue-100"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#facc15" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Alertas por e-mail (30/15/7d)</li>
+          <li class="flex items-center gap-2.5 text-blue-100"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#facc15" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Importa&ccedil;&atilde;o CSV</li>
+          <li class="flex items-center gap-2.5 text-blue-100"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#facc15" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Upload de PDF do certificado</li>
+          <li class="flex items-center gap-2.5 text-blue-100"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#facc15" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Exporta&ccedil;&atilde;o de relat&oacute;rios</li>
+        </ul>
+        <a href="checkout.php?plan=pro" class="block text-center bg-industrial-yellow text-gray-900 font-bold py-3 rounded-xl hover:bg-yellow-300 transition-colors text-sm">Come&ccedil;ar 7 dias gr&aacute;tis</a>
+      </div>
+      <!-- Business -->
+      <div class="bg-white rounded-2xl border-2 border-industrial-blue p-8">
+        <h3 class="font-display text-xl font-bold mb-1">Business</h3>
+        <p class="text-sm text-gray-500 mb-4">Para m&eacute;dias e grandes empresas</p>
+        <div class="flex items-baseline gap-1 mb-6"><span class="text-4xl font-display font-extrabold">R$&nbsp;349</span><span class="text-gray-400 text-sm">/m&ecirc;s</span></div>
+        <ul class="space-y-3 mb-8 text-sm">
+          <li class="flex items-center gap-2.5 text-gray-700"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1e3a8a" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>At&eacute; 300 funcion&aacute;rios</li>
+          <li class="flex items-center gap-2.5 text-gray-700"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1e3a8a" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>QR Code de valida&ccedil;&atilde;o</li>
+          <li class="flex items-center gap-2.5 text-gray-700"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1e3a8a" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Dashboard completo</li>
+          <li class="flex items-center gap-2.5 text-gray-700"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1e3a8a" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Alertas por e-mail (30/15/7d)</li>
+          <li class="flex items-center gap-2.5 text-gray-700"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1e3a8a" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Importa&ccedil;&atilde;o CSV</li>
+          <li class="flex items-center gap-2.5 text-gray-700"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1e3a8a" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Relat&oacute;rios avan&ccedil;ados</li>
+          <li class="flex items-center gap-2.5 text-gray-700"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1e3a8a" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Suporte priorit&aacute;rio</li>
+        </ul>
+        <a href="checkout.php?plan=business" class="block text-center bg-industrial-blue text-white font-bold py-3 rounded-xl hover:bg-blue-900 transition-colors text-sm">Come&ccedil;ar 7 dias gr&aacute;tis</a>
+      </div>
+      <!-- Enterprise -->
+      <div class="bg-white rounded-2xl border border-gray-200 p-8">
+        <h3 class="font-display text-xl font-bold mb-1">Enterprise</h3>
+        <p class="text-sm text-gray-500 mb-4">Para grupos industriais e terceirizadoras</p>
+        <div class="mb-1"><span class="text-2xl font-display font-extrabold">A partir de R$&nbsp;799</span><span class="text-gray-400 text-sm">/m&ecirc;s</span></div>
+        <p class="text-xs text-gray-400 mb-5">Valor escal&aacute;vel conforme o n&uacute;mero de funcion&aacute;rios</p>
+        <ul class="space-y-3 mb-8 text-sm">
+          <li class="flex items-center gap-2.5 text-gray-700"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1e3a8a" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Acima de 800 funcion&aacute;rios</li>
+          <li class="flex items-center gap-2.5 text-gray-700"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1e3a8a" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>QR Code de valida&ccedil;&atilde;o</li>
+          <li class="flex items-center gap-2.5 text-gray-700"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1e3a8a" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Dashboard completo</li>
+          <li class="flex items-center gap-2.5 text-gray-700"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1e3a8a" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Alertas por e-mail (30/15/7d)</li>
+          <li class="flex items-center gap-2.5 text-gray-700"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1e3a8a" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Importa&ccedil;&atilde;o CSV</li>
+          <li class="flex items-center gap-2.5 text-gray-700"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1e3a8a" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Relat&oacute;rios avan&ccedil;ados</li>
+          <li class="flex items-center gap-2.5 text-gray-700"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1e3a8a" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Suporte dedicado</li>
+        </ul>
+        <a href="#contato" class="block text-center border-2 border-gray-200 text-gray-700 font-semibold py-2.5 rounded-xl hover:bg-gray-50 transition-colors text-sm">Falar com vendas</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section id="faq" class="py-28">
+  <div class="max-w-3xl mx-auto px-5">
+    <div class="mb-16">
+      <p class="text-xs font-semibold uppercase tracking-widest text-industrial-blue mb-3">FAQ</p>
+      <h2 class="font-display text-4xl md:text-5xl font-extrabold tracking-tight">D&uacute;vidas frequentes.</h2>
+    </div>
+    <div class="space-y-3" id="faq-list">
+      <div class="faq-item open border border-gray-200 rounded-2xl overflow-hidden">
+        <button class="faq-btn w-full text-left px-6 py-5 flex items-center justify-between gap-4 font-display font-bold text-base hover:bg-gray-50 transition-colors" aria-expanded="true">
+          Funciona em qualquer empresa?
+          <svg class="faq-icon flex-shrink-0 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+        <div class="faq-answer open px-6 pb-5 text-sm text-gray-600 leading-relaxed">Sim. O sistema &eacute; gen&eacute;rico para qualquer setor que precise controlar NRs: ind&uacute;stria, constru&ccedil;&atilde;o civil, minera&ccedil;&atilde;o, log&iacute;stica, servi&ccedil;os de terceiriza&ccedil;&atilde;o.</div>
+      </div>
+      <div class="faq-item border border-gray-200 rounded-2xl overflow-hidden">
+        <button class="faq-btn w-full text-left px-6 py-5 flex items-center justify-between gap-4 font-display font-bold text-base hover:bg-gray-50 transition-colors" aria-expanded="false">
+          Como funciona a valida&ccedil;&atilde;o por QR Code na fiscaliza&ccedil;&atilde;o?
+          <svg class="faq-icon flex-shrink-0 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+        <div class="faq-answer px-6 pb-5 text-sm text-gray-600 leading-relaxed">Cada certificado tem um QR Code &uacute;nico. O fiscal escaneia com qualquer c&acirc;mera &mdash; sem baixar app. O link abre uma p&aacute;gina p&uacute;blica que mostra os dados do certificado e o status.</div>
+      </div>
+      <div class="faq-item border border-gray-200 rounded-2xl overflow-hidden">
+        <button class="faq-btn w-full text-left px-6 py-5 flex items-center justify-between gap-4 font-display font-bold text-base hover:bg-gray-50 transition-colors" aria-expanded="false">
+          Preciso instalar algum app?
+          <svg class="faq-icon flex-shrink-0 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+        <div class="faq-answer px-6 pb-5 text-sm text-gray-600 leading-relaxed">N&atilde;o. Nem para o administrador, nem para o colaborador, nem para o fiscal. Tudo funciona direto no navegador.</div>
+      </div>
+      <div class="faq-item border border-gray-200 rounded-2xl overflow-hidden">
+        <button class="faq-btn w-full text-left px-6 py-5 flex items-center justify-between gap-4 font-display font-bold text-base hover:bg-gray-50 transition-colors" aria-expanded="false">
+          Como importo os certificados que j&aacute; tenho hoje?
+          <svg class="faq-icon flex-shrink-0 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+        <div class="faq-answer px-6 pb-5 text-sm text-gray-600 leading-relaxed">Disponibilizamos um modelo de planilha CSV. Voc&ecirc; preenche com os dados que j&aacute; tem e importa de uma vez. Em 10 minutos uma empresa com 50 funcion&aacute;rios j&aacute; est&aacute; toda cadastrada.</div>
+      </div>
+      <div class="faq-item border border-gray-200 rounded-2xl overflow-hidden">
+        <button class="faq-btn w-full text-left px-6 py-5 flex items-center justify-between gap-4 font-display font-bold text-base hover:bg-gray-50 transition-colors" aria-expanded="false">
+          Posso cancelar quando quiser?
+          <svg class="faq-icon flex-shrink-0 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+        <div class="faq-answer px-6 pb-5 text-sm text-gray-600 leading-relaxed">Sim. Sem multa, sem fidelidade. Voc&ecirc; cancela pelo painel a qualquer momento. Os dados ficam dispon&iacute;veis por 30 dias ap&oacute;s o cancelamento para exportar.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA FINAL -->
+<section class="bg-industrial-blue py-24 relative overflow-hidden">
+  <div class="absolute inset-0" style="background-image:linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px);background-size:40px 40px;"></div>
+  <div class="max-w-4xl mx-auto px-5 text-center relative z-10">
+    <h2 class="font-display text-4xl md:text-5xl lg:text-6xl font-extrabold text-white tracking-tight mb-6">Pronto para acabar com a<br>dor de cabe&ccedil;a das NRs?</h2>
+    <p class="text-blue-200 text-lg mb-10">Comece em 5 minutos. Cancele quando quiser.</p>
+    <a href="checkout.php" class="inline-block bg-industrial-yellow text-gray-900 font-bold text-lg px-10 py-4 rounded-2xl hover:bg-yellow-300 transition-colors shadow-lg">Come&ccedil;ar gr&aacute;tis agora</a>
+    <p class="text-blue-300 text-sm mt-5">7 dias gr&aacute;tis &nbsp;&middot;&nbsp; Cancele quando quiser</p>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer id="contato" class="bg-gray-950 text-gray-400 py-16">
+  <div class="max-w-6xl mx-auto px-5">
+    <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-10 mb-12">
+      <div>
+        <a href="index.php" class="flex items-center gap-2.5 mb-4">
+          <div class="w-7 h-7 rounded-full bg-industrial-blue flex items-center justify-center"><div class="w-2.5 h-2.5 rounded-full bg-industrial-yellow"></div></div>
+          <span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700" class="text-white text-sm">QRCertify</span>
+        </a>
+        <p class="text-sm leading-relaxed mb-5">Gest&atilde;o digital de certificados de NR. Sem papel, sem planilha, sem multa.</p>
+      </div>
+      <div>
+        <h4 style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700" class="text-white text-sm mb-4">Produto</h4>
+        <ul class="space-y-2.5 text-sm">
+          <li><a href="#recursos" class="hover:text-white transition-colors">Recursos</a></li>
+          <li><a href="#precos" class="hover:text-white transition-colors">Pre&ccedil;os</a></li>
+          <li><a href="#como-funciona" class="hover:text-white transition-colors">Demonstra&ccedil;&atilde;o</a></li>
+          <li><a href="login.php" class="hover:text-white transition-colors">Entrar no sistema</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700" class="text-white text-sm mb-4">Contato</h4>
+        <ul class="space-y-2.5 text-sm">
+          <li><a href="mailto:contato@qrcertify.com.br" class="hover:text-white transition-colors">contato@qrcertify.com.br</a></li>
+          <li><a href="#contato" class="hover:text-white transition-colors">Falar com vendas (Enterprise)</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700" class="text-white text-sm mb-4">Legal</h4>
+        <ul class="space-y-2.5 text-sm">
+          <li><a href="admin/suporte/termos.php" class="hover:text-white transition-colors">Termos de uso</a></li>
+          <li><a href="admin/suporte/privacidade.php" class="hover:text-white transition-colors">Privacidade</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="border-t border-gray-800 pt-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-600">
+      <p>&copy; 2026 QRCertify &nbsp;&middot;&nbsp; contato@qrcertify.com.br</p>
+      <p>Feito para o Brasil industrial.</p>
+    </div>
+  </div>
+</footer>
+
+<script>
+const menuBtn = document.getElementById('menu-btn');
+const mobileMenu = document.getElementById('mobile-menu');
+let menuOpen = false;
+menuBtn.addEventListener('click', () => {
+  menuOpen = !menuOpen;
+  mobileMenu.classList.toggle('hidden', !menuOpen);
+  menuBtn.setAttribute('aria-expanded', menuOpen);
+});
+document.querySelectorAll('.mobile-close').forEach(el => el.addEventListener('click', () => {
+  menuOpen = false; mobileMenu.classList.add('hidden');
+}));
+
+document.querySelectorAll('.faq-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const item = btn.closest('.faq-item');
+    const isOpen = item.classList.contains('open');
+    document.querySelectorAll('.faq-item').forEach(i => {
+      i.classList.remove('open');
+      i.querySelector('.faq-answer').classList.remove('open');
+      i.querySelector('.faq-btn').setAttribute('aria-expanded', false);
+    });
+    if (!isOpen) { item.classList.add('open'); item.querySelector('.faq-answer').classList.add('open'); btn.setAttribute('aria-expanded', true); }
+  });
+});
+
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+  a.addEventListener('click', e => {
+    const id = a.getAttribute('href').slice(1);
+    const el = document.getElementById(id);
+    if (el) { e.preventDefault(); el.scrollIntoView({ behavior:'smooth', block:'start' }); }
+  });
+});
+
+const header = document.querySelector('header');
+window.addEventListener('scroll', () => {
+  header.style.boxShadow = window.scrollY > 10 ? '0 2px 20px rgba(0,0,0,.08)' : 'none';
+}, { passive: true });
+</script>
+</body>
+</html>
