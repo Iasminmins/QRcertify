@@ -36,6 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $coPhone    = preg_replace('/\D/', '', $_POST['company_phone'] ?? '');
         $cep        = preg_replace('/\D/', '', $_POST['cep'] ?? '');
         $address    = trim($_POST['address'] ?? '');
+        $province   = strtoupper(trim($_POST['province'] ?? ''));
         $addrNumber = trim($_POST['address_number'] ?? '');
         $userName   = trim($_POST['user_name'] ?? '');
         $email      = strtolower(trim($_POST['email'] ?? ''));
@@ -50,6 +51,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!$coPhone)        $errors[] = 'Telefone é obrigatório.';
         if (strlen($cep) < 8) $errors[] = 'CEP inválido.';
         if ($address === '')  $errors[] = 'Endereço é obrigatório.';
+        if (!preg_match('/^[A-Z]{2}$/', $province)) $errors[] = 'UF é obrigatória.';
         if ($addrNumber === '') $errors[] = 'Número do endereço é obrigatório.';
         if ($userName === '') $errors[] = 'Seu nome é obrigatório.';
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) $errors[] = 'E-mail inválido.';
@@ -117,6 +119,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         'phone'         => $coPhone ?: null,
                         'postalCode'    => $cep ?: null,
                         'address'       => $address ?: null,
+                        'province'      => $province ?: null,
                         'addressNumber' => $addrNumber ?: null,
                     ], static fn($value) => $value !== null && $value !== '');
                     $checkoutPayload = [
@@ -370,6 +373,11 @@ tailwind.config = {
         <input type="text" name="address" class="input-field" placeholder="Rua, avenida ou estrada"
                value="<?= htmlspecialchars($_POST['address'] ?? '') ?>" required>
       </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">UF *</label>
+        <input type="text" name="province" id="province" class="input-field uppercase" placeholder="RJ" maxlength="2"
+               value="<?= htmlspecialchars($_POST['province'] ?? '') ?>" required style="text-transform:uppercase">
+      </div>
       <hr class="border-gray-100">
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Seu nome completo *</label>
@@ -503,7 +511,7 @@ function selectPlan(key) {
 }
 
 function validateStep2() {
-  const fields = ['company_name','company_phone','cep','address','address_number','user_name','email','password','password2'];
+  const fields = ['company_name','company_phone','cep','address','province','address_number','user_name','email','password','password2'];
   let ok = true;
   fields.forEach(f => {
     const el = document.querySelector('[name="' + f + '"]');
@@ -542,6 +550,9 @@ document.getElementById('cep')?.addEventListener('input', function(){
   let v = this.value.replace(/\D/g,'').slice(0,8);
   if(v.length > 5) v = v.slice(0,5) + '-' + v.slice(5);
   this.value = v;
+});
+document.getElementById('province')?.addEventListener('input', function(){
+  this.value = this.value.replace(/[^a-zA-Z]/g,'').slice(0,2).toUpperCase();
 });
 
 // Inicia no step correto
