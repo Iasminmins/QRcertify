@@ -93,6 +93,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $id,$companyId
                 ]);
                 auditLog('employee.update',"employee #{$id}",json_encode(['name'=>$employee['name']]));
+
+                // Sincroniza nome e e-mail na conta de login do colaborador
+                $empRow = $db->prepare('SELECT user_id FROM employees WHERE id = ? AND company_id = ?');
+                $empRow->execute([$id, $companyId]);
+                $empData = $empRow->fetch();
+                if (!empty($empData['user_id'])) {
+                    $db->prepare('UPDATE users SET name=?,email=?,status=? WHERE id=? AND role="employee"')
+                       ->execute([$employee['name'],$employee['email'],$employee['status'],$empData['user_id']]);
+                }
+
                 setFlash('success','Funcionário atualizado com sucesso!');
             } else {
                 $publicHash = generateHash();
@@ -110,8 +120,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $employee['complement']?:null,$employee['neighborhood']?:null,
                     $employee['city']?:null,$employee['state']?:null,
                 ]);
-                auditLog('employee.create',"employee #".$db->lastInsertId(),json_encode(['name'=>$employee['name']]));
-                setFlash('success','Funcionário cadastrado com sucesso!');
+                $newEmployeeId = (int)$db->lastInsertId();
+                auditLog('employee.create',"employee #{$newEmployeeId}",json_encode(['name'=>$employee['name']]));
+
+                // Cria conta de login: senha padrão = CPF (só dígitos)
+                $cpfDigits = preg_replace('/\D/', '', $employee['cpf']);
+                $hashedPwd = password_hash($cpfDigits, PASSWORD_DEFAULT);
+                $chkUser = $db->prepare('SELECT id FROM users WHERE email = ? AND role = "employee"');
+                $chkUser->execute([$employee['email']]);
+                if (!$chkUser->fetch()) {
+                    $uStmt = $db->prepare(
+                        'INSERT INTO users (company_id,name,email,password,role,status)
+                         VALUES (?,?,?,?,"employee","active")'
+                    );
+                    $uStmt->execute([$companyId,$employee['name'],$employee['email'],$hashedPwd]);
+                    $newUserId = (int)$db->lastInsertId();
+                    $db->prepare('UPDATE employees SET user_id = ? WHERE id = ?')
+                       ->execute([$newUserId, $newEmployeeId]);
+
+                    // Envia e-mail de boas-vindas com as credenciais
+                    require_once __DIR__ . '/../includes/mailer.php';
+                    $loginUrl = BASE_URL . '/login.php';
+                    $emailHtml =
+                        '<h2>Bem-vindo(a), ' . htmlspecialchars($employee['name']) . '!</h2>'
+                      . '<p>Sua conta de acesso ao <strong>' . SITE_NAME . '</strong> foi criada.</p>'
+                      . '<p><strong>E-mail:</strong> ' . htmlspecialchars($employee['email']) . '<br>'
+                      . '<strong>Senha:</strong> ' . htmlspecialchars($cpfDigits) . ' (seu CPF sem pontuação)</p>'
+                      . '<p style="color:#6b7280;font-size:13px">Após o primeiro acesso, você pode alterar sua senha pelo painel.</p>'
+                      . '<a class="btn" href="' . $loginUrl . '">Acessar o sistema</a>';
+                    sendMail(
+                        $employee['email'],
+                        'Seus dados de acesso — ' . SITE_NAME,
+                        $emailHtml
+                    );
+                }
+
+                setFlash('success','Funcionário cadastrado com sucesso! Senha de acesso: CPF (apenas números).');
             }
             redirect('/admin/employees.php');
         }
