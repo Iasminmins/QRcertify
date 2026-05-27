@@ -86,6 +86,14 @@ error_log('[Asaas Webhook] payload=' . json_encode([
     'externalReference' => $externalReference,
 ]));
 
+// Grava também em arquivo para debug na Hostinger
+$debugLine = date('Y-m-d H:i:s') . ' event=' . $event
+    . ' sub=' . ($subscriptionId ?? 'NULL')
+    . ' cus=' . ($customerId ?? 'NULL')
+    . ' ref=' . ($externalReference ?? 'NULL')
+    . "\n";
+@file_put_contents(__DIR__ . '/webhook-debug.log', $debugLine, FILE_APPEND);
+
 $companyIdFromRef = null;
 $planFromRef = null;
 if (is_string($externalReference) && preg_match('/^company_(\d+)_plan_([a-z0-9_-]+)$/i', $externalReference, $m)) {
