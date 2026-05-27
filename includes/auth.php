@@ -115,9 +115,9 @@ function requireLogin(): void {
             $stmt->execute([$user['company_id']]);
             $status = $stmt->fetchColumn();
             if ($status === 'pending_checkout') {
-                session_destroy();
-                setFlash('error', 'Finalize o checkout seguro do Asaas para ativar seus 30 dias gratis.');
-                redirect('/login.php');
+                // Não destrói a sessão — mantém o usuário logado e redireciona
+                // para uma página explicando que o checkout precisa ser concluído.
+                redirect('/admin/pending-checkout.php');
             }
             if ($status === 'canceled') {
                 session_destroy();

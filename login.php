@@ -8,7 +8,11 @@ if (isLoggedIn()) {
 
 $errors = [];
 $email = '';
-$role = 'employee';
+// Preserva role se vier via query string (ex: redirect de requireLogin)
+$role = $_GET['role'] ?? 'employee';
+if (!in_array($role, ['superadmin', 'admin', 'employee'], true)) {
+    $role = 'employee';
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!csrfCheck()) {

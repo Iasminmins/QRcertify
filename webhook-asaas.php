@@ -38,7 +38,18 @@ if (!$payload || !isset($payload['event'])) {
 }
 
 $event = $payload['event'];
-$data = $payload['payment'] ?? $payload['subscription'] ?? $payload['checkout'] ?? [];
+
+// Para SUBSCRIPTION_CREATED o dado principal fica em $payload['subscription'].
+// Para PAYMENT_* fica em $payload['payment'].
+// Para CHECKOUT_* fica em $payload['checkout'].
+// Priorizamos pelo tipo de evento para evitar pegar o objeto errado.
+if (str_starts_with($event, 'SUBSCRIPTION_')) {
+    $data = $payload['subscription'] ?? $payload['payment'] ?? $payload['checkout'] ?? [];
+} elseif (str_starts_with($event, 'CHECKOUT_')) {
+    $data = $payload['checkout'] ?? $payload['payment'] ?? $payload['subscription'] ?? [];
+} else {
+    $data = $payload['payment'] ?? $payload['subscription'] ?? $payload['checkout'] ?? [];
+}
 
 error_log("[Asaas Webhook] Event: {$event}");
 
@@ -67,13 +78,20 @@ if (is_string($externalReference) && preg_match('/^company_(\d+)_plan_([a-z0-9_-
 }
 
 $statusMap = [
+    // Pagamento confirmado → ativa a assinatura
     'PAYMENT_RECEIVED'         => 'active',
     'PAYMENT_CONFIRMED'        => 'active',
+    // Inadimplência / cancelamentos
     'PAYMENT_OVERDUE'          => 'overdue',
     'PAYMENT_DELETED'          => 'canceled',
+    // Checkout hospedado no Asaas concluído (sem cobrança imediata = trial)
     'CHECKOUT_PAID'            => 'trialing',
     'CHECKOUT_CANCELED'        => 'canceled',
     'CHECKOUT_EXPIRED'         => 'canceled',
+    // Assinatura criada via checkout recorrente (trial de 30 dias, sem pagamento imediato)
+    // Este é o evento enviado pelo Asaas quando o usuário cadastra o cartão no checkout.
+    'SUBSCRIPTION_CREATED'     => 'trialing',
+    // Outros estados da assinatura
     'SUBSCRIPTION_INACTIVATED' => 'canceled',
     'SUBSCRIPTION_DELETED'     => 'canceled',
 ];
