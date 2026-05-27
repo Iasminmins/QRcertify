@@ -62,13 +62,29 @@ $extractId = static function ($value): ?string {
     return $value ? (string) $value : null;
 };
 
-$subscriptionId = $extractId($data['subscription'] ?? null);
+// Para SUBSCRIPTION_*, $data JÁ É o objeto da assinatura → ID em $data['id']
+// Para PAYMENT_*, a assinatura é uma referência dentro do pagamento → $data['subscription']
+if (str_starts_with($event, 'SUBSCRIPTION_')) {
+    $subscriptionId = $extractId($data['id'] ?? null);
+} else {
+    $subscriptionId = $extractId($data['subscription'] ?? null);
+}
+
 $customerId = $extractId($data['customer'] ?? null);
+
 $externalReference = $data['externalReference']
     ?? ($payload['checkout']['externalReference'] ?? null)
     ?? ($payload['payment']['externalReference'] ?? null)
     ?? ($payload['subscription']['externalReference'] ?? null)
     ?? null;
+
+// Log completo para debug — remover após confirmar funcionamento
+error_log('[Asaas Webhook] payload=' . json_encode([
+    'event'             => $event,
+    'subscriptionId'    => $subscriptionId,
+    'customerId'        => $customerId,
+    'externalReference' => $externalReference,
+]));
 
 $companyIdFromRef = null;
 $planFromRef = null;
