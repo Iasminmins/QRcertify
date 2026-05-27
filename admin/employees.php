@@ -361,9 +361,12 @@ require_once __DIR__ . '/../includes/sidebar.php';
 
                 <!-- Dados pessoais -->
                 <div style="display:flex;gap:.75rem;padding:.75rem;border-bottom:1px solid #e2e8f0;align-items:flex-start">
-                    <div style="border:1.5px dashed #cbd5e1;border-radius:.25rem;
-                                width:58px;height:58px;flex-shrink:0;display:flex;align-items:center;justify-content:center">
-                        <span style="font-size:.5rem;color:#94a3b8;text-align:center;line-height:1.4">LOGO<br>EMPRESA</span>
+                    <div id="cart-logo-wrap"
+                         style="border:1.5px dashed #cbd5e1;border-radius:.25rem;
+                                width:58px;height:58px;flex-shrink:0;overflow:hidden;
+                                background:#f8fafc;display:flex;align-items:center;justify-content:center">
+                        <img id="cart-logo-img" src="" alt="Logo" style="max-width:100%;max-height:100%;object-fit:contain;display:none">
+                        <span id="cart-logo-placeholder" style="font-size:.5rem;color:#94a3b8;text-align:center;line-height:1.4">LOGO<br>EMPRESA</span>
                     </div>
                     <div id="cart-photo-wrap"
                          style="border:1.5px dashed #cbd5e1;border-radius:.25rem;
@@ -490,6 +493,7 @@ require_once __DIR__ . '/../includes/sidebar.php';
 <script>
 // Dados de todos os funcionários (PHP → JS)
 const EMP_DATA = <?= json_encode($empData, JSON_UNESCAPED_UNICODE) ?>;
+const COMPANY_LOGO = <?= json_encode(!empty($company['logo']) ? BASE_URL . '/' . ltrim($company['logo'], '/') : '') ?>;
 
 let _currentQrUrl = '';
 
@@ -579,6 +583,18 @@ function openCarteirinha(empId) {
     document.getElementById('cart-role').textContent    = emp.role;
     document.getElementById('cart-company').textContent = emp.company;
     document.getElementById('cart-cpf').textContent     = emp.cpf;
+
+    // Logo da empresa
+    const logoImg = document.getElementById('cart-logo-img');
+    const logoPh  = document.getElementById('cart-logo-placeholder');
+    if (COMPANY_LOGO) {
+        logoImg.src = COMPANY_LOGO;
+        logoImg.style.display = 'block';
+        if (logoPh) logoPh.style.display = 'none';
+    } else {
+        logoImg.style.display = 'none';
+        if (logoPh) logoPh.style.display = '';
+    }
 
     // Foto
     const photoWrap = document.getElementById('cart-photo-wrap');

@@ -37,10 +37,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_company'])) {
         if ($cep !== '' && strlen($cep) !== 8) $errCompany[] = 'CEP inválido.';
 
         if (empty($errCompany)) {
+            // Upload de logo
+            $logoPath = $company['logo'] ?? null;
+            if (!empty($_FILES['logo_upload']['name'])) {
+                $up = uploadFile($_FILES['logo_upload'], 'photo', $logoPath);
+                if (!$up['ok']) {
+                    $errCompany[] = $up['error'];
+                } elseif ($up['path']) {
+                    $logoPath = $up['path'];
+                }
+            }
+        }
+        if (empty($errCompany)) {
             $stmt = $db->prepare(
                 'UPDATE companies
                  SET name=?,email=?,phone=?,cep=?,address=?,number=?,complement=?,
-                     neighborhood=?,city=?,state=?,
+                     neighborhood=?,city=?,state=?,logo=?,
                      emergency_sesmt=?,emergency_bombeiro=?,emergency_samu=?,emergency_policia=?
                  WHERE id=?'
             );
@@ -48,6 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_company'])) {
                 $name, $email ?: null, $phone ?: null,
                 $cep ?: null, $addr ?: null, $num ?: null,
                 $comp ?: null, $neigh ?: null, $city ?: null, $state ?: null,
+                $logoPath,
                 $emSesmt ?: null, $emBombeiro ?: '193', $emSamu ?: '192', $emPolicia ?: '190',
                 $user['company_id']
             ]);
@@ -166,7 +179,7 @@ $sc         = $subColors[$coSub] ?? 'gray';
     </div>
 <?php endif; ?>
 
-<form method="POST" class="space-y-5 max-w-2xl">
+<form method="POST" enctype="multipart/form-data" class="space-y-5 max-w-2xl">
     <?= csrfField() ?>
     <input type="hidden" name="save_company" value="1">
 
@@ -177,6 +190,34 @@ $sc         = $subColors[$coSub] ?? 'gray';
             <label class="block text-sm font-medium text-gray-700 mb-1">Nome da Empresa *</label>
             <input type="text" name="name" value="<?= e($company['name'] ?? '') ?>" required
                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-industrial-blue outline-none">
+        </div>
+
+        <!-- Logo da Empresa -->
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Logo da Empresa</label>
+            <div class="flex items-center gap-4">
+                <div style="width:80px;height:80px;border:2px dashed #cbd5e1;border-radius:.5rem;
+                            display:flex;align-items:center;justify-content:center;overflow:hidden;
+                            background:#f8fafc;flex-shrink:0">
+                    <?php if (!empty($company['logo'])): ?>
+                        <img src="<?= BASE_URL . '/' . ltrim(e($company['logo']), '/') ?>"
+                             alt="Logo" style="max-width:100%;max-height:100%;object-fit:contain"
+                             id="logo-preview">
+                    <?php else: ?>
+                        <img id="logo-preview" src="" alt="" style="max-width:100%;max-height:100%;object-fit:contain;display:none">
+                        <span id="logo-placeholder" style="font-size:.55rem;color:#94a3b8;text-align:center;line-height:1.4">
+                            LOGO<br>EMPRESA
+                        </span>
+                    <?php endif; ?>
+                </div>
+                <div>
+                    <input type="file" name="logo_upload" id="logo_upload"
+                           accept="image/jpeg,image/png,image/webp,image/gif"
+                           class="block text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-industrial-blue hover:file:bg-blue-100 cursor-pointer"
+                           onchange="previewLogo(this)">
+                    <p class="text-xs text-gray-400 mt-1">JPG, PNG ou WebP · máx. 3 MB · aparece na carteirinha</p>
+                </div>
+            </div>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -356,6 +397,20 @@ $sc         = $subColors[$coSub] ?? 'gray';
 <?php endif; ?>
 
 <script>
+// Preview de logo antes do upload
+function previewLogo(input) {
+    if (!input.files || !input.files[0]) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const img = document.getElementById('logo-preview');
+        const ph  = document.getElementById('logo-placeholder');
+        img.src = e.target.result;
+        img.style.display = 'block';
+        if (ph) ph.style.display = 'none';
+    };
+    reader.readAsDataURL(input.files[0]);
+}
+
 // Máscaras — empresa
 function maskPhone(v){
     v=v.replace(/\D/g,'').slice(0,11);
