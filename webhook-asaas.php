@@ -78,6 +78,12 @@ $externalReference = $data['externalReference']
     ?? ($payload['subscription']['externalReference'] ?? null)
     ?? null;
 
+// Se externalReference veio nulo, busca direto na API do Asaas pelo ID da assinatura
+if (!$externalReference && $subscriptionId) {
+    $subDetails = asaasRequest('GET', '/subscriptions/' . $subscriptionId);
+    $externalReference = $subDetails['externalReference'] ?? null;
+}
+
 // Log completo para debug — remover após confirmar funcionamento
 error_log('[Asaas Webhook] payload=' . json_encode([
     'event'             => $event,
