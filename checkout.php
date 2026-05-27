@@ -104,7 +104,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 if (in_array($plan, ['starter', 'pro', 'business', 'enterprise'], true)) {
 
-                    // 1) Checkout recorrente: o Asaas coleta o cartão e cria a assinatura.
                     $trialEnd = (new \DateTime('+30 days'))->format('Y-m-d');
                     $successQuery = http_build_query([
                         'nome'  => $userName,
@@ -112,7 +111,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         'email' => $email,
                     ]);
                     $externalReference = "company_{$companyId}_plan_{$plan}";
-                    $customerData = array_filter([
+
+                    // 1) Cria o cliente no Asaas ANTES do checkout e salva o ID no banco.
+                    //    Isso permite que o webhook encontre a empresa pelo customer_id
+                    //    caso o externalReference não venha no payload.
+                    $customerPayload = array_filter([
                         'name'          => $userName,
                         'email'         => $email,
                         'cpfCnpj'       => $cnpj ?: null,
@@ -121,7 +124,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         'address'       => $address ?: null,
                         'province'      => $province ?: null,
                         'addressNumber' => $addrNumber ?: null,
-                    ], static fn($value) => $value !== null && $value !== '');
+                        'externalReference' => $externalReference,
+                    ], static fn($v) => $v !== null && $v !== '');
+
+                    $customerResp = asaasRequest('POST', '/customers', $customerPayload);
+                    if (!empty($customerResp['id'])) {
+                        $asaasCustomerId = $customerResp['id'];
+                        $db->prepare('UPDATE companies SET asaas_customer_id = ? WHERE id = ?')
+                           ->execute([$asaasCustomerId, $companyId]);
+                    }
+
+                    // 2) Cria o checkout recorrente usando o customer já criado
                     $checkoutPayload = [
                         'billingTypes'      => ['CREDIT_CARD'],
                         'chargeTypes'       => ['RECURRENT'],
@@ -138,12 +151,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             'quantity'    => 1,
                             'value'       => $planPrices[$plan],
                         ]],
-                        'customerData' => $customerData,
                         'subscription' => [
                             'cycle'       => 'MONTHLY',
                             'nextDueDate' => $trialEnd,
                         ],
                     ];
+
+                    // Se conseguimos criar o cliente, usa o ID; senão, passa os dados brutos
+                    if ($asaasCustomerId) {
+                        $checkoutPayload['customer'] = $asaasCustomerId;
+                    } else {
+                        $checkoutPayload['customerData'] = $customerPayload;
+                    }
 
                     $checkoutResp = asaasRequest('POST', '/checkouts', $checkoutPayload);
                     if (empty($checkoutResp['id'])) {
@@ -151,12 +170,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         throw new \Exception('Não foi possível gerar o checkout seguro: ' . $asaasErr);
                     }
 
-                    $checkoutId = $checkoutResp['id'];
+                    $checkoutId  = $checkoutResp['id'];
                     $checkoutUrl = $checkoutResp['link']
                         ?? $checkoutResp['url']
                         ?? buildAsaasCheckoutUrl($checkoutId);
 
-                    // 2) Salva o plano localmente; liberacao e IDs chegam via webhook.
+                    // 3) Salva plano e status; IDs de assinatura chegam via webhook
                     $db->prepare(
                         'UPDATE companies SET plan = ?, subscription_status = "pending_checkout" WHERE id = ?'
                     )->execute([$plan, $companyId]);

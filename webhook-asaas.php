@@ -13,7 +13,6 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit('Method Not Allowed');
 }
 
-// O Asaas envia o token configurado no header "asaas-access-token".
 $expectedToken = defined('ASAAS_WEBHOOK_TOKEN') ? ASAAS_WEBHOOK_TOKEN : '';
 $receivedToken = $_SERVER['HTTP_ASAAS_ACCESS_TOKEN'] ?? '';
 
@@ -29,7 +28,7 @@ if ($receivedToken === '' || !hash_equals($expectedToken, $receivedToken)) {
     exit('Unauthorized');
 }
 
-$raw = file_get_contents('php://input');
+$raw     = file_get_contents('php://input');
 $payload = json_decode($raw, true);
 
 if (!$payload || !isset($payload['event'])) {
@@ -39,31 +38,24 @@ if (!$payload || !isset($payload['event'])) {
 
 $event = $payload['event'];
 
-// Para SUBSCRIPTION_CREATED o dado principal fica em $payload['subscription'].
-// Para PAYMENT_* fica em $payload['payment'].
-// Para CHECKOUT_* fica em $payload['checkout'].
-// Priorizamos pelo tipo de evento para evitar pegar o objeto errado.
+// Seleciona o objeto principal pelo tipo de evento
 if (str_starts_with($event, 'SUBSCRIPTION_')) {
-    $data = $payload['subscription'] ?? $payload['payment'] ?? $payload['checkout'] ?? [];
+    $data = $payload['subscription'] ?? [];
 } elseif (str_starts_with($event, 'CHECKOUT_')) {
-    $data = $payload['checkout'] ?? $payload['payment'] ?? $payload['subscription'] ?? [];
+    $data = $payload['checkout'] ?? [];
 } else {
     $data = $payload['payment'] ?? $payload['subscription'] ?? $payload['checkout'] ?? [];
 }
 
-error_log("[Asaas Webhook] Event: {$event}");
-
 $db = getDB();
 
 $extractId = static function ($value): ?string {
-    if (is_array($value)) {
-        return isset($value['id']) ? (string) $value['id'] : null;
-    }
+    if (is_array($value)) return isset($value['id']) ? (string) $value['id'] : null;
     return $value ? (string) $value : null;
 };
 
-// Para SUBSCRIPTION_*, $data JÁ É o objeto da assinatura → ID em $data['id']
-// Para PAYMENT_*, a assinatura é uma referência dentro do pagamento → $data['subscription']
+// Para SUBSCRIPTION_*, o ID da assinatura e $data['id']
+// Para outros eventos, a assinatura e uma referencia: $data['subscription']
 if (str_starts_with($event, 'SUBSCRIPTION_')) {
     $subscriptionId = $extractId($data['id'] ?? null);
 } else {
@@ -72,56 +64,59 @@ if (str_starts_with($event, 'SUBSCRIPTION_')) {
 
 $customerId = $extractId($data['customer'] ?? null);
 
+// Tenta encontrar externalReference no payload
 $externalReference = $data['externalReference']
-    ?? ($payload['checkout']['externalReference'] ?? null)
-    ?? ($payload['payment']['externalReference'] ?? null)
+    ?? ($payload['checkout']['externalReference']     ?? null)
+    ?? ($payload['payment']['externalReference']      ?? null)
     ?? ($payload['subscription']['externalReference'] ?? null)
     ?? null;
 
-// Se externalReference veio nulo, busca direto na API do Asaas pelo ID da assinatura
+// Se ainda nulo, consulta a API do Asaas pela assinatura
 if (!$externalReference && $subscriptionId) {
-    $subDetails = asaasRequest('GET', '/subscriptions/' . $subscriptionId);
+    $subDetails        = asaasRequest('GET', '/subscriptions/' . $subscriptionId);
     $externalReference = $subDetails['externalReference'] ?? null;
 }
 
-// Log completo para debug — remover após confirmar funcionamento
-error_log('[Asaas Webhook] payload=' . json_encode([
-    'event'             => $event,
-    'subscriptionId'    => $subscriptionId,
-    'customerId'        => $customerId,
-    'externalReference' => $externalReference,
-]));
-
-// Grava também em arquivo para debug na Hostinger
-$debugLine = date('Y-m-d H:i:s') . ' event=' . $event
-    . ' sub=' . ($subscriptionId ?? 'NULL')
-    . ' cus=' . ($customerId ?? 'NULL')
-    . ' ref=' . ($externalReference ?? 'NULL')
+// Log para debug
+$debugLine = date('Y-m-d H:i:s')
+    . ' event='  . $event
+    . ' sub='    . ($subscriptionId    ?? 'NULL')
+    . ' cus='    . ($customerId        ?? 'NULL')
+    . ' ref='    . ($externalReference ?? 'NULL')
     . "\n";
 @file_put_contents(__DIR__ . '/webhook-debug.log', $debugLine, FILE_APPEND);
 
+// Tenta resolver company pelo externalReference
 $companyIdFromRef = null;
-$planFromRef = null;
-if (is_string($externalReference) && preg_match('/^company_(\d+)_plan_([a-z0-9_-]+)$/i', $externalReference, $m)) {
+$planFromRef      = null;
+if (is_string($externalReference)
+    && preg_match('/^company_(\d+)_plan_([a-z0-9_-]+)$/i', $externalReference, $m)) {
     $companyIdFromRef = (int) $m[1];
-    $planFromRef = strtolower($m[2]);
+    $planFromRef      = strtolower($m[2]);
+}
+
+// Ultimo recurso: busca pelo asaas_customer_id ja salvo no banco
+if (!$companyIdFromRef && $customerId) {
+    $stmtCus = $db->prepare(
+        'SELECT id, plan FROM companies WHERE asaas_customer_id = ? LIMIT 1'
+    );
+    $stmtCus->execute([$customerId]);
+    $coByCustomer = $stmtCus->fetch();
+    if ($coByCustomer) {
+        $companyIdFromRef = (int) $coByCustomer['id'];
+        $planFromRef      = $coByCustomer['plan'];
+    }
 }
 
 $statusMap = [
-    // Pagamento confirmado → ativa a assinatura
     'PAYMENT_RECEIVED'         => 'active',
     'PAYMENT_CONFIRMED'        => 'active',
-    // Inadimplência / cancelamentos
     'PAYMENT_OVERDUE'          => 'overdue',
     'PAYMENT_DELETED'          => 'canceled',
-    // Checkout hospedado no Asaas concluído (sem cobrança imediata = trial)
     'CHECKOUT_PAID'            => 'trialing',
     'CHECKOUT_CANCELED'        => 'canceled',
     'CHECKOUT_EXPIRED'         => 'canceled',
-    // Assinatura criada via checkout recorrente (trial de 30 dias, sem pagamento imediato)
-    // Este é o evento enviado pelo Asaas quando o usuário cadastra o cartão no checkout.
     'SUBSCRIPTION_CREATED'     => 'trialing',
-    // Outros estados da assinatura
     'SUBSCRIPTION_INACTIVATED' => 'canceled',
     'SUBSCRIPTION_DELETED'     => 'canceled',
 ];
@@ -131,40 +126,36 @@ $newStatus = $statusMap[$event] ?? null;
 if ($newStatus) {
     $updatedCompanyId = null;
 
+    // 1) Tenta pelo asaas_subscription_id ja cadastrado no banco
     if ($subscriptionId) {
         $stmt = $db->prepare(
             'UPDATE companies
                 SET subscription_status = ?,
-                    asaas_customer_id = COALESCE(asaas_customer_id, ?)
+                    asaas_customer_id   = COALESCE(asaas_customer_id, ?)
               WHERE asaas_subscription_id = ?'
         );
         $stmt->execute([$newStatus, $customerId, $subscriptionId]);
 
         if ($stmt->rowCount() > 0) {
-            $stmtCo = $db->prepare(
-                'SELECT id FROM companies WHERE asaas_subscription_id = ?'
-            );
+            $stmtCo = $db->prepare('SELECT id FROM companies WHERE asaas_subscription_id = ?');
             $stmtCo->execute([$subscriptionId]);
-            $company = $stmtCo->fetch();
-            if ($company) {
-                $updatedCompanyId = (int) $company['id'];
-            }
+            $co = $stmtCo->fetch();
+            if ($co) $updatedCompanyId = (int) $co['id'];
         }
     }
 
+    // 2) Tenta pelo externalReference ou customer_id
     if (!$updatedCompanyId && $companyIdFromRef) {
         $stmt = $db->prepare(
             'UPDATE companies
-                SET subscription_status = ?,
-                    plan = COALESCE(?, plan),
-                    asaas_customer_id = COALESCE(asaas_customer_id, ?),
+                SET subscription_status   = ?,
+                    plan                  = COALESCE(?, plan),
+                    asaas_customer_id     = COALESCE(asaas_customer_id, ?),
                     asaas_subscription_id = COALESCE(asaas_subscription_id, ?)
               WHERE id = ?'
         );
         $stmt->execute([$newStatus, $planFromRef, $customerId, $subscriptionId, $companyIdFromRef]);
-        if ($stmt->rowCount() > 0) {
-            $updatedCompanyId = $companyIdFromRef;
-        }
+        if ($stmt->rowCount() > 0) $updatedCompanyId = $companyIdFromRef;
     }
 
     if ($updatedCompanyId && in_array($newStatus, ['canceled', 'overdue', 'trialing', 'active'], true)) {
@@ -177,8 +168,8 @@ if ($newStatus) {
             'subscription.' . $newStatus,
             'asaas_webhook',
             json_encode([
-                'event' => $event,
-                'subscription' => $subscriptionId,
+                'event'             => $event,
+                'subscription'      => $subscriptionId,
                 'externalReference' => $externalReference,
             ]),
             $_SERVER['REMOTE_ADDR'] ?? null,
