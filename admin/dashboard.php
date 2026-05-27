@@ -150,67 +150,71 @@ function dismissOnboarding() {
 <!-- ── Cards de estatísticas ─────────────────────────────────────────────── -->
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
 
-    <div class="bg-white p-5 rounded-lg shadow-sm border hover:shadow-md transition">
+    <a href="<?= BASE_URL ?>/admin/employees.php"
+       class="bg-white p-5 rounded-lg shadow-sm border hover:shadow-md hover:border-blue-200 transition group cursor-pointer">
         <div class="flex items-center justify-between">
             <div>
                 <p class="text-sm text-gray-600">Funcionários Ativos</p>
                 <p class="text-3xl font-bold text-gray-900 mt-1"><?= $stats['employees'] ?></p>
                 <p class="text-xs text-gray-400 mt-1">colaboradores cadastrados</p>
             </div>
-            <div class="h-12 w-12 rounded-lg bg-blue-100 flex items-center justify-center">
+            <div class="h-12 w-12 rounded-lg bg-blue-100 flex items-center justify-center group-hover:bg-blue-200 transition">
                 <svg class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                           d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
                 </svg>
             </div>
         </div>
-    </div>
+    </a>
 
-    <div class="bg-white p-5 rounded-lg shadow-sm border hover:shadow-md transition">
+    <a href="<?= BASE_URL ?>/admin/certificates.php?status=valid"
+       class="bg-white p-5 rounded-lg shadow-sm border hover:shadow-md hover:border-green-200 transition group cursor-pointer">
         <div class="flex items-center justify-between">
             <div>
                 <p class="text-sm text-gray-600">Certificados Válidos</p>
                 <p class="text-3xl font-bold text-green-600 mt-1"><?= $stats['certs_valid'] ?></p>
                 <p class="text-xs text-gray-400 mt-1">certificados ativos e em dia</p>
             </div>
-            <div class="h-12 w-12 rounded-lg bg-green-100 flex items-center justify-center">
+            <div class="h-12 w-12 rounded-lg bg-green-100 flex items-center justify-center group-hover:bg-green-200 transition">
                 <svg class="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
             </div>
         </div>
-    </div>
+    </a>
 
-    <div class="bg-white p-5 rounded-lg shadow-sm border hover:shadow-md transition">
+    <a href="<?= BASE_URL ?>/admin/certificates.php?status=expiring"
+       class="bg-white p-5 rounded-lg shadow-sm border hover:shadow-md hover:border-amber-200 transition group cursor-pointer">
         <div class="flex items-center justify-between">
             <div>
                 <p class="text-sm text-gray-600">Expirando em 30 dias</p>
                 <p class="text-3xl font-bold text-amber-600 mt-1"><?= $stats['certs_expiring'] ?></p>
                 <p class="text-xs text-gray-400 mt-1">requerem atenção</p>
             </div>
-            <div class="h-12 w-12 rounded-lg bg-amber-100 flex items-center justify-center">
+            <div class="h-12 w-12 rounded-lg bg-amber-100 flex items-center justify-center group-hover:bg-amber-200 transition">
                 <svg class="h-6 w-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
             </div>
         </div>
-    </div>
+    </a>
 
-    <div class="bg-white p-5 rounded-lg shadow-sm border hover:shadow-md transition">
+    <a href="<?= BASE_URL ?>/admin/certificates.php?status=expired"
+       class="bg-white p-5 rounded-lg shadow-sm border hover:shadow-md hover:border-red-200 transition group cursor-pointer">
         <div class="flex items-center justify-between">
             <div>
                 <p class="text-sm text-gray-600">Certificados Expirados</p>
                 <p class="text-3xl font-bold text-red-600 mt-1"><?= $stats['certs_expired'] ?></p>
                 <p class="text-xs text-gray-400 mt-1">precisam ser renovados</p>
             </div>
-            <div class="h-12 w-12 rounded-lg bg-red-100 flex items-center justify-center">
+            <div class="h-12 w-12 rounded-lg bg-red-100 flex items-center justify-center group-hover:bg-red-200 transition">
                 <svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                           d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
                 </svg>
             </div>
         </div>
-    </div>
+    </a>
 
 </div>
 
