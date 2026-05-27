@@ -250,7 +250,7 @@ require_once __DIR__ . '/../includes/sidebar.php';
         </div>
 
         <!-- QR Code centralizado -->
-        <div style="text-align:center;padding:.5rem 0 .25rem;border-top:1px solid #f1f5f9">
+        <div style="display:flex;justify-content:center;align-items:center;padding:.5rem 0 .25rem;border-top:1px solid #f1f5f9">
             <img src="<?= e($qrUrl) ?>" alt="QR Code"
                  style="width:90px;height:90px;object-fit:contain">
         </div>
