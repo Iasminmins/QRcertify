@@ -45,6 +45,7 @@ $qrUrl = $certificate ? generateQRCodeUrl(getCertificatePublicUrl($certificate['
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Validação de Certificado | <?= e(SITE_NAME) ?></title>
+    <link rel="icon" type="image/svg+xml" href="<?= BASE_URL ?>/public/assets/logo-qrcertify.svg">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {

@@ -33,6 +33,7 @@ $checkoutUrl = BASE_URL . '/checkout.php?plan=' . urlencode($plan);
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Checkout Pendente | <?= e(SITE_NAME) ?></title>
+  <link rel="icon" type="image/svg+xml" href="<?= BASE_URL ?>/public/assets/logo-qrcertify.svg">
   <script src="https://cdn.tailwindcss.com"></script>
   <script>tailwind.config = { theme: { extend: { colors: { 'industrial-blue': '#1e3a8a', 'industrial-yellow': '#facc15' } } } }</script>
   <meta http-equiv="refresh" content="15;url=<?= BASE_URL ?>/admin/pending-checkout.php">

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -17,6 +17,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="description" content="Gerencie certificados de NR com QR Code, alertas autom&aacute;ticos e valida&ccedil;&atilde;o p&uacute;blica. Sem papel, sem planilha, sem multa do MTE.">
 <title>QRCertify &mdash; Gest&atilde;o de Certificados de NR</title>
+<link rel="icon" type="image/svg+xml" href="public/assets/logo-qrcertify.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
@@ -36,6 +37,23 @@ tailwind.config = {
 html { scroll-behavior: smooth; }
 body { font-family: 'IBM Plex Sans', sans-serif; color: #0a0a0a; background: #fff; }
 h1,h2,h3,h4 { font-family: 'Bricolage Grotesque', sans-serif; }
+a { text-decoration: none; }
+h1, h2, h3, .balance-text { text-wrap: balance; }
+p, li { overflow-wrap: normal; word-break: normal; hyphens: none; }
+header a { white-space: nowrap; }
+.qrc-wordmark {
+  font-family: Arial, Helvetica, sans-serif;
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1;
+}
+.qr-text {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+  letter-spacing: 0;
+}
 .grid-bg {
   background-image:
     linear-gradient(rgba(30,58,138,.04) 1px, transparent 1px),
@@ -87,8 +105,8 @@ h1,h2,h3,h4 { font-family: 'Bricolage Grotesque', sans-serif; }
 <header class="sticky top-0 z-50 bg-white/95 backdrop-blur border-b border-gray-100">
   <div class="max-w-6xl mx-auto px-5 h-16 flex items-center justify-between">
     <a href="index.php" class="flex items-center gap-2.5">
-      <div class="w-8 h-8 rounded-full bg-industrial-blue flex items-center justify-center flex-shrink-0"><div class="w-3 h-3 rounded-full bg-industrial-yellow"></div></div>
-      <span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:1rem" class="text-gray-900">QRCertify</span>
+      <img src="public/assets/logo-qrcertify.svg" alt="QRCertify" class="w-10 h-10 flex-shrink-0">
+      <span class="qrc-wordmark text-gray-900 text-base">QRCertify</span>
     </a>
     <nav class="hidden md:flex items-center gap-8">
       <a href="#recursos" class="nav-link">Recursos</a>
@@ -123,12 +141,12 @@ h1,h2,h3,h4 { font-family: 'Bricolage Grotesque', sans-serif; }
       <div>
         <div class="inline-flex items-center gap-2 bg-yellow-50 border border-yellow-200 text-yellow-800 text-xs font-semibold px-3 py-1.5 rounded-full mb-6">
           <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-          Adeus papelada, ol&aacute; QR Code
+          Adeus papelada, ol&aacute; <span class="qr-text">QR Code</span>
         </div>
         <h1 class="font-display text-5xl md:text-6xl lg:text-[5rem] font-extrabold leading-[1.05] tracking-tight mb-6">
           Certificados<br>de NR sempre<br><span class="em-dia">em dia.</span>
         </h1>
-        <p class="text-gray-600 text-lg leading-relaxed mb-8 max-w-lg">Gerencie carteiras digitais, valide com QR Code e receba alertas antes de qualquer certificado vencer. Sem planilha, sem papel, sem multa do MTE.</p>
+        <p class="text-gray-600 text-lg leading-relaxed mb-8 max-w-lg">Gerencie carteiras digitais, valide com <span class="qr-text">QR Code</span> e receba alertas antes de qualquer certificado vencer. Sem planilha, sem papel, sem multa do MTE.</p>
         <div class="flex flex-col sm:flex-row gap-3 mb-4">
           <a href="checkout.php" class="bg-industrial-blue text-white font-semibold px-6 py-3.5 rounded-xl hover:bg-blue-900 transition-colors text-center text-sm">Come&ccedil;ar gr&aacute;tis por 30 dias</a>
           <a href="#como-funciona" class="text-gray-700 font-medium px-6 py-3.5 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors text-center text-sm">Ver demonstra&ccedil;&atilde;o &rarr;</a>
@@ -205,8 +223,8 @@ h1,h2,h3,h4 { font-family: 'Bricolage Grotesque', sans-serif; }
         <div class="w-12 h-12 bg-yellow-50 rounded-xl flex items-center justify-center mb-5">
           <svg width="24" height="24" fill="none" stroke="#b45309" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h.01M18 14h.01M14 18h.01M18 18h.01"/></svg>
         </div>
-        <h3 class="font-display text-xl font-bold mb-2">Gere QR Codes &uacute;nicos para cada NR</h3>
-        <p class="text-gray-500 text-sm leading-relaxed">Cada certificado recebe um QR Code inviolável. Fiscal escaneia &mdash; sistema confirma autenticidade em 2 segundos.</p>
+        <h3 class="font-display text-xl font-bold mb-2">Gere <span class="qr-text">QR Codes</span> &uacute;nicos para cada NR</h3>
+        <p class="text-gray-500 text-sm leading-relaxed">Cada certificado recebe um <span class="qr-text">QR Code</span> inviolável. Fiscal escaneia &mdash; sistema confirma autenticidade em 2 segundos.</p>
       </div>
       <div class="relative p-8 bg-white rounded-2xl border border-gray-100">
         <span class="step-num">03</span>
@@ -235,7 +253,7 @@ h1,h2,h3,h4 { font-family: 'Bricolage Grotesque', sans-serif; }
       </div>
       <div class="feat-card bg-white rounded-2xl p-7 border border-gray-100">
         <div class="w-11 h-11 bg-yellow-50 rounded-xl flex items-center justify-center mb-5"><svg width="22" height="22" fill="none" stroke="#b45309" stroke-width="1.5" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div>
-        <h3 class="font-display text-base font-bold mb-2">Valida&ccedil;&atilde;o por QR Code</h3>
+        <h3 class="font-display text-base font-bold mb-2">Valida&ccedil;&atilde;o por <span class="qr-text">QR Code</span></h3>
         <p class="text-gray-500 text-sm leading-relaxed">Fiscal escaneia e confirma autenticidade em 2 segundos. Sem acesso ao sistema, sem login.</p>
       </div>
       <div class="feat-card bg-white rounded-2xl p-7 border border-gray-100">
@@ -287,7 +305,7 @@ h1,h2,h3,h4 { font-family: 'Bricolage Grotesque', sans-serif; }
         <ul class="space-y-2 text-sm text-gray-600">
           <li class="flex items-center gap-2"><span class="text-industrial-blue font-bold">+</span> NR-18, NR-35 (altura)</li>
           <li class="flex items-center gap-2"><span class="text-industrial-blue font-bold">+</span> Carteira no celular do pe&atilde;o</li>
-          <li class="flex items-center gap-2"><span class="text-industrial-blue font-bold">+</span> QR Code sem app</li>
+          <li class="flex items-center gap-2"><span class="text-industrial-blue font-bold">+</span> <span class="qr-text">QR Code</span> sem app</li>
         </ul>
       </div>
       <div class="p-8 rounded-2xl border-2 border-gray-100 hover:border-industrial-blue transition-colors group">
@@ -320,7 +338,7 @@ h1,h2,h3,h4 { font-family: 'Bricolage Grotesque', sans-serif; }
         <div class="flex items-baseline gap-1 mb-6"><span class="text-4xl font-display font-extrabold">R$&nbsp;49</span><span class="text-gray-400 text-sm">/m&ecirc;s</span></div>
         <ul class="space-y-3 mb-8 text-sm">
           <li class="flex items-center gap-2.5 text-gray-700"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1e3a8a" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>At&eacute; 10 funcion&aacute;rios</li>
-          <li class="flex items-center gap-2.5 text-gray-700"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1e3a8a" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>QR Code de valida&ccedil;&atilde;o</li>
+          <li class="flex items-center gap-2.5 text-gray-700"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1e3a8a" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg><span class="qr-text">QR Code</span> de valida&ccedil;&atilde;o</li>
           <li class="flex items-center gap-2.5 text-gray-700"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1e3a8a" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Dashboard b&aacute;sico</li>
           <li class="flex items-center gap-2.5 text-gray-400"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>Alertas por e-mail</li>
           <li class="flex items-center gap-2.5 text-gray-400"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>Importa&ccedil;&atilde;o CSV</li>
@@ -335,7 +353,7 @@ h1,h2,h3,h4 { font-family: 'Bricolage Grotesque', sans-serif; }
         <div class="flex items-baseline gap-1 mb-6"><span class="text-4xl font-display font-extrabold text-white">R$&nbsp;179</span><span class="text-blue-300 text-sm">/m&ecirc;s</span></div>
         <ul class="space-y-3 mb-8 text-sm">
           <li class="flex items-center gap-2.5 text-blue-100"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#facc15" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>At&eacute; 100 funcion&aacute;rios</li>
-          <li class="flex items-center gap-2.5 text-blue-100"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#facc15" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>QR Code de valida&ccedil;&atilde;o</li>
+          <li class="flex items-center gap-2.5 text-blue-100"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#facc15" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg><span class="qr-text">QR Code</span> de valida&ccedil;&atilde;o</li>
           <li class="flex items-center gap-2.5 text-blue-100"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#facc15" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Dashboard completo</li>
           <li class="flex items-center gap-2.5 text-blue-100"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#facc15" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Alertas por e-mail (30/15/7d)</li>
           <li class="flex items-center gap-2.5 text-blue-100"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#facc15" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Importa&ccedil;&atilde;o CSV</li>
@@ -351,7 +369,7 @@ h1,h2,h3,h4 { font-family: 'Bricolage Grotesque', sans-serif; }
         <div class="flex items-baseline gap-1 mb-6"><span class="text-4xl font-display font-extrabold">R$&nbsp;349</span><span class="text-gray-400 text-sm">/m&ecirc;s</span></div>
         <ul class="space-y-3 mb-8 text-sm">
           <li class="flex items-center gap-2.5 text-gray-700"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1e3a8a" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>At&eacute; 300 funcion&aacute;rios</li>
-          <li class="flex items-center gap-2.5 text-gray-700"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1e3a8a" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>QR Code de valida&ccedil;&atilde;o</li>
+          <li class="flex items-center gap-2.5 text-gray-700"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1e3a8a" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg><span class="qr-text">QR Code</span> de valida&ccedil;&atilde;o</li>
           <li class="flex items-center gap-2.5 text-gray-700"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1e3a8a" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Dashboard completo</li>
           <li class="flex items-center gap-2.5 text-gray-700"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1e3a8a" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Alertas por e-mail (30/15/7d)</li>
           <li class="flex items-center gap-2.5 text-gray-700"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1e3a8a" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Importa&ccedil;&atilde;o CSV</li>
@@ -368,7 +386,7 @@ h1,h2,h3,h4 { font-family: 'Bricolage Grotesque', sans-serif; }
         <p class="text-xs text-gray-400 mb-5">Valor escal&aacute;vel conforme o n&uacute;mero de funcion&aacute;rios</p>
         <ul class="space-y-3 mb-8 text-sm">
           <li class="flex items-center gap-2.5 text-gray-700"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1e3a8a" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Acima de 800 funcion&aacute;rios</li>
-          <li class="flex items-center gap-2.5 text-gray-700"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1e3a8a" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>QR Code de valida&ccedil;&atilde;o</li>
+          <li class="flex items-center gap-2.5 text-gray-700"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1e3a8a" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg><span class="qr-text">QR Code</span> de valida&ccedil;&atilde;o</li>
           <li class="flex items-center gap-2.5 text-gray-700"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1e3a8a" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Dashboard completo</li>
           <li class="flex items-center gap-2.5 text-gray-700"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1e3a8a" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Alertas por e-mail (30/15/7d)</li>
           <li class="flex items-center gap-2.5 text-gray-700"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1e3a8a" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Importa&ccedil;&atilde;o CSV</li>
@@ -391,35 +409,35 @@ h1,h2,h3,h4 { font-family: 'Bricolage Grotesque', sans-serif; }
     <div class="space-y-3" id="faq-list">
       <div class="faq-item open border border-gray-200 rounded-2xl overflow-hidden">
         <button class="faq-btn w-full text-left px-6 py-5 flex items-center justify-between gap-4 font-display font-bold text-base hover:bg-gray-50 transition-colors" aria-expanded="true">
-          Funciona em qualquer empresa?
+          <span class="flex-1 min-w-0">Funciona em qualquer empresa?</span>
           <svg class="faq-icon flex-shrink-0 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         </button>
         <div class="faq-answer open px-6 pb-5 text-sm text-gray-600 leading-relaxed">Sim. O sistema &eacute; gen&eacute;rico para qualquer setor que precise controlar NRs: ind&uacute;stria, constru&ccedil;&atilde;o civil, minera&ccedil;&atilde;o, log&iacute;stica, servi&ccedil;os de terceiriza&ccedil;&atilde;o.</div>
       </div>
       <div class="faq-item border border-gray-200 rounded-2xl overflow-hidden">
         <button class="faq-btn w-full text-left px-6 py-5 flex items-center justify-between gap-4 font-display font-bold text-base hover:bg-gray-50 transition-colors" aria-expanded="false">
-          Como funciona a valida&ccedil;&atilde;o por QR Code na fiscaliza&ccedil;&atilde;o?
+          <span class="flex-1 min-w-0">Como funciona a valida&ccedil;&atilde;o por <span class="qr-text">QR Code</span> na fiscaliza&ccedil;&atilde;o?</span>
           <svg class="faq-icon flex-shrink-0 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         </button>
-        <div class="faq-answer px-6 pb-5 text-sm text-gray-600 leading-relaxed">Cada certificado tem um QR Code &uacute;nico. O fiscal escaneia com qualquer c&acirc;mera &mdash; sem baixar app. O link abre uma p&aacute;gina p&uacute;blica que mostra os dados do certificado e o status.</div>
+        <div class="faq-answer px-6 pb-5 text-sm text-gray-600 leading-relaxed">Cada certificado tem um <span class="qr-text">QR Code</span> &uacute;nico. O fiscal escaneia com qualquer c&acirc;mera &mdash; sem baixar app. O link abre uma p&aacute;gina p&uacute;blica que mostra os dados do certificado e o status.</div>
       </div>
       <div class="faq-item border border-gray-200 rounded-2xl overflow-hidden">
         <button class="faq-btn w-full text-left px-6 py-5 flex items-center justify-between gap-4 font-display font-bold text-base hover:bg-gray-50 transition-colors" aria-expanded="false">
-          Preciso instalar algum app?
+          <span class="flex-1 min-w-0">Preciso instalar algum app?</span>
           <svg class="faq-icon flex-shrink-0 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         </button>
         <div class="faq-answer px-6 pb-5 text-sm text-gray-600 leading-relaxed">N&atilde;o. Nem para o administrador, nem para o colaborador, nem para o fiscal. Tudo funciona direto no navegador.</div>
       </div>
       <div class="faq-item border border-gray-200 rounded-2xl overflow-hidden">
         <button class="faq-btn w-full text-left px-6 py-5 flex items-center justify-between gap-4 font-display font-bold text-base hover:bg-gray-50 transition-colors" aria-expanded="false">
-          Como importo os certificados que j&aacute; tenho hoje?
+          <span class="flex-1 min-w-0">Como importo os certificados que j&aacute; tenho hoje?</span>
           <svg class="faq-icon flex-shrink-0 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         </button>
         <div class="faq-answer px-6 pb-5 text-sm text-gray-600 leading-relaxed">Disponibilizamos um modelo de planilha CSV. Voc&ecirc; preenche com os dados que j&aacute; tem e importa de uma vez. Em 10 minutos uma empresa com 50 funcion&aacute;rios j&aacute; est&aacute; toda cadastrada.</div>
       </div>
       <div class="faq-item border border-gray-200 rounded-2xl overflow-hidden">
         <button class="faq-btn w-full text-left px-6 py-5 flex items-center justify-between gap-4 font-display font-bold text-base hover:bg-gray-50 transition-colors" aria-expanded="false">
-          Posso cancelar quando quiser?
+          <span class="flex-1 min-w-0">Posso cancelar quando quiser?</span>
           <svg class="faq-icon flex-shrink-0 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         </button>
         <div class="faq-answer px-6 pb-5 text-sm text-gray-600 leading-relaxed">Sim. Sem multa, sem fidelidade. Voc&ecirc; cancela pelo painel a qualquer momento. Os dados ficam dispon&iacute;veis por 30 dias ap&oacute;s o cancelamento para exportar.</div>
@@ -445,8 +463,8 @@ h1,h2,h3,h4 { font-family: 'Bricolage Grotesque', sans-serif; }
     <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-10 mb-12">
       <div>
         <a href="index.php" class="flex items-center gap-2.5 mb-4">
-          <div class="w-7 h-7 rounded-full bg-industrial-blue flex items-center justify-center"><div class="w-2.5 h-2.5 rounded-full bg-industrial-yellow"></div></div>
-          <span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700" class="text-white text-sm">QRCertify</span>
+          <img src="public/assets/logo-qrcertify.svg" alt="QRCertify" class="w-9 h-9 flex-shrink-0">
+          <span class="qrc-wordmark text-white text-sm">QRCertify</span>
         </a>
         <p class="text-sm leading-relaxed mb-5">Gest&atilde;o digital de certificados de NR. Sem papel, sem planilha, sem multa.</p>
         <a href="https://www.instagram.com/qrcertifytech/" target="_blank" rel="noopener" aria-label="Instagram QRCertify"

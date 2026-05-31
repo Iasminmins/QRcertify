@@ -47,6 +47,18 @@ body {
     gap: 1rem;
 }
 
+.brand-logo {
+    display: block;
+    flex-shrink: 0;
+    object-fit: contain;
+}
+
+.brand-logo-header,
+.brand-logo-sidebar {
+    width: 2rem;
+    height: 2rem;
+}
+
 /* ════════════════════════════════════════════════════════════
    SIDEBAR
    ════════════════════════════════════════════════════════════ */

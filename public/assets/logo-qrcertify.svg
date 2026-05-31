@@ -1,0 +1,7 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">QRCertify</title>
+  <desc id="desc">Marca em formato de Q azul com centro amarelo do QRCertify</desc>
+  <circle cx="30" cy="30" r="24" fill="#1E3A8A"/>
+  <path d="M43 43L51 51" stroke="#1E3A8A" stroke-width="8" stroke-linecap="round"/>
+  <circle cx="30" cy="30" r="12" fill="#FACC15"/>
+</svg>

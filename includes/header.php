@@ -22,6 +22,7 @@ if ($user) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= e($pageTitle) ?> | <?= e(SITE_NAME) ?></title>
+    <link rel="icon" type="image/svg+xml" href="<?= BASE_URL ?>/public/assets/logo-qrcertify.svg">
 
     <!-- Tailwind CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -62,10 +63,10 @@ if ($user) {
     </button>
 
     <!-- Logo + nome do sistema -->
-    <a href="<?= $logoHref ?>" class="flex items-center gap-2.5 flex-shrink-0 text-decoration-none">
-        <div class="h-8 w-8 rounded-full bg-industrial-blue flex items-center justify-center shadow-sm">
-            <div class="h-4 w-4 rounded-full bg-industrial-yellow"></div>
-        </div>
+    <a href="<?= $logoHref ?>" class="flex items-center gap-2.5 flex-shrink-0 no-underline">
+        <img src="<?= BASE_URL ?>/public/assets/logo-qrcertify.svg"
+             alt="QRCertify"
+             class="brand-logo brand-logo-header">
         <span class="text-base font-bold text-gray-800 hidden sm:block leading-none">
             QRCertify
         </span>

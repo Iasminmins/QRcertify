@@ -41,9 +41,9 @@ $base = BASE_URL;
 
     <!-- Brand no topo da sidebar (desktop) -->
     <div class="flex items-center gap-3 px-4 py-4 border-b border-gray-100 flex-shrink-0">
-        <div class="h-8 w-8 rounded-full bg-industrial-blue flex items-center justify-center flex-shrink-0 shadow-sm">
-            <div class="h-4 w-4 rounded-full bg-industrial-yellow"></div>
-        </div>
+        <img src="<?= BASE_URL ?>/public/assets/logo-qrcertify.svg"
+             alt="QRCertify"
+             class="brand-logo brand-logo-sidebar">
         <span class="sidebar-brand-text text-sm font-bold text-gray-700 leading-tight transition-all duration-200">
             QRCertify
         </span>
