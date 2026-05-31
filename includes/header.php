@@ -66,7 +66,8 @@ if ($user) {
     <a href="<?= $logoHref ?>" class="flex items-center gap-2.5 flex-shrink-0 no-underline">
         <img src="<?= BASE_URL ?>/public/assets/logo-qrcertify.svg"
              alt="QRCertify"
-             class="brand-logo brand-logo-header">
+             class="brand-logo brand-logo-header"
+             style="width:2rem;height:2rem;max-width:2rem;max-height:2rem;object-fit:contain">
         <span class="text-base font-bold text-gray-800 hidden sm:block leading-none">
             QRCertify
         </span>

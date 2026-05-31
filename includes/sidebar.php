@@ -43,7 +43,8 @@ $base = BASE_URL;
     <div class="flex items-center gap-3 px-4 py-4 border-b border-gray-100 flex-shrink-0">
         <img src="<?= BASE_URL ?>/public/assets/logo-qrcertify.svg"
              alt="QRCertify"
-             class="brand-logo brand-logo-sidebar">
+             class="brand-logo brand-logo-sidebar"
+             style="width:2rem;height:2rem;max-width:2rem;max-height:2rem;object-fit:contain">
         <span class="sidebar-brand-text text-sm font-bold text-gray-700 leading-tight transition-all duration-200">
             QRCertify
         </span>
