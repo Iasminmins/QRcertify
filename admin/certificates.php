@@ -182,7 +182,7 @@ require_once __DIR__ . '/../includes/sidebar.php';
         'expired'  => '#dc2626',
         default    => '#64748b',
     };
-    $qrUrl = generateQRCodeUrl(getCertificatePublicUrl($cert['hash']), 120);
+    $qrImgSrc = BASE_URL . '/public/qr.php?size=120&data=' . urlencode(getCertificatePublicUrl($cert['hash']));
     $empInitials = strtoupper(mb_substr($cert['employee_name'], 0, 1));
 ?>
 <div style="background:#fff;border:1px solid #e2e8f0;border-radius:.75rem;overflow:hidden;
@@ -251,8 +251,7 @@ require_once __DIR__ . '/../includes/sidebar.php';
 
         <!-- QR Code centralizado -->
         <div style="display:flex;justify-content:center;align-items:center;padding:.5rem 0 .25rem;border-top:1px solid #f1f5f9">
-            <img src="<?= e($qrUrl) ?>" alt="QR Code"
-                 style="width:90px;height:90px;object-fit:contain">
+            <img src="<?= e($qrImgSrc) ?>" alt="QR Code" width="120" height="120" style="display:block">
         </div>
     </div>
 </div>

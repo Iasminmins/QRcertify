@@ -105,16 +105,34 @@ function getEmployeePublicUrl(int $employeeId): string {
 }
 
 /**
- * Gera URL da imagem de um QR Code usando a API gratuita do qrserver.com.
- * Não precisa instalar nada, funciona em qualquer hospedagem com PHP.
+ * Gera QR Code em SVG localmente (sem dependência externa).
+ * Retorna uma string SVG pronta para uso como src em data URI ou inline.
+ */
+function generateQRCodeSvg(string $data, int $size = 200, string $dark = '#000000', string $light = '#ffffff'): string {
+    require_once __DIR__ . '/qrcode.php';
+    try {
+        return QRCode::svg($data, $size, $dark, $light);
+    } catch (\Throwable $e) {
+        // Fallback: quadrado placeholder
+        return '<svg xmlns="http://www.w3.org/2000/svg" width="' . $size . '" height="' . $size . '"><rect width="100%" height="100%" fill="#f3f4f6"/><text x="50%" y="50%" text-anchor="middle" fill="#9ca3af" font-size="12" dy=".3em">QR Code</text></svg>';
+    }
+}
+
+/**
+ * Gera data URI de um QR Code SVG — pode ser usado direto em <img src="...">.
+ */
+function generateQRCodeDataUri(string $data, int $size = 200): string {
+    $svg = generateQRCodeSvg($data, $size);
+    return 'data:image/svg+xml;base64,' . base64_encode($svg);
+}
+
+/**
+ * Gera URL da imagem de um QR Code.
+ * Usa gerador local (SVG puro) como data URI — sem dependência externa.
+ * Mantido por compatibilidade com código existente que usa <img src="...">.
  */
 function generateQRCodeUrl(string $data, int $size = 200): string {
-    $params = http_build_query([
-        'data' => $data,
-        'size' => $size . 'x' . $size,
-        'margin' => 1,
-    ]);
-    return 'https://api.qrserver.com/v1/create-qr-code/?' . $params;
+    return generateQRCodeDataUri($data, $size);
 }
 
 /**

@@ -29,8 +29,8 @@ $expiringCount = count(array_filter($certificates, fn($c) => $c['status'] === 'e
 $expiredCount  = count(array_filter($certificates, fn($c) => $c['status'] === 'expired'));
 
 // QR Code da carteira pessoal
-$employeeQrUrl = $employee
-    ? generateQRCodeUrl(getEmployeePublicUrl((int)$employee['id']), 180)
+$employeeQrSrc = $employee
+    ? BASE_URL . '/public/qr.php?size=112&data=' . urlencode(getEmployeePublicUrl((int)$employee['id']))
     : '';
 
 $pageTitle = 'Meus Certificados';
@@ -104,7 +104,7 @@ require_once __DIR__ . '/../includes/sidebar.php';
         <div class="section-card flex flex-col items-center justify-center p-5 text-center">
             <p class="text-sm font-semibold text-gray-700 mb-3">Minha Carteira Digital</p>
             <div class="p-2.5 border-2 border-gray-200 rounded-xl bg-white shadow-sm inline-block mb-3">
-                <img src="<?= e($employeeQrUrl) ?>" alt="QR Code" class="w-28 h-28 object-contain">
+                <img src="<?= e($employeeQrSrc) ?>" alt="QR Code" width="112" height="112" style="display:block">
             </div>
             <p class="text-xs text-gray-500 mb-3">Compartilhe este QR Code para mostrar todos os seus certificados</p>
             <a href="<?= getEmployeePublicUrl((int)$employee['id']) ?>" target="_blank"

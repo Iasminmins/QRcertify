@@ -84,7 +84,7 @@ $debugLine = date('Y-m-d H:i:s')
     . ' cus='    . ($customerId        ?? 'NULL')
     . ' ref='    . ($externalReference ?? 'NULL')
     . "\n";
-@file_put_contents(__DIR__ . '/webhook-debug.log', $debugLine, FILE_APPEND);
+@file_put_contents(__DIR__ . '/logs/webhook-debug.log', $debugLine, FILE_APPEND);
 
 // Tenta resolver company pelo externalReference
 $companyIdFromRef = null;

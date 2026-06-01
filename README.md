@@ -18,7 +18,7 @@ Sistema de carteiras digitais para certificados industriais (NRs, ISO, CIPA) com
 - **PHP 7.4+** (compatível até PHP 8.x)
 - **MySQL / MariaDB** (Hostinger)
 - **Tailwind CSS** via CDN (sem build, funciona em qualquer hospedagem)
-- **API gratuita do qrserver.com** para gerar imagens de QR Code
+- **chillerlan/php-qrcode** para gerar QR Codes localmente (sem dependência externa)
 - **PDO** para acesso ao banco (com prepared statements — protege contra SQL Injection)
 - **Sessões PHP** + CSRF token para segurança
 
@@ -146,7 +146,7 @@ O projeto já vem com:
 
 1. **Certificado individual:** hash único → `public/certificate.php?hash=XXXX` (validação de uma NR)
 2. **Carteira do colaborador:** hash público do funcionário → `public/employee.php?hash=XXXX` (todos os certificados)
-3. Imagens do QR via API [qrserver.com](https://goqr.me/api/) (requer internet no servidor)
+3. Imagens do QR geradas **localmente** via biblioteca `chillerlan/php-qrcode` — sem dependência externa, funciona offline
 4. Links antigos com `?id=` redirecionam automaticamente para o hash seguro
 
 ## 🎨 Customização
@@ -173,7 +173,7 @@ Catálogo centralizado em `includes/plans.php`.
 - API REST para integrações externas
 - Relatórios em PDF
 - Filiais / multi-unidade por empresa
-- QR Code gerado localmente (sem API externa)
+- QR Code gerado localmente (✅ feito — biblioteca chillerlan/php-qrcode)
 - Testes automatizados (PHPUnit)
 
 ## ⚙️ Requisitos do servidor
@@ -199,7 +199,7 @@ error_reporting(E_ALL);
 ```
 
 **QR Code não aparece**
-→ A API do qrserver.com precisa de internet pra funcionar. Se o servidor da Hostinger tiver bloqueio de saída (raro), instale a biblioteca [endroid/qr-code](https://github.com/endroid/qr-code) via Composer.
+→ Verifique se a pasta `vendor/` foi enviada junto com os arquivos. Ela contém a biblioteca de geração local de QR Code. Sem ela os QR Codes não funcionam.
 
 ---
 

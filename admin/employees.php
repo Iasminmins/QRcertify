@@ -279,9 +279,9 @@ require_once __DIR__ . '/../includes/sidebar.php';
 </div>
 <?php endif; ?>
 
-<!-- ══════════════════════════════════════════════════════
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
      MODAL: QR Code do colaborador
-     ══════════════════════════════════════════════════════ -->
+     â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
 <div id="modal-qr" style="display:none;position:fixed;inset:0;z-index:9000;
      background:rgba(0,0,0,.5);backdrop-filter:blur(4px);
      align-items:center;justify-content:center;padding:1rem">
@@ -321,9 +321,9 @@ require_once __DIR__ . '/../includes/sidebar.php';
     </div>
 </div>
 
-<!-- ══════════════════════════════════════════════════════
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
      MODAL: Carteirinha de Autorização
-     ══════════════════════════════════════════════════════ -->
+     â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
 <div id="modal-carteirinha" style="display:none;position:fixed;inset:0;z-index:9000;
      background:rgba(0,0,0,.55);backdrop-filter:blur(4px);
      overflow:hidden;padding:1.25rem;align-items:flex-start;justify-content:center">
@@ -442,7 +442,7 @@ require_once __DIR__ . '/../includes/sidebar.php';
                                 padding:.5rem .6rem;font-size:.6rem;text-align:center;height:100%">
                         <div style="font-weight:700;color:#b45309;margin-bottom:.25rem">RAMAIS DE EMERGÊNCIA</div>
                         <div style="color:#78350f;line-height:1.8">
-                            SESMT: <?= e($company['emergency_sesmt'] ?: ($company['phone'] ?? '—')) ?><br>
+                            SESMT: <?= e($company['emergency_sesmt'] ?: ($company['phone'] ?? 'â€”')) ?><br>
                             Bombeiro: <strong><?= e($company['emergency_bombeiro'] ?? '193') ?></strong>
                             &nbsp;&nbsp; SAMU: <strong><?= e($company['emergency_samu'] ?? '192') ?></strong>
                             &nbsp;&nbsp; Polícia: <strong><?= e($company['emergency_policia'] ?? '190') ?></strong>
@@ -453,7 +453,7 @@ require_once __DIR__ . '/../includes/sidebar.php';
             </div><!-- /carteirinha-preview -->
         </div>
 
-        <!-- Botões SEMPRE visíveis (flex-shrink:0) -->
+        <!-- Botões SEMPRE visÃ­veis (flex-shrink:0) -->
         <div style="display:flex;gap:.5rem;padding:1rem 1.25rem;border-top:1px solid #f1f5f9;
                     flex-shrink:0;flex-wrap:wrap;background:#fff">
             <button onclick="closeModal('modal-carteirinha')" class="btn btn-secondary" style="font-size:.8rem">Fechar</button>
@@ -482,22 +482,22 @@ require_once __DIR__ . '/../includes/sidebar.php';
     </div>
 </div>
 
-<!-- ══════════════════════════════════════════════════════
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
      PAGINAÇÃO
-     ══════════════════════════════════════════════════════ -->
+     â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
 <?= $pag['html'] ?>
 
-<!-- ══════════════════════════════════════════════════════
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
      JAVASCRIPT
-     ══════════════════════════════════════════════════════ -->
+     â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
 <script>
-// Dados de todos os funcionários (PHP → JS)
+// Dados de todos os funcionários (PHP â†’ JS)
 const EMP_DATA = <?= json_encode($empData, JSON_UNESCAPED_UNICODE) ?>;
 const COMPANY_LOGO = <?= json_encode(!empty($company['logo']) ? BASE_URL . '/' . ltrim($company['logo'], '/') : '') ?>;
 
 let _currentQrUrl = '';
 
-/* ── Utilitários de modal ─────────────────────────────── */
+/* â”€â”€ Utilitários de modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 function openModal(id) {
     const el = document.getElementById(id);
     el.style.display = 'flex';
@@ -520,7 +520,7 @@ document.addEventListener('keydown', e => {
     }
 });
 
-/* ── Modal QR Code ────────────────────────────────────── */
+/* â”€â”€ Modal QR Code â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 let _currentQrEmpName = '';
 
 function showQrModal(empId, name) {
@@ -535,8 +535,7 @@ function showQrModal(empId, name) {
     document.getElementById('qr-modal-url').textContent  = url;
     document.getElementById('qr-open-link').href         = url;
 
-    const qrSrc = 'https://api.qrserver.com/v1/create-qr-code/?data='
-                + encodeURIComponent(url) + '&size=160x160&margin=1';
+    const qrSrc = '<?= BASE_URL ?>/public/qr.php?size=160&data=' + encodeURIComponent(url);
     document.getElementById('qr-modal-img').src = qrSrc;
 
     openModal('modal-qr');
@@ -554,8 +553,7 @@ async function downloadQrCode() {
     const img  = document.getElementById('qr-modal-img');
     const name = (_currentQrEmpName || 'colaborador').replace(/\s+/g, '-').toLowerCase();
     // Versão maior para download
-    const largeSrc = 'https://api.qrserver.com/v1/create-qr-code/?data='
-                   + encodeURIComponent(_currentQrUrl) + '&size=400x400&margin=2';
+    const largeSrc = '<?= BASE_URL ?>/public/qr.php?size=400&data=' + encodeURIComponent(_currentQrUrl);
     try {
         const resp = await fetch(largeSrc);
         const blob = await resp.blob();
@@ -572,7 +570,7 @@ async function downloadQrCode() {
     }
 }
 
-/* ── Modal Carteirinha ────────────────────────────────── */
+/* â”€â”€ Modal Carteirinha â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 function openCarteirinha(empId) {
     const emp = EMP_DATA[empId];
     if (!emp) return;
@@ -610,7 +608,7 @@ function openCarteirinha(empId) {
         nrContainer.innerHTML = '<div style="font-size:.65rem;color:#94a3b8;padding:.25rem;text-align:center">Nenhum certificado</div>';
     } else {
         nrContainer.innerHTML = emp.certs.map(c => {
-            const dateStr = c.expiry_date ? formatDateBR(c.expiry_date) : '—';
+            const dateStr = c.expiry_date ? formatDateBR(c.expiry_date) : 'â€”';
             const color = c.status === 'expired' ? '#ef4444' : c.status === 'expiring' ? '#f59e0b' : '#16a34a';
             return '<div style="display:flex;align-items:center;gap:.3rem;padding:.15rem .25rem;'
                  + 'border-bottom:1px solid #f1f5f9;font-size:.65rem">'
@@ -623,8 +621,7 @@ function openCarteirinha(empId) {
     }
 
     // QR Code da carteira
-    const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?data='
-                + encodeURIComponent(emp.qr_url) + '&size=90x90&margin=1';
+    const qrUrl = '<?= BASE_URL ?>/public/qr.php?size=90&data=' + encodeURIComponent(emp.qr_url);
     document.getElementById('cart-qr-img').src = qrUrl;
 
     openModal('modal-carteirinha');
@@ -645,8 +642,7 @@ function showCarteirinhaQr() {
     document.getElementById('qr-modal-url').textContent  = dataUrl;
     document.getElementById('qr-open-link').href         = dataUrl;
 
-    const qrSrc = 'https://api.qrserver.com/v1/create-qr-code/?data='
-                + encodeURIComponent(dataUrl) + '&size=160x160&margin=1';
+    const qrSrc = '<?= BASE_URL ?>/public/qr.php?size=160&data=' + encodeURIComponent(dataUrl);
     document.getElementById('qr-modal-img').src = qrSrc;
 
     closeModal('modal-carteirinha');
@@ -656,7 +652,7 @@ function showCarteirinhaQr() {
 async function downloadCarteirinhaAsPdf() {
     const btn = document.getElementById('btn-pdf');
     const origText = btn.innerHTML;
-    btn.innerHTML  = '⏳ Gerando PDF...';
+    btn.innerHTML  = 'â³ Gerando PDF...';
     btn.disabled   = true;
 
     try {
@@ -706,9 +702,9 @@ function printCarteirinha() {
     win.document.close();
 }
 
-/* ── Helpers ────────────────────────────────────────────  */
+/* â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€  */
 function formatDateBR(str) {
-    if (!str) return '—';
+    if (!str) return 'â€”';
     const [y, m, d] = str.split('-');
     return d + '/' + m + '/' + y;
 }
