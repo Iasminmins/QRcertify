@@ -377,20 +377,76 @@ function uploadFile(array $fileInput, string $type, ?string $oldPath = null): ar
 }
 
 /**
- * Registra uma entrada no log de auditoria.
+ * Registra uma entrada no log de auditoria (versão aprimorada).
+ *
+ * @param string      $action      Código da ação: employee.create, cert.delete, etc.
+ * @param string      $module      Módulo: colaboradores, certificados, aso, relatorios, etc.
+ * @param string      $description Descrição legível: "Amanda criou o colaborador João."
+ * @param string      $target      Identificador legível do alvo: "employee #42"
+ * @param string      $detail      JSON legado (mantido para compatibilidade)
+ * @param string|null $entityType  Tipo da entidade: employee, certificate, aso, etc.
+ * @param int|null    $entityId    ID da entidade afetada
+ * @param string|null $entityName  Nome legível da entidade
+ * @param array|null  $oldValues   Valores antes da alteração
+ * @param array|null  $newValues   Valores depois da alteração
  */
-function auditLog(string $action, string $target = '', string $detail = ''): void {
+function auditLog(
+    string  $action,
+    string  $target      = '',
+    string  $detail      = '',
+    string  $module      = '',
+    string  $description = '',
+    ?string $entityType  = null,
+    ?int    $entityId    = null,
+    ?string $entityName  = null,
+    ?array  $oldValues   = null,
+    ?array  $newValues   = null
+): void {
     try {
-        $db = getDB();
+        $db        = getDB();
         $user      = currentUser();
         $userId    = is_array($user) ? ($user['id']         ?? null) : null;
         $companyId = is_array($user) ? ($user['company_id'] ?? null) : null;
-        $ip = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'] ?? null;
+        $userName  = is_array($user) ? ($user['name']       ?? null) : null;
+        $userEmail = is_array($user) ? ($user['email']      ?? null) : null;
+        $ip        = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'] ?? null;
+        $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? null;
+
+        // Infere módulo a partir da action se não fornecido
+        if ($module === '') {
+            $module = match(true) {
+                str_starts_with($action, 'login')      => 'autenticacao',
+                str_starts_with($action, 'logout')     => 'autenticacao',
+                str_starts_with($action, 'password')   => 'autenticacao',
+                str_starts_with($action, 'employee')   => 'colaboradores',
+                str_starts_with($action, 'cert')       => 'certificados',
+                str_starts_with($action, 'aso')        => 'aso',
+                str_starts_with($action, 'export')     => 'relatorios',
+                str_starts_with($action, 'import')     => 'importacao',
+                str_starts_with($action, 'qr')         => 'qrcode',
+                str_starts_with($action, 'settings')   => 'configuracoes',
+                str_starts_with($action, 'department') => 'areas',
+                str_starts_with($action, 'notify')     => 'notificacoes',
+                default                                => 'sistema',
+            };
+        }
+
         $stmt = $db->prepare(
-            'INSERT INTO audit_log (user_id, company_id, action, target, detail, ip)
-             VALUES (?, ?, ?, ?, ?, ?)'
+            'INSERT INTO audit_log
+             (user_id, company_id, action, target, detail, ip,
+              user_name, user_email, module, entity_type, entity_id,
+              entity_name, description, old_values, new_values, user_agent)
+             VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'
         );
-        $stmt->execute([$userId, $companyId, $action, $target, $detail ?: null, $ip]);
+        $stmt->execute([
+            $userId, $companyId, $action, $target ?: null, $detail ?: null, $ip,
+            $userName, $userEmail, $module ?: null,
+            $entityType, $entityId, $entityName,
+            $description ?: null,
+            $oldValues ? json_encode($oldValues, JSON_UNESCAPED_UNICODE) : null,
+            $newValues ? json_encode($newValues, JSON_UNESCAPED_UNICODE) : null,
+            $userAgent ? mb_substr($userAgent, 0, 500) : null,
+        ]);
     } catch (\Exception $e) {
         // Não deixa o log quebrar o fluxo principal
     }

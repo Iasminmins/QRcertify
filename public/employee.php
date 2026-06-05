@@ -59,6 +59,22 @@ if ($employee) {
     );
     $stmt->execute([$employeeId]);
     $certificates = $stmt->fetchAll();
+
+    // Busca ASO mais recente — apenas status e validade (sem dados médicos)
+    $db->prepare(
+        'UPDATE employee_asos SET document_status = CASE
+            WHEN expiration_date < CURDATE() THEN "vencido"
+            WHEN expiration_date <= DATE_ADD(CURDATE(), INTERVAL 30 DAY) THEN "vencendo"
+            ELSE "valido"
+         END WHERE employee_id = ?'
+    )->execute([$employeeId]);
+
+    $stmtAso = $db->prepare(
+        'SELECT document_status, expiration_date FROM employee_asos
+         WHERE employee_id = ? ORDER BY exam_date DESC LIMIT 1'
+    );
+    $stmtAso->execute([$employeeId]);
+    $publicAso = $stmtAso->fetch();
 }
 
 $validCount    = 0;
@@ -214,6 +230,32 @@ if (isLoggedIn()) {
             Carteira digital emitida por <?= e($employee['company_name']) ?>.
             Cada certificado possui QR Code individual para validação pelo fiscal.
         </p>
+
+        <?php if (!empty($publicAso)): ?>
+        <?php
+            $asoDocLabel = [
+                'valido'   => ['text' => 'Regular',  'class' => 'bg-green-100 text-green-800 border-green-200'],
+                'vencendo' => ['text' => 'Atenção',   'class' => 'bg-amber-100 text-amber-800 border-amber-200'],
+                'vencido'  => ['text' => 'Vencido',   'class' => 'bg-red-100 text-red-800 border-red-200'],
+            ];
+            $ad = $asoDocLabel[$publicAso['document_status']] ?? $asoDocLabel['valido'];
+        ?>
+        <div class="mt-3 max-w-lg w-full bg-white rounded-xl shadow border border-gray-200 px-4 py-3 flex items-center justify-between gap-3">
+            <div>
+                <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Saúde Ocupacional — ASO</p>
+                <p class="text-sm font-bold text-gray-900 mt-0.5">
+                    ASO: <?= $ad['text'] ?>
+                </p>
+                <p class="text-xs text-gray-500 mt-0.5">
+                    Válido até: <?= formatDate($publicAso['expiration_date']) ?>
+                </p>
+            </div>
+            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold border flex-shrink-0 <?= $ad['class'] ?>">
+                <?= $ad['text'] ?>
+            </span>
+        </div>
+        <?php endif; ?>
+
     </div>
 <?php endif; ?>
 

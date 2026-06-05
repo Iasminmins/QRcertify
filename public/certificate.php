@@ -149,7 +149,13 @@ $qrUrl = $certificate ? generateQRCodeUrl(getCertificatePublicUrl($certificate['
                     <div class="flex-1 min-w-0">
                         <h2 class="font-semibold text-base truncate"><?= e($certificate['employee_name']) ?></h2>
                         <p class="text-sm text-gray-600"><?= e($certificate['employee_role']) ?></p>
-                        <p class="text-xs text-gray-500 mt-0.5">CPF: <?= e($certificate['employee_cpf']) ?></p>
+                        <?php
+                        $cpf = preg_replace('/\D/', '', $certificate['employee_cpf'] ?? '');
+                        $cpfMask = (strlen($cpf) === 11)
+                            ? '***.' . substr($cpf, 3, 3) . '.' . substr($cpf, 6, 3) . '-**'
+                            : '***.***.***-**';
+                        ?>
+                        <p class="text-xs text-gray-500 mt-0.5">CPF: <?= e($cpfMask) ?></p>
                     </div>
                 </div>
 

@@ -1,0 +1,73 @@
+-- ============================================
+-- Migration 010: Auditoria aprimorada
+-- PARA PRODUÇÃO — seguro para rodar mesmo que
+-- algumas colunas já existam no banco
+-- ============================================
+
+DROP PROCEDURE IF EXISTS `migration_010_audit`;
+
+DELIMITER $$
+
+CREATE PROCEDURE `migration_010_audit`()
+BEGIN
+  -- Colunas
+  IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='audit_log' AND COLUMN_NAME='user_name') THEN
+    ALTER TABLE `audit_log` ADD COLUMN `user_name` VARCHAR(255) NULL AFTER `user_id`;
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='audit_log' AND COLUMN_NAME='user_email') THEN
+    ALTER TABLE `audit_log` ADD COLUMN `user_email` VARCHAR(255) NULL AFTER `user_name`;
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='audit_log' AND COLUMN_NAME='module') THEN
+    ALTER TABLE `audit_log` ADD COLUMN `module` VARCHAR(50) NULL
+      COMMENT 'autenticacao|colaboradores|certificados|aso|relatorios|importacao|qrcode|configuracoes|areas'
+      AFTER `action`;
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='audit_log' AND COLUMN_NAME='entity_type') THEN
+    ALTER TABLE `audit_log` ADD COLUMN `entity_type` VARCHAR(50) NULL AFTER `module`;
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='audit_log' AND COLUMN_NAME='entity_id') THEN
+    ALTER TABLE `audit_log` ADD COLUMN `entity_id` INT NULL AFTER `entity_type`;
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='audit_log' AND COLUMN_NAME='entity_name') THEN
+    ALTER TABLE `audit_log` ADD COLUMN `entity_name` VARCHAR(255) NULL AFTER `entity_id`;
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='audit_log' AND COLUMN_NAME='description') THEN
+    ALTER TABLE `audit_log` ADD COLUMN `description` TEXT NULL AFTER `entity_name`;
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='audit_log' AND COLUMN_NAME='old_values') THEN
+    ALTER TABLE `audit_log` ADD COLUMN `old_values` JSON NULL AFTER `description`;
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='audit_log' AND COLUMN_NAME='new_values') THEN
+    ALTER TABLE `audit_log` ADD COLUMN `new_values` JSON NULL AFTER `old_values`;
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='audit_log' AND COLUMN_NAME='user_agent') THEN
+    ALTER TABLE `audit_log` ADD COLUMN `user_agent` VARCHAR(500) NULL AFTER `ip`;
+  END IF;
+
+  -- Índices
+  IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='audit_log' AND INDEX_NAME='idx_audit_module') THEN
+    ALTER TABLE `audit_log` ADD INDEX `idx_audit_module` (`module`);
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='audit_log' AND INDEX_NAME='idx_audit_entity_type') THEN
+    ALTER TABLE `audit_log` ADD INDEX `idx_audit_entity_type` (`entity_type`);
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='audit_log' AND INDEX_NAME='idx_audit_entity_id') THEN
+    ALTER TABLE `audit_log` ADD INDEX `idx_audit_entity_id` (`entity_id`);
+  END IF;
+END$$
+
+DELIMITER ;
+
+CALL `migration_010_audit`();
+DROP PROCEDURE IF EXISTS `migration_010_audit`;

@@ -68,6 +68,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['send'])) {
 }
 
 $pageTitle = 'Notificações de Vencimento';
+
+// ── ASO: busca vencidos e vencendo ───────────────────────────────────────────
+$db->prepare(
+    'UPDATE employee_asos a
+     JOIN employees e ON e.id = a.employee_id
+     SET a.document_status = CASE
+        WHEN a.expiration_date < CURDATE() THEN "vencido"
+        WHEN a.expiration_date <= DATE_ADD(CURDATE(), INTERVAL 30 DAY) THEN "vencendo"
+        ELSE "valido"
+     END
+     WHERE e.company_id = ?'
+)->execute([$companyId]);
+
+$stmtAso = $db->prepare(
+    'SELECT a.id, a.aso_type, a.expiration_date, a.document_status,
+            e.id AS emp_id, e.name AS emp_name
+     FROM employee_asos a
+     JOIN employees e ON e.id = a.employee_id
+     WHERE e.company_id = ? AND e.status = "active"
+       AND a.document_status IN ("vencendo","vencido")
+     ORDER BY a.expiration_date ASC'
+);
+$stmtAso->execute([$companyId]);
+$asoAlerts = $stmtAso->fetchAll();
+
+$asoTypeLabels = [
+    'admissional'      => 'Admissional',
+    'periodico'        => 'Periódico',
+    'retorno_trabalho' => 'Retorno ao Trabalho',
+    'mudanca_risco'    => 'Mudança de Risco',
+    'demissional'      => 'Demissional',
+];
+
 require_once __DIR__ . '/../includes/header.php';
 require_once __DIR__ . '/../includes/sidebar.php';
 ?>
@@ -191,4 +224,46 @@ function toggleAll(v) {
 </script>
 
 <?php endif; ?>
+
+<!-- ── ALERTAS DE ASO ─────────────────────────────────────────────────────── -->
+<?php if (!empty($asoAlerts)): ?>
+<div class="mt-8">
+    <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+        <svg class="h-5 w-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+        </svg>
+        Alertas de ASO (<?= count($asoAlerts) ?>)
+    </h2>
+    <div class="space-y-3">
+        <?php foreach ($asoAlerts as $a):
+            $isVencido = $a['document_status'] === 'vencido';
+            $days = (int) round((strtotime($a['expiration_date']) - time()) / 86400);
+            $bgClass = $isVencido ? 'border-red-200 bg-red-50' : 'border-amber-200 bg-amber-50';
+            $badge   = $isVencido
+                ? '<span class="text-xs font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-700 border border-red-200">Vencido</span>'
+                : '<span class="text-xs font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 border border-amber-200">Vencendo</span>';
+            $prazo = $isVencido
+                ? 'Venceu há ' . abs($days) . ' dia' . (abs($days) === 1 ? '' : 's')
+                : 'Vence em ' . $days . ' dia' . ($days === 1 ? '' : 's');
+        ?>
+        <div class="flex items-center justify-between gap-4 border rounded-lg px-4 py-3 <?= $bgClass ?>">
+            <div class="min-w-0">
+                <p class="text-sm font-semibold text-gray-900"><?= e($a['emp_name']) ?></p>
+                <p class="text-xs text-gray-600 mt-0.5">
+                    ASO <?= e($asoTypeLabels[$a['aso_type']] ?? $a['aso_type']) ?>
+                    · <?= e($prazo) ?> · Validade: <?= formatDate($a['expiration_date']) ?>
+                </p>
+            </div>
+            <div class="flex items-center gap-2 flex-shrink-0">
+                <?= $badge ?>
+                <a href="<?= BASE_URL ?>/admin/employee-details.php?id=<?= $a['emp_id'] ?>"
+                   class="text-xs text-industrial-blue hover:underline font-medium">Ver →</a>
+            </div>
+        </div>
+        <?php endforeach; ?>
+    </div>
+</div>
+<?php endif; ?>
+
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>

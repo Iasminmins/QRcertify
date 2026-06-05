@@ -32,6 +32,30 @@ foreach ($statsQueries as $key => $sql) {
     $stats[$key] = (int) $stmt->fetchColumn();
 }
 
+// ── ASO: atualiza status e busca indicadores ──────────────────────────────────
+$db->prepare(
+    'UPDATE employee_asos a
+     JOIN employees e ON e.id = a.employee_id
+     SET a.document_status = CASE
+        WHEN a.expiration_date < CURDATE() THEN "vencido"
+        WHEN a.expiration_date <= DATE_ADD(CURDATE(), INTERVAL 30 DAY) THEN "vencendo"
+        ELSE "valido"
+     END
+     WHERE e.company_id = ?'
+)->execute([$companyId]);
+
+$asoStats = [];
+foreach ([
+    'aso_valido'   => 'SELECT COUNT(*) FROM employee_asos a JOIN employees e ON e.id=a.employee_id WHERE e.company_id=? AND a.document_status="valido"',
+    'aso_vencendo' => 'SELECT COUNT(*) FROM employee_asos a JOIN employees e ON e.id=a.employee_id WHERE e.company_id=? AND a.document_status="vencendo"',
+    'aso_vencido'  => 'SELECT COUNT(*) FROM employee_asos a JOIN employees e ON e.id=a.employee_id WHERE e.company_id=? AND a.document_status="vencido"',
+    'aso_sem'      => 'SELECT COUNT(*) FROM employees e WHERE e.company_id=? AND e.status="active" AND NOT EXISTS (SELECT 1 FROM employee_asos a WHERE a.employee_id=e.id)',
+] as $key => $sql) {
+    $stmt = $db->prepare($sql);
+    $stmt->execute([$companyId]);
+    $asoStats[$key] = (int) $stmt->fetchColumn();
+}
+
 // ── Dados para gráfico: certificados por tipo ─────────────────────────────────
 $stmtByType = $db->prepare(
     'SELECT c.type, COUNT(*) AS total
@@ -131,10 +155,10 @@ function dismissOnboarding() {
 </div>
 <?php endif; ?>
 
-<div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+<div class="mb-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
     <div>
         <h1 class="text-2xl font-bold text-gray-900">Dashboard</h1>
-        <p class="text-gray-600 mt-1">Visão geral dos certificados da empresa</p>
+        <p class="text-gray-500 text-sm mt-0.5">Visão geral de conformidade — certificados e saúde ocupacional</p>
     </div>
     <a href="<?= BASE_URL ?>/admin/certificate-form.php"
        class="inline-flex items-center gap-2 bg-industrial-blue hover:bg-blue-800 text-white px-4 py-2 rounded-lg font-medium transition w-full sm:w-auto justify-center">
@@ -148,7 +172,7 @@ function dismissOnboarding() {
 <?php renderFlashes(); ?>
 
 <!-- ── Cards de estatísticas ─────────────────────────────────────────────── -->
-<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
 
     <a href="<?= BASE_URL ?>/admin/employees.php"
        class="bg-white p-5 rounded-lg shadow-sm border hover:shadow-md hover:border-blue-200 transition group cursor-pointer">
@@ -250,6 +274,101 @@ function dismissOnboarding() {
         <?php endif; ?>
     </div>
 
+</div>
+
+<!-- ── Painel ASO — faixa horizontal ────────────────────────────────────── -->
+<?php
+$asoTotal   = $asoStats['aso_valido'] + $asoStats['aso_vencendo'] + $asoStats['aso_vencido'] + $asoStats['aso_sem'];
+$pctValido  = $asoTotal > 0 ? round($asoStats['aso_valido']   / $asoTotal * 100) : 0;
+$pctVencend = $asoTotal > 0 ? round($asoStats['aso_vencendo'] / $asoTotal * 100) : 0;
+$pctVencido = $asoTotal > 0 ? round($asoStats['aso_vencido']  / $asoTotal * 100) : 0;
+$pctSem     = $asoTotal > 0 ? round($asoStats['aso_sem']      / $asoTotal * 100) : 0;
+?>
+<div class="bg-white rounded-lg shadow-sm border mb-8 overflow-hidden">
+    <div class="px-5 py-4 flex items-center justify-between border-b">
+        <div class="flex items-center gap-2">
+            <svg class="h-4 w-4 text-industrial-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+            </svg>
+            <h2 class="text-sm font-semibold text-gray-800">Saúde Ocupacional — ASO</h2>
+        </div>
+        <a href="<?= BASE_URL ?>/admin/notify-expiring.php"
+           class="text-xs text-industrial-blue hover:underline">Ver alertas →</a>
+    </div>
+
+    <!-- Barra de proporção -->
+    <?php if ($asoTotal > 0): ?>
+    <div class="px-5 pt-4">
+        <div class="flex h-3 rounded-full overflow-hidden gap-px bg-gray-100">
+            <?php if ($pctValido  > 0): ?><div class="bg-green-500 transition-all" style="width:<?= $pctValido ?>%"  title="Válidos: <?= $asoStats['aso_valido'] ?>"></div><?php endif; ?>
+            <?php if ($pctVencend > 0): ?><div class="bg-amber-400 transition-all" style="width:<?= $pctVencend ?>%" title="Vencendo: <?= $asoStats['aso_vencendo'] ?>"></div><?php endif; ?>
+            <?php if ($pctVencido > 0): ?><div class="bg-red-500 transition-all"   style="width:<?= $pctVencido ?>%" title="Vencidos: <?= $asoStats['aso_vencido'] ?>"></div><?php endif; ?>
+            <?php if ($pctSem     > 0): ?><div class="bg-gray-300 transition-all"  style="width:<?= $pctSem ?>%"     title="Sem ASO: <?= $asoStats['aso_sem'] ?>"></div><?php endif; ?>
+        </div>
+    </div>
+    <?php endif; ?>
+
+    <!-- 4 métricas em linha -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 divide-x divide-y lg:divide-y-0 divide-gray-100">
+
+        <div class="px-5 py-4 flex items-center gap-3">
+            <div class="h-9 w-9 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                <svg class="h-4 w-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+            </div>
+            <div>
+                <p class="text-2xl font-bold text-green-600 leading-none"><?= $asoStats['aso_valido'] ?></p>
+                <p class="text-xs text-gray-500 mt-1">Válidos</p>
+                <?php if ($asoTotal > 0): ?><p class="text-[10px] text-gray-400"><?= $pctValido ?>% do total</p><?php endif; ?>
+            </div>
+        </div>
+
+        <a href="<?= BASE_URL ?>/admin/notify-expiring.php"
+           class="px-5 py-4 flex items-center gap-3 hover:bg-amber-50 transition">
+            <div class="h-9 w-9 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
+                <svg class="h-4 w-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+            </div>
+            <div>
+                <p class="text-2xl font-bold text-amber-500 leading-none"><?= $asoStats['aso_vencendo'] ?></p>
+                <p class="text-xs text-gray-500 mt-1">Vencendo</p>
+                <?php if ($asoTotal > 0): ?><p class="text-[10px] text-gray-400"><?= $pctVencend ?>% do total</p><?php endif; ?>
+            </div>
+        </a>
+
+        <a href="<?= BASE_URL ?>/admin/notify-expiring.php"
+           class="px-5 py-4 flex items-center gap-3 hover:bg-red-50 transition">
+            <div class="h-9 w-9 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+                <svg class="h-4 w-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                </svg>
+            </div>
+            <div>
+                <p class="text-2xl font-bold text-red-600 leading-none"><?= $asoStats['aso_vencido'] ?></p>
+                <p class="text-xs text-gray-500 mt-1">Vencidos</p>
+                <?php if ($asoTotal > 0): ?><p class="text-[10px] text-gray-400"><?= $pctVencido ?>% do total</p><?php endif; ?>
+            </div>
+        </a>
+
+        <a href="<?= BASE_URL ?>/admin/employees.php"
+           class="px-5 py-4 flex items-center gap-3 hover:bg-gray-50 transition">
+            <div class="h-9 w-9 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
+                <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+                </svg>
+            </div>
+            <div>
+                <p class="text-2xl font-bold text-gray-500 leading-none"><?= $asoStats['aso_sem'] ?></p>
+                <p class="text-xs text-gray-500 mt-1">Sem ASO cadastrado</p>
+                <?php if ($asoTotal > 0): ?><p class="text-[10px] text-gray-400"><?= $pctSem ?>% do total</p><?php endif; ?>
+            </div>
+        </a>
+
+    </div>
 </div>
 
 <!-- ── Certificados Recentes ──────────────────────────────────────────────── -->

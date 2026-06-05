@@ -14,6 +14,7 @@ $company = $stmtCo->fetch();
 
 $search       = trim($_GET['search'] ?? '');
 $statusFilter = $_GET['status'] ?? '';
+$deptFilter   = $_GET['department_id'] ?? '';
 
 $sql    = 'SELECT e.*,
             COUNT(c.id)                    AS cert_count,
@@ -33,6 +34,12 @@ if ($search !== '') {
 if (in_array($statusFilter, ['active', 'inactive'], true)) {
     $sql .= ' AND e.status = ?';
     $params[] = $statusFilter;
+}
+if ($deptFilter === 'none') {
+    $sql .= ' AND e.department_id IS NULL';
+} elseif (ctype_digit($deptFilter) && (int)$deptFilter > 0) {
+    $sql .= ' AND e.department_id = ?';
+    $params[] = (int)$deptFilter;
 }
 $sql .= ' GROUP BY e.id ORDER BY e.name ASC';
 
@@ -80,6 +87,23 @@ foreach ($employees as $emp) {
 }
 
 $pageTitle = 'Colaboradores';
+
+// Busca nome da área se vier filtro por department_id
+$deptFilterName = '';
+if ($deptFilter === 'none') {
+    $deptFilterName = 'Sem área definida';
+} elseif (ctype_digit($deptFilter) && (int)$deptFilter > 0) {
+    $dStmt = $db->prepare('SELECT name FROM departments WHERE id = ? AND company_id = ? LIMIT 1');
+    $dStmt->execute([(int)$deptFilter, $companyId]);
+    $dRow = $dStmt->fetch();
+    $deptFilterName = $dRow ? $dRow['name'] : '';
+}
+
+// Carrega áreas para o select do filtro
+$deptList = $db->prepare('SELECT id, name FROM departments WHERE company_id = ? ORDER BY name ASC');
+$deptList->execute([$companyId]);
+$deptList = $deptList->fetchAll();
+
 require_once __DIR__ . '/../includes/header.php';
 require_once __DIR__ . '/../includes/sidebar.php';
 ?>
@@ -88,7 +112,13 @@ require_once __DIR__ . '/../includes/sidebar.php';
 <div class="page-header">
     <div>
         <h1 class="page-title">Colaboradores</h1>
-        <p class="page-subtitle">Total de <?= $pag['total'] ?> colaboradores</p>
+        <p class="page-subtitle">
+            <?php if ($deptFilterName): ?>
+                Filtrando por área: <strong><?= e($deptFilterName) ?></strong> · <?= $pag['total'] ?> colaborador<?= $pag['total'] !== 1 ? 'es' : '' ?>
+            <?php else: ?>
+                Total de <?= $pag['total'] ?> colaboradores
+            <?php endif; ?>
+        </p>
     </div>
     <div class="flex gap-2">
         <?php if ($canImportCsv): ?>
@@ -112,7 +142,21 @@ require_once __DIR__ . '/../includes/sidebar.php';
 
 <?php renderFlashes(); ?>
 
-<!-- Filtros -->
+<?php if ($deptFilterName): ?>
+<div class="mb-4 flex items-center gap-3 bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 text-sm">
+    <svg class="h-4 w-4 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5"/>
+    </svg>
+    <span class="text-blue-800">
+        Exibindo colaboradores da área <strong><?= e($deptFilterName) ?></strong>
+    </span>
+    <a href="<?= BASE_URL ?>/admin/employees.php"
+       class="ml-auto text-xs text-blue-600 hover:text-blue-800 hover:underline flex-shrink-0">
+        Ver todos →
+    </a>
+</div>
+<?php endif; ?>
 <form method="GET" class="section-card mb-5">
     <div class="section-card-body">
         <div class="flex flex-col sm:flex-row gap-3">
@@ -131,8 +175,20 @@ require_once __DIR__ . '/../includes/sidebar.php';
                 <option value="active"   <?= $statusFilter === 'active'   ? 'selected' : '' ?>>Ativos</option>
                 <option value="inactive" <?= $statusFilter === 'inactive' ? 'selected' : '' ?>>Inativos</option>
             </select>
+            <?php if (!empty($deptList)): ?>
+            <select name="department_id" class="form-input sm:w-48">
+                <option value="">Todas as áreas</option>
+                <?php foreach ($deptList as $d): ?>
+                    <option value="<?= $d['id'] ?>"
+                        <?= $deptFilter === (string)$d['id'] ? 'selected' : '' ?>>
+                        <?= e($d['name']) ?>
+                    </option>
+                <?php endforeach; ?>
+                <option value="none" <?= $deptFilter === 'none' ? 'selected' : '' ?>>Sem área</option>
+            </select>
+            <?php endif; ?>
             <button type="submit" class="btn btn-primary whitespace-nowrap">Filtrar</button>
-            <?php if ($search || $statusFilter): ?>
+            <?php if ($search || $statusFilter || $deptFilter): ?>
                 <a href="<?= BASE_URL ?>/admin/employees.php" class="btn btn-secondary whitespace-nowrap">Limpar</a>
             <?php endif; ?>
         </div>

@@ -32,6 +32,41 @@ $validCount    = count(array_filter($certificates, fn($c) => $c['status'] === 'v
 $expiringCount = count(array_filter($certificates, fn($c) => $c['status'] === 'expiring'));
 $expiredCount  = count(array_filter($certificates, fn($c) => $c['status'] === 'expired'));
 
+// ── ASO: atualiza document_status e busca o mais recente ─────────────────────
+$db->prepare(
+    'UPDATE employee_asos
+     SET document_status = CASE
+        WHEN expiration_date < CURDATE() THEN "vencido"
+        WHEN expiration_date <= DATE_ADD(CURDATE(), INTERVAL 30 DAY) THEN "vencendo"
+        ELSE "valido"
+     END
+     WHERE employee_id = ?'
+)->execute([$id]);
+
+$stmtAso = $db->prepare(
+    'SELECT * FROM employee_asos WHERE employee_id = ? ORDER BY exam_date DESC LIMIT 1'
+);
+$stmtAso->execute([$id]);
+$aso = $stmtAso->fetch();
+
+$asoTypeLabels = [
+    'admissional'      => 'Admissional',
+    'periodico'        => 'Periódico',
+    'retorno_trabalho' => 'Retorno ao Trabalho',
+    'mudanca_risco'    => 'Mudança de Risco',
+    'demissional'      => 'Demissional',
+];
+$asoResultBadge = [
+    'apto'     => ['label' => 'Apto',     'class' => 'bg-green-100 text-green-800 border-green-200'],
+    'inapto'   => ['label' => 'Inapto',   'class' => 'bg-red-100 text-red-800 border-red-200'],
+    'pendente' => ['label' => 'Pendente', 'class' => 'bg-amber-100 text-amber-800 border-amber-200'],
+];
+$asoDocBadge = [
+    'valido'   => ['label' => 'Válido',   'class' => 'bg-green-100 text-green-800 border-green-200'],
+    'vencendo' => ['label' => 'Vencendo', 'class' => 'bg-amber-100 text-amber-800 border-amber-200'],
+    'vencido'  => ['label' => 'Vencido',  'class' => 'bg-red-100 text-red-800 border-red-200'],
+];
+
 $pageTitle = $employee['name'];
 require_once __DIR__ . '/../includes/header.php';
 require_once __DIR__ . '/../includes/sidebar.php';
@@ -172,6 +207,75 @@ require_once __DIR__ . '/../includes/sidebar.php';
             <?php endforeach; ?>
         </div>
     <?php endif; ?>
+</div>
+
+<!-- ── SAÚDE OCUPACIONAL (ASO) ────────────────────────────────────────────── -->
+<div class="section-card mt-6">
+    <div class="section-card-header flex items-center justify-between">
+        <div class="flex items-center gap-2">
+            <svg class="h-5 w-5 text-industrial-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+            </svg>
+            <h2 class="section-title">Saúde Ocupacional</h2>
+        </div>
+        <a href="<?= BASE_URL ?>/admin/aso-form.php?employee_id=<?= $id ?>"
+           class="btn btn-primary btn-sm">
+            + <?= $aso ? 'Novo ASO' : 'Adicionar ASO' ?>
+        </a>
+    </div>
+    <div class="section-card-body">
+        <?php if (!$aso): ?>
+            <p class="text-sm text-gray-400 text-center py-6">Nenhum ASO cadastrado para este colaborador.</p>
+        <?php else:
+            $rb = $asoResultBadge[$aso['result_status']] ?? $asoResultBadge['pendente'];
+            $db2= $asoDocBadge[$aso['document_status']]  ?? $asoDocBadge['valido'];
+        ?>
+        <div class="border border-gray-200 rounded-lg p-4 space-y-3">
+            <!-- Linha 1: tipo + badges -->
+            <div class="flex items-center justify-between flex-wrap gap-2">
+                <div>
+                    <p class="text-xs font-bold text-industrial-blue uppercase tracking-wider">
+                        <?= e($asoTypeLabels[$aso['aso_type']] ?? $aso['aso_type']) ?>
+                    </p>
+                    <p class="text-sm text-gray-500 mt-0.5">
+                        Exame: <?= formatDate($aso['exam_date']) ?>
+                        · Válido até: <strong><?= formatDate($aso['expiration_date']) ?></strong>
+                    </p>
+                </div>
+                <div class="flex items-center gap-2 flex-wrap">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border <?= $rb['class'] ?>">
+                        <?= $rb['label'] ?>
+                    </span>
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border <?= $db2['class'] ?>">
+                        <?= $db2['label'] ?>
+                    </span>
+                </div>
+            </div>
+
+            <!-- Médico (se houver) -->
+            <?php if (!empty($aso['doctor_name'])): ?>
+            <p class="text-xs text-gray-500">
+                Médico: <?= e($aso['doctor_name']) ?>
+                <?php if (!empty($aso['doctor_crm'])): ?> · CRM: <?= e($aso['doctor_crm']) ?><?php endif; ?>
+            </p>
+            <?php endif; ?>
+
+            <!-- Ações -->
+            <div class="flex items-center gap-2 pt-1 border-t border-gray-100">
+                <a href="<?= BASE_URL ?>/admin/aso-form.php?id=<?= $aso['id'] ?>"
+                   class="btn btn-secondary btn-sm">Editar</a>
+                <?php if (!empty($aso['file_path'])): ?>
+                <a href="<?= BASE_URL ?>/admin/aso-download.php?id=<?= $aso['id'] ?>"
+                   target="_blank" class="btn btn-secondary btn-sm">Ver Documento</a>
+                <?php endif; ?>
+                <a href="<?= BASE_URL ?>/admin/aso-delete.php?id=<?= $aso['id'] ?>"
+                   onclick="return confirm('Excluir este ASO?')"
+                   class="btn btn-danger btn-sm ml-auto">Excluir</a>
+            </div>
+        </div>
+        <?php endif; ?>
+    </div>
 </div>
 
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>
