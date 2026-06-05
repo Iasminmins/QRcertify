@@ -36,10 +36,22 @@ if (in_array($statusFilter, ['active', 'inactive'], true)) {
     $params[] = $statusFilter;
 }
 if ($deptFilter === 'none') {
-    $sql .= ' AND e.department_id IS NULL';
+    $sql .= ' AND e.department_id IS NULL AND (e.department IS NULL OR e.department = "" OR e.department NOT IN (SELECT name FROM departments WHERE company_id = e.company_id))';
 } elseif (ctype_digit($deptFilter) && (int)$deptFilter > 0) {
-    $sql .= ' AND e.department_id = ?';
-    $params[] = (int)$deptFilter;
+    // Busca o nome da área para filtrar também pelo campo department (texto)
+    $dNameStmt = $db->prepare('SELECT name FROM departments WHERE id = ? AND company_id = ? LIMIT 1');
+    $dNameStmt->execute([(int)$deptFilter, $companyId]);
+    $dNameRow = $dNameStmt->fetch();
+    $deptName = $dNameRow ? $dNameRow['name'] : '';
+
+    if ($deptName !== '') {
+        $sql .= ' AND (e.department_id = ? OR (e.department_id IS NULL AND e.department = ?))';
+        $params[] = (int)$deptFilter;
+        $params[] = $deptName;
+    } else {
+        $sql .= ' AND e.department_id = ?';
+        $params[] = (int)$deptFilter;
+    }
 }
 $sql .= ' GROUP BY e.id ORDER BY e.name ASC';
 
