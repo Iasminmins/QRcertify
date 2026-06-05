@@ -15,8 +15,8 @@
 })();
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="Gerencie certificados de NR com QR Code, alertas autom&aacute;ticos e valida&ccedil;&atilde;o p&uacute;blica. Sem papel, sem planilha, sem multa do MTE.">
-<title>QRCertify &mdash; Gest&atilde;o de Certificados de NR</title>
+<meta name="description" content="Gerencie certificados de NR e ASOs com QR Code, alertas autom&aacute;ticos e valida&ccedil;&atilde;o p&uacute;blica. Sem papel, sem planilha, sem multa do MTE.">
+<title>QRCertify &mdash; Certificados de NR e ASOs sempre em dia</title>
 <link rel="icon" type="image/svg+xml" href="public/assets/logo-qrcertify.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -144,9 +144,9 @@ header a { white-space: nowrap; }
           Adeus papelada, ol&aacute; <span class="qr-text">QR Code</span>
         </div>
         <h1 class="font-display text-5xl md:text-6xl lg:text-[5rem] font-extrabold leading-[1.05] tracking-tight mb-6">
-          Certificados<br>de NR sempre<br><span class="em-dia">em dia.</span>
+          Certificados<br>de NR e ASOs<br><span class="em-dia">em dia.</span>
         </h1>
-        <p class="text-gray-600 text-lg leading-relaxed mb-8 max-w-lg">Gerencie carteiras digitais, valide com <span class="qr-text">QR Code</span> e receba alertas antes de qualquer certificado vencer. Sem planilha, sem papel, sem multa do MTE.</p>
+        <p class="text-gray-600 text-lg leading-relaxed mb-8 max-w-lg">Gerencie certificados, ASOs e carteiras digitais com <span class="qr-text">QR Code</span>. Alertas antes de qualquer vencimento. Sem planilha, sem papel, sem multa do MTE.</p>
         <div class="flex flex-col sm:flex-row gap-3 mb-4">
           <a href="checkout.php" class="bg-industrial-blue text-white font-semibold px-6 py-3.5 rounded-xl hover:bg-blue-900 transition-colors text-center text-sm">Come&ccedil;ar gr&aacute;tis por 30 dias</a>
           <a href="#como-funciona" class="text-gray-700 font-medium px-6 py-3.5 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors text-center text-sm">Ver demonstra&ccedil;&atilde;o &rarr;</a>
@@ -165,7 +165,11 @@ header a { white-space: nowrap; }
                 <div style="width:88px;height:88px;margin:0 auto 6px;background:repeating-linear-gradient(0deg,#1e3a8a 0px,#1e3a8a 6px,transparent 6px,transparent 12px),repeating-linear-gradient(90deg,#1e3a8a 0px,#1e3a8a 6px,transparent 6px,transparent 12px);background-size:12px 12px;border-radius:4px;opacity:.85;"></div>
                 <div class="flex items-center gap-1.5 justify-center"><div class="w-2 h-2 rounded-full bg-green-400"></div><span class="text-[7px] text-green-600 font-semibold">Autenticado</span></div>
               </div>
-              <div class="qr-block" style="opacity:.7"><div class="text-[8px] font-semibold text-gray-700">NR-35 &middot; V&Aacute;LIDO</div><div class="text-[7px] text-gray-400">V&aacute;lido at&eacute; 20/03/2026</div></div>
+              <div class="qr-block" style="opacity:.75"><div class="text-[8px] font-semibold text-gray-700">NR-35 &middot; V&Aacute;LIDO</div><div class="text-[7px] text-gray-400">V&aacute;lido at&eacute; 20/03/2026</div></div>
+              <div class="qr-block" style="background:#f0fdf4;border:1px solid #bbf7d0">
+                <div class="text-[8px] font-semibold text-green-700">ASO Peri&oacute;dico &middot; APTO</div>
+                <div class="text-[7px] text-green-500">V&aacute;lido at&eacute; 10/08/2026</div>
+              </div>
               <div class="qr-block" style="opacity:.5;background:#fff5f5"><div class="text-[8px] font-semibold text-red-600">NR-11 &middot; VENCENDO</div><div class="text-[7px] text-red-400">Vence em 10/12/2025</div></div>
             </div>
           </div>
@@ -197,6 +201,7 @@ header a { white-space: nowrap; }
       <span class="inline-flex items-center gap-1.5 bg-green-50 text-green-700 text-xs font-bold px-3 py-1.5 rounded-full border border-green-100">CIPA</span>
       <span class="inline-flex items-center gap-1.5 bg-green-50 text-green-700 text-xs font-bold px-3 py-1.5 rounded-full border border-green-100">PPRA</span>
       <span class="inline-flex items-center gap-1.5 bg-green-50 text-green-700 text-xs font-bold px-3 py-1.5 rounded-full border border-green-100">PCMSO</span>
+      <span class="inline-flex items-center gap-1.5 bg-green-50 text-green-700 text-xs font-bold px-3 py-1.5 rounded-full border border-green-100">ASO</span>
       <span class="inline-flex items-center gap-1.5 bg-gray-100 text-gray-600 text-xs font-bold px-3 py-1.5 rounded-full border border-gray-200">+ Personalizado</span>
     </div>
   </div>
@@ -215,8 +220,8 @@ header a { white-space: nowrap; }
         <div class="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center mb-5">
           <svg width="24" height="24" fill="none" stroke="#1e3a8a" stroke-width="1.5" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
         </div>
-        <h3 class="font-display text-xl font-bold mb-2">Cadastre funcion&aacute;rios e certificados</h3>
-        <p class="text-gray-500 text-sm leading-relaxed">Importe em massa via CSV ou cadastre manualmente. NR-10, NR-35, CIPA &mdash; todos os tipos suportados.</p>
+        <h3 class="font-display text-xl font-bold mb-2">Cadastre funcion&aacute;rios, certificados e ASOs</h3>
+        <p class="text-gray-500 text-sm leading-relaxed">Importe em massa via CSV ou cadastre manualmente. NR-10, NR-35, CIPA, ASO Peri&oacute;dico &mdash; todos os tipos suportados.</p>
       </div>
       <div class="relative p-8 bg-white rounded-2xl border border-gray-100">
         <span class="step-num">02</span>
@@ -246,6 +251,11 @@ header a { white-space: nowrap; }
       <h2 class="font-display text-4xl md:text-5xl font-extrabold tracking-tight">Tudo que o seu time de SST precisa.</h2>
     </div>
     <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+      <div class="feat-card bg-white rounded-2xl p-7 border border-gray-100">
+        <div class="w-11 h-11 bg-green-50 rounded-xl flex items-center justify-center mb-5"><svg width="22" height="22" fill="none" stroke="#15803d" stroke-width="1.5" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg></div>
+        <h3 class="font-display text-base font-bold mb-2">Gest&atilde;o de ASO integrada</h3>
+        <p class="text-gray-500 text-sm leading-relaxed">Admissional, peri&oacute;dico, demissional. Controle validade, resultado (apto/inapto) e receba alertas antes do vencimento &mdash; junto com os certificados.</p>
+      </div>
       <div class="feat-card bg-white rounded-2xl p-7 border border-gray-100">
         <div class="w-11 h-11 bg-blue-50 rounded-xl flex items-center justify-center mb-5"><svg width="22" height="22" fill="none" stroke="#1e3a8a" stroke-width="1.5" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg></div>
         <h3 class="font-display text-base font-bold mb-2">Carteira digital no celular</h3>
@@ -294,6 +304,7 @@ header a { white-space: nowrap; }
         <p class="text-gray-500 text-sm leading-relaxed mb-4">Metal&uacute;rgicas, qu&iacute;micas, alimentos. Centenas de funcion&aacute;rios, dezenas de NRs. O MTE aplicou R$&nbsp;78 milh&otilde;es em multas em 2024.</p>
         <ul class="space-y-2 text-sm text-gray-600">
           <li class="flex items-center gap-2"><span class="text-industrial-blue font-bold">+</span> NR-10, 12, 13, 33, 35</li>
+          <li class="flex items-center gap-2"><span class="text-industrial-blue font-bold">+</span> ASO Peri&oacute;dico e Admissional</li>
           <li class="flex items-center gap-2"><span class="text-industrial-blue font-bold">+</span> Importa&ccedil;&atilde;o CSV em massa</li>
           <li class="flex items-center gap-2"><span class="text-industrial-blue font-bold">+</span> Relat&oacute;rio de conformidade</li>
         </ul>
@@ -430,6 +441,13 @@ header a { white-space: nowrap; }
       </div>
       <div class="faq-item border border-gray-200 rounded-2xl overflow-hidden">
         <button class="faq-btn w-full text-left px-6 py-5 flex items-center justify-between gap-4 font-display font-bold text-base hover:bg-gray-50 transition-colors" aria-expanded="false">
+          <span class="flex-1 min-w-0">O sistema tamb&eacute;m controla ASO?</span>
+          <svg class="faq-icon flex-shrink-0 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+        <div class="faq-answer px-6 pb-5 text-sm text-gray-600 leading-relaxed">Sim. O QRCertify gerencia ASOs (admissional, peri&oacute;dico, retorno ao trabalho, mudan&ccedil;a de risco e demissional) junto com os certificados de NR. Voc&ecirc; v&ecirc; tudo em um &uacute;nico painel, recebe alertas de vencimento separados e pode importar ASOs em massa via CSV.</div>
+      </div>
+      <div class="faq-item border border-gray-200 rounded-2xl overflow-hidden">
+        <button class="faq-btn w-full text-left px-6 py-5 flex items-center justify-between gap-4 font-display font-bold text-base hover:bg-gray-50 transition-colors" aria-expanded="false">
           <span class="flex-1 min-w-0">Como importo os certificados que j&aacute; tenho hoje?</span>
           <svg class="faq-icon flex-shrink-0 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         </button>
@@ -450,7 +468,7 @@ header a { white-space: nowrap; }
 <section class="bg-industrial-blue py-24 relative overflow-hidden">
   <div class="absolute inset-0" style="background-image:linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px);background-size:40px 40px;"></div>
   <div class="max-w-4xl mx-auto px-5 text-center relative z-10">
-    <h2 class="font-display text-4xl md:text-5xl lg:text-6xl font-extrabold text-white tracking-tight mb-6">Pronto para acabar com a<br>dor de cabe&ccedil;a das NRs?</h2>
+    <h2 class="font-display text-4xl md:text-5xl lg:text-6xl font-extrabold text-white tracking-tight mb-6">Pronto para acabar com a<br>dor de cabe&ccedil;a das NRs e ASOs?</h2>
     <p class="text-blue-200 text-lg mb-10">Comece em 5 minutos. Cancele quando quiser.</p>
     <a href="checkout.php" class="inline-block bg-industrial-yellow text-gray-900 font-bold text-lg px-10 py-4 rounded-2xl hover:bg-yellow-300 transition-colors shadow-lg">Come&ccedil;ar gr&aacute;tis agora</a>
     <p class="text-blue-300 text-sm mt-5">30 dias gr&aacute;tis &nbsp;&middot;&nbsp; Cancele quando quiser</p>
@@ -466,7 +484,7 @@ header a { white-space: nowrap; }
           <img src="public/assets/logo-qrcertify.svg" alt="QRCertify" class="w-9 h-9 flex-shrink-0">
           <span class="qrc-wordmark text-white text-sm">QRCertify</span>
         </a>
-        <p class="text-sm leading-relaxed mb-5">Gest&atilde;o digital de certificados de NR. Sem papel, sem planilha, sem multa.</p>
+        <p class="text-sm leading-relaxed mb-5">Gest&atilde;o digital de certificados de NR e ASOs. Sem papel, sem planilha, sem multa.</p>
         <a href="https://www.instagram.com/qrcertifytech/" target="_blank" rel="noopener" aria-label="Instagram QRCertify"
            class="inline-flex items-center gap-2 text-sm text-gray-300 hover:text-white transition-colors">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">

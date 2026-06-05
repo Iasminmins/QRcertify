@@ -81,12 +81,21 @@ require_once __DIR__ . '/../includes/sidebar.php';
         <h1 class="page-title">Certificados</h1>
         <p class="page-subtitle"><?= $pag['total'] ?> certificado(s) encontrado(s)</p>
     </div>
-    <a href="<?= BASE_URL ?>/admin/certificate-form.php" class="btn btn-primary">
-        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-        </svg>
-        Novo Certificado
-    </a>
+    <div class="flex gap-2">
+        <a href="<?= BASE_URL ?>/admin/certificate-import.php" class="btn btn-secondary">
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+            </svg>
+            Importar
+        </a>
+        <a href="<?= BASE_URL ?>/admin/certificate-form.php" class="btn btn-primary">
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            Novo Certificado
+        </a>
+    </div>
 </div>
 
 <?php renderFlashes(); ?>

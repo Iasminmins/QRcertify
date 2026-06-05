@@ -30,6 +30,7 @@ $icons = [
     'audit'        => '<path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>',
     'departments'  => '<path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>',
     'billing'      => '<path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>',
+    'aso'          => '<path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>',
 ];
 
 $base = BASE_URL;
@@ -61,22 +62,21 @@ $base = BASE_URL;
 
         <?php elseif ($role === 'admin'): ?>
             <div class="nav-section-label">Gestão</div>
-            <?php navLink("{$base}/admin/dashboard.php",    $icons['dashboard'],    'Dashboard') ?>
+            <?php navLink("{$base}/admin/dashboard.php",          $icons['dashboard'],    'Dashboard') ?>
             <?php navLink("{$base}/admin/employees.php",          $icons['employees'],    'Colaboradores') ?>
-            <?php navLink("{$base}/admin/departments.php",        $icons['departments'], 'Áreas e Setores') ?>
-            <?php navLink("{$base}/admin/certificates.php",       $icons['certificates'],'Certificados') ?>
-            <?php navLink("{$base}/admin/employee-import.php",    $icons['export'],      'Importar Colaboradores') ?>
-            <?php navLink("{$base}/admin/certificate-import.php", $icons['export'],      'Importar Certificados') ?>
-            <?php navLink("{$base}/admin/aso-import.php",         $icons['export'],      'Importar ASO') ?>
+            <?php navLink("{$base}/admin/departments.php",        $icons['departments'],  'Áreas e Setores') ?>
+            <?php navLink("{$base}/admin/certificates.php",       $icons['certificates'], 'Certificados') ?>
+            <?php navLink("{$base}/admin/asos.php",               $icons['aso'],          'ASOs') ?>
 
             <div class="nav-section-label" style="margin-top:.75rem">Ferramentas</div>
             <?php navLink("{$base}/admin/notify-expiring.php",    $icons['notify'],  'Notificações') ?>
+            <?php navLink("{$base}/admin/aso-notify.php",         $icons['notify'],  'Alertas de ASO') ?>
             <?php navLink("{$base}/admin/export.php",             $icons['export'],  'Exportar') ?>
             <?php navLink("{$base}/admin/report-uncertified.php", $icons['report'],  'Conformidade') ?>
             <?php navLink("{$base}/admin/audit-log.php",          $icons['audit'],   'Auditoria') ?>
             <div class="nav-section-label" style="margin-top:.75rem">Conta</div>
             <?php navLink("{$base}/admin/settings.php", $icons['settings'], 'Configurações') ?>
-            <?php navLink("{$base}/admin/plano.php",    $icons['billing'],     'Meu Plano') ?>
+            <?php navLink("{$base}/admin/plano.php",    $icons['billing'],  'Meu Plano') ?>
 
         <?php elseif ($role === 'employee'): ?>
             <div class="nav-section-label">Minha Área</div>
