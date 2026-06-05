@@ -42,7 +42,7 @@ $departments = $db->prepare("
         ) THEN 1 ELSE 0 END) AS count_no_cert
 
     FROM departments d
-    LEFT JOIN employees e ON e.department_id = d.id AND e.status = 'active'
+    LEFT JOIN employees e ON (e.department_id = d.id OR (e.department_id IS NULL AND e.department = d.name)) AND e.status = 'active'
     WHERE d.company_id = ?
     GROUP BY d.id, d.name, d.manager_name
     ORDER BY d.name ASC
@@ -71,7 +71,11 @@ $noArea = $db->prepare("
             SELECT 1 FROM certificates cs WHERE cs.employee_id = e.id
         ) THEN 1 ELSE 0 END) AS count_no_cert
     FROM employees e
-    WHERE e.company_id = ? AND e.status = 'active' AND e.department_id IS NULL
+    WHERE e.company_id = ? AND e.status = 'active'
+      AND e.department_id IS NULL
+      AND (e.department IS NULL OR e.department = '' OR e.department NOT IN (
+          SELECT name FROM departments WHERE company_id = e.company_id
+      ))
 ");
 $noArea->execute([$companyId]);
 $noArea = $noArea->fetch();
