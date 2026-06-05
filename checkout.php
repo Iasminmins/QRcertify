@@ -265,9 +265,7 @@ tailwind.config = {
 <header class="bg-white border-b border-gray-100 py-4 px-5">
   <div class="max-w-5xl mx-auto flex items-center justify-between">
     <a href="<?= BASE_URL ?>/" class="flex items-center gap-2.5">
-      <div class="w-7 h-7 rounded-full bg-industrial-blue flex items-center justify-center">
-        <div class="w-2.5 h-2.5 rounded-full bg-industrial-yellow"></div>
-      </div>
+      <img src="<?= BASE_URL ?>/public/assets/logo-qrcertify.svg" alt="QRCertify" class="w-9 h-9 flex-shrink-0">
       <span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:.95rem" class="text-gray-900">QRCertify</span>
     </a>
     <a href="login.php" class="text-sm text-gray-500 hover:text-gray-900 transition-colors">Já tenho conta → Entrar</a>
@@ -522,7 +520,7 @@ function selectPlan(key) {
   if (radio) radio.className = 'w-4 h-4 rounded-full border-2 border-industrial-blue bg-industrial-blue';
   document.getElementById('planInput').value = key;
 
-  const prices = { starter: 'R$ 49/mês', pro: 'R$ 179/mês', business: 'R$ 349/mês' };
+  const prices = { starter: 'R$ 97/mês', pro: 'R$ 197/mês', business: 'R$ 397/mês' };
   const names  = { starter: 'Starter', pro: 'Pro', business: 'Business' };
   const el = document.getElementById('summaryPlanName');
   const pr = document.getElementById('summaryPrice');

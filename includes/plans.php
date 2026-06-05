@@ -17,8 +17,8 @@ function getPlansCatalog(): array {
     $catalog = [
         'starter' => [
             'name'      => 'Starter',
-            'price'     => 49,
-            'employees' => 10,
+            'price'     => 97,
+            'employees' => 20,
             'features'  => [
                 'qr'              => true,
                 'dashboard_basic' => true,
@@ -30,7 +30,7 @@ function getPlansCatalog(): array {
         ],
         'pro' => [
             'name'      => 'Pro',
-            'price'     => 179,
+            'price'     => 197,
             'employees' => 100,
             'features'  => [
                 'qr'              => true,
@@ -43,7 +43,7 @@ function getPlansCatalog(): array {
         ],
         'business' => [
             'name'      => 'Business',
-            'price'     => 349,
+            'price'     => 397,
             'employees' => 300,
             'features'  => [
                 'qr'              => true,
@@ -55,10 +55,11 @@ function getPlansCatalog(): array {
             ],
         ],
         'enterprise' => [
-            'name'      => 'Enterprise',
-            'price'     => 799,
-            'employees' => 800,
-            'features'  => [
+            'name'        => 'Enterprise',
+            'price'       => 997,
+            'setup_fee'   => 2000,
+            'employees'   => 800,
+            'features'    => [
                 'qr'              => true,
                 'dashboard_basic' => true,
                 'email_alerts'    => true,
