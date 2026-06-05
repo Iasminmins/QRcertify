@@ -8,31 +8,73 @@ $db        = getDB();
 
 // ── Download do modelo CSV ────────────────────────────────────
 if (isset($_GET['template'])) {
+    // Busca áreas cadastradas para incluir no modelo
+    $deptForTemplate = $db->prepare('SELECT name, manager_name FROM departments WHERE company_id = ? ORDER BY name ASC');
+    $deptForTemplate->execute([$companyId]);
+    $deptForTemplate = $deptForTemplate->fetchAll();
+
     header('Content-Type: text/csv; charset=UTF-8');
     header('Content-Disposition: attachment; filename="modelo_importacao_funcionarios.csv"');
-    // BOM UTF-8 para Excel abrir corretamente
     echo "\xEF\xBB\xBF";
     $out = fopen('php://output', 'w');
+
+    // Linha de instrução sobre áreas
+    if (!empty($deptForTemplate)) {
+        $areaNames = implode(' | ', array_column($deptForTemplate, 'name'));
+        fputcsv($out, ['# ÁREAS CADASTRADAS — use exatamente um destes nomes na coluna "area": ' . $areaNames], ';');
+    } else {
+        fputcsv($out, ['# Nenhuma área cadastrada ainda. Cadastre em Áreas e Setores antes de importar.'], ';');
+    }
+
+    // Cabeçalho
     fputcsv($out, [
-        'nome','email','cpf','cargo','departamento','telefone',
+        'nome','email','cpf','cargo','area (opcional)','gestor (opcional)','telefone',
         'cep','logradouro','numero','complemento','bairro','cidade','uf','status'
     ], ';');
+
     // Linha de exemplo
+    $exArea   = !empty($deptForTemplate) ? $deptForTemplate[0]['name'] : 'Manutenção';
+    $exGestor = !empty($deptForTemplate) ? ($deptForTemplate[0]['manager_name'] ?? 'Carlos Silva') : 'Carlos Silva';
     fputcsv($out, [
-        'João da Silva','joao@empresa.com','123.456.789-00','Eletricista','Manutenção','(11) 91234-5678',
+        'João da Silva','joao@empresa.com','123.456.789-00','Eletricista',
+        $exArea, $exGestor, '(11) 91234-5678',
         '01310-100','Av. Paulista','1000','Sala 5','Bela Vista','São Paulo','SP','ativo'
     ], ';');
+
     fclose($out);
     exit;
 }
 
 // ── Processamento do upload ───────────────────────────────────
-$results   = null;
-$errors    = [];
-$imported  = 0;
-$skipped   = [];
+$results          = null;
+$errors           = [];
+$imported         = 0;
+$skipped          = [];
+$unknownAreas     = []; // áreas digitadas que não batem com nenhuma cadastrada
 
 $canImportCsv = companyHasFeature($companyId, 'csv_import');
+
+// Carrega áreas cadastradas para comparação
+$deptStmt = $db->prepare('SELECT name FROM departments WHERE company_id = ? ORDER BY name ASC');
+$deptStmt->execute([$companyId]);
+$registeredAreas = array_column($deptStmt->fetchAll(), 'name');
+
+// Normaliza string para comparação: minúsculo, sem acentos, sem espaços extras
+function normalizeStr(string $s): string {
+    $s = mb_strtolower(trim($s));
+    $s = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $s);
+    return preg_replace('/\s+/', ' ', $s);
+}
+
+// Encontra a área cadastrada mais próxima (ou null se nenhuma bater)
+function matchArea(string $input, array $registered): ?string {
+    if ($input === '') return null;
+    $norm = normalizeStr($input);
+    foreach ($registered as $area) {
+        if (normalizeStr($area) === $norm) return $area; // match exato normalizado
+    }
+    return null; // não encontrou
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!csrfCheck()) {
@@ -75,7 +117,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'email'        => ['email','e-mail','email'],
                     'cpf'          => ['cpf'],
                     'cargo'        => ['cargo','role','funcao','função'],
-                    'departamento' => ['departamento','setor','department','sector'],
+                    'area'         => ['area','área','setor','departamento','department','sector'],
+                    'gestor'       => ['gestor','gestordireto','manager'],
                     'telefone'     => ['telefone','phone','fone','celular'],
                     'cep'          => ['cep'],
                     'logradouro'   => ['logradouro','rua','endereco','endereço','address'],
@@ -106,9 +149,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $stmtChk  = $db->prepare('SELECT id FROM employees WHERE (email=? OR cpf=?) AND company_id=?');
                     $stmtIns  = $db->prepare(
                         'INSERT INTO employees
-                           (company_id,name,email,cpf,role,department,phone,public_hash,status,
+                           (company_id,name,email,cpf,role,department,manager_name,phone,public_hash,status,
                             cep,address,number,complement,neighborhood,city,state)
-                         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'
+                         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'
                     );
 
                     $db->beginTransaction();
@@ -121,20 +164,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 return isset($idx[$field]) ? trim($row[$idx[$field]] ?? '') : '';
                             };
 
-                            $name   = $get('nome');
-                            $email  = strtolower($get('email'));
-                            $cpf    = preg_replace('/\D/', '', $get('cpf'));
-                            $role   = $get('cargo');
-                            $dept   = $get('departamento');
-                            $phone  = preg_replace('/\D/', '', $get('telefone'));
-                            $cep    = preg_replace('/\D/', '', $get('cep'));
-                            $addr   = $get('logradouro');
-                            $num    = $get('numero');
-                            $comp   = $get('complemento');
-                            $neigh  = $get('bairro');
-                            $city   = $get('cidade');
-                            $state  = strtoupper($get('uf'));
-                            $status = in_array(strtolower($get('status')), ['inativo','inactive']) ? 'inactive' : 'active';
+                            $name    = $get('nome');
+                            $email   = strtolower($get('email'));
+                            $cpf     = preg_replace('/\D/', '', $get('cpf'));
+                            $role    = $get('cargo');
+                            $deptRaw = $get('area');
+                            $gestor  = $get('gestor');
+                            $phone   = preg_replace('/\D/', '', $get('telefone'));
+                            $cep     = preg_replace('/\D/', '', $get('cep'));
+                            $addr    = $get('logradouro');
+                            $num     = $get('numero');
+                            $comp    = $get('complemento');
+                            $neigh   = $get('bairro');
+                            $city    = $get('cidade');
+                            $state   = strtoupper($get('uf'));
+                            $status  = in_array(strtolower($get('status')), ['inativo','inactive']) ? 'inactive' : 'active';
+
+                            // Tenta bater área com cadastradas (ignora maiúsculas/acentos)
+                            $matched = $deptRaw !== '' ? matchArea($deptRaw, $registeredAreas) : null;
+                            $dept    = $matched; // só usa se bater com uma área cadastrada
+
+                            // Se digitou uma área mas não encontrou match — bloqueia a linha
+                            if ($deptRaw !== '' && $matched === null && !empty($registeredAreas)) {
+                                $areasList = implode(', ', $registeredAreas);
+                                $skipped[] = "Linha {$lineNum} ({$name}): área \"{$deptRaw}\" não reconhecida. Use exatamente um dos nomes: {$areasList}";
+                                continue;
+                            }
 
                             // Validações básicas
                             $lineErrors = [];
@@ -164,6 +219,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             $stmtIns->execute([
                                 $companyId, $name, $email, $cpf, $role,
                                 $dept ?: null,
+                                $gestor ?: null,
                                 $phone ?: null, generateHash(), $status,
                                 $cep ?: null, $addr ?: null, $num ?: null,
                                 $comp ?: null, $neigh ?: null,
@@ -227,12 +283,32 @@ require_once __DIR__ . '/../includes/sidebar.php';
                 <strong><?= count($skipped) ?></strong> linha(s) ignorada(s).
             <?php endif; ?>
         </p>
+        <?php if (!empty($unknownAreas)): ?>
+            <div class="mt-3 bg-amber-50 border border-amber-200 rounded-lg p-3">
+                <p class="text-sm font-semibold text-amber-800 mb-1">
+                    ⚠️ Áreas não reconhecidas (<?= count($unknownAreas) ?>)
+                </p>
+                <p class="text-xs text-amber-700 mb-2">
+                    As áreas abaixo foram salvas como texto, mas não correspondem a nenhuma área cadastrada no sistema.
+                    Verifique a grafia ou cadastre-as em <a href="<?= BASE_URL ?>/admin/departments.php" class="underline font-medium">Áreas e Setores</a>.
+                </p>
+                <div class="flex flex-wrap gap-2">
+                    <?php foreach ($unknownAreas as $ua): ?>
+                        <span class="bg-amber-100 text-amber-800 border border-amber-300 text-xs px-2 py-0.5 rounded-full font-mono">
+                            "<?= e($ua) ?>"
+                        </span>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        <?php endif; ?>
         <?php if (!empty($skipped)): ?>
             <details class="mt-3">
-                <summary class="text-sm text-green-700 cursor-pointer hover:underline">Ver linhas ignoradas (<?= count($skipped) ?>)</summary>
+                <summary class="text-sm text-red-700 cursor-pointer hover:underline font-medium">
+                    ⚠️ Ver linhas ignoradas com erro (<?= count($skipped) ?>)
+                </summary>
                 <ul class="mt-2 space-y-1">
                     <?php foreach ($skipped as $s): ?>
-                        <li class="text-xs text-amber-700 bg-amber-50 rounded px-2 py-1"><?= e($s) ?></li>
+                        <li class="text-xs text-red-700 bg-red-50 border border-red-100 rounded px-2 py-1.5"><?= e($s) ?></li>
                     <?php endforeach; ?>
                 </ul>
             </details>
@@ -319,6 +395,8 @@ require_once __DIR__ . '/../includes/sidebar.php';
                     ['email',     'E-mail',          true],
                     ['cpf',       'CPF (11 dígitos)', true],
                     ['cargo',     'Cargo/função',    true],
+                    ['area',      'Área / Setor',    false],
+                    ['gestor',    'Gestor direto',   false],
                     ['telefone',  'Telefone',        false],
                     ['cep',       'CEP',             false],
                     ['logradouro','Rua/Avenida',     false],
