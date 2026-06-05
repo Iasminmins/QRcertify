@@ -335,7 +335,7 @@ function aplicarFiltros() {
 }
 
 async function enviarEmLotes() {
-    const checks  = [...document.querySelectorAll('.emp-check:checked')];
+    const checks  = [...document.querySelectorAll('.emp-card:not(.hidden) .emp-check:checked')];
     const targets = checks.map(c => c.value);
 
     if (targets.length === 0) {
