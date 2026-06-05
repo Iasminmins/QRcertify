@@ -324,7 +324,13 @@ function aplicarFiltros() {
     const contador = document.getElementById('contador-filtro');
     if (contador) {
         const total = document.querySelectorAll('.emp-card').length;
-        contador.textContent = visiveis < total ? `— ${visiveis} exibido(s)` : '';
+        const temFiltro = busca !== '' || tipo !== '' || status !== '' || dept !== '';
+        if (temFiltro) {
+            contador.textContent = `— ${visiveis} resultado(s) encontrado(s)`;
+            contador.style.color = visiveis === 0 ? '#ef4444' : '#64748b';
+        } else {
+            contador.textContent = '';
+        }
     }
 }
 
