@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once __DIR__ . '/../config/config.php';
 requireRole('admin');
 
@@ -64,6 +64,7 @@ $employees = $pag['items'];
 
 // Para cada funcionário, busca os certificados (para a carteirinha)
 $empCertMap = [];
+$empAsoMap  = [];
 if (!empty($employees)) {
     $ids = implode(',', array_map(fn($e) => (int)$e['id'], $employees));
     $allCerts = $db->query(
@@ -72,12 +73,26 @@ if (!empty($employees)) {
     foreach ($allCerts as $c) {
         $empCertMap[$c['employee_id']][] = $c;
     }
+    // ASO mais recente de cada funcionário
+    $allAsos = $db->query(
+        "SELECT employee_id, aso_type, exam_date, expiration_date, result_status, document_status
+         FROM employee_asos
+         WHERE employee_id IN ($ids)
+         ORDER BY exam_date DESC"
+    )->fetchAll();
+    foreach ($allAsos as $a) {
+        // Guarda apenas o mais recente por funcionário
+        if (!isset($empAsoMap[$a['employee_id']])) {
+            $empAsoMap[$a['employee_id']] = $a;
+        }
+    }
 }
 
 // Monta JSON para o JS usar na carteirinha
 $empData = [];
 foreach ($employees as $emp) {
     $certs = $empCertMap[$emp['id']] ?? [];
+    $aso   = $empAsoMap[$emp['id']]  ?? null;
     $empData[$emp['id']] = [
         'id'      => $emp['id'],
         'name'    => $emp['name'],
@@ -94,6 +109,12 @@ foreach ($employees as $emp) {
             'status'      => $c['status'],
             'hash'        => $c['hash'],
         ], $certs),
+        'aso'     => $aso ? [
+            'tipo'       => $aso['aso_type'],
+            'validade'   => $aso['expiration_date'],
+            'resultado'  => $aso['result_status'],
+            'status'     => $aso['document_status'],
+        ] : null,
         'qr_url'  => getEmployeePublicUrl((int) $emp['id']),
     ];
 }
@@ -331,15 +352,26 @@ require_once __DIR__ . '/../includes/sidebar.php';
             </button>
         </div>
 
-        <!-- Linha 2: Gerar Carteirinha -->
-        <button onclick="openCarteirinha(<?= (int)$emp['id'] ?>)"
-                class="btn btn-secondary btn-sm" style="justify-content:center;width:100%">
-            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0M9 12h6"/>
-            </svg>
-            Gerar Carteirinha
-        </button>
+        <!-- Linha 2: dois tipos de carteira -->
+        <div style="display:flex;gap:.5rem">
+            <button onclick="openCarteirinha(<?= (int)$emp['id'] ?>)"
+                    class="btn btn-secondary btn-sm" style="flex:1;justify-content:center">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0M9 12h6"/>
+                </svg>
+                Autorização
+            </button>
+            <a href="<?= BASE_URL ?>/public/employee.php?hash=<?= e($emp['public_hash'] ?? '') ?>"
+               target="_blank"
+               class="btn btn-secondary btn-sm" style="flex:1;justify-content:center">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                </svg>
+                Carteira Digital
+            </a>
+        </div>
 
     </div>
 </div>
@@ -394,7 +426,7 @@ require_once __DIR__ . '/../includes/sidebar.php';
      â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
 <div id="modal-carteirinha" style="display:none;position:fixed;inset:0;z-index:9000;
      background:rgba(0,0,0,.55);backdrop-filter:blur(4px);
-     overflow:hidden;padding:1.25rem;align-items:flex-start;justify-content:center">
+     overflow-y:auto;padding:1.25rem;align-items:center;justify-content:center">
     <div style="max-width:620px;width:100%;background:#fff;border-radius:1rem;
                 box-shadow:0 24px 64px rgba(0,0,0,.3);
                 display:flex;flex-direction:column;
@@ -485,6 +517,16 @@ require_once __DIR__ . '/../includes/sidebar.php';
                             <?php endforeach; ?>
                         </div>
                     </div>
+                </div>
+
+                <!-- ASO -->
+                <div style="border-bottom:1px solid #e2e8f0">
+                    <div style="background:#1e3a8a;color:#fff;font-size:.6rem;font-weight:700;
+                                padding:.3rem .5rem;text-align:center">
+                        ATESTADO DE SAÚDE OCUPACIONAL (ASO)
+                    </div>
+                    <div id="cart-aso" style="padding:.35rem .5rem;font-size:.6rem;min-height:28px;
+                                display:flex;align-items:center;gap:.5rem"></div>
                 </div>
 
                 <!-- SESMT -->
@@ -692,6 +734,27 @@ function openCarteirinha(empId) {
     const qrUrl = '<?= BASE_URL ?>/public/qr.php?size=90&data=' + encodeURIComponent(emp.qr_url);
     document.getElementById('cart-qr-img').src = qrUrl;
 
+    // ASO
+    const asoEl = document.getElementById('cart-aso');
+    if (emp.aso) {
+        const asoLabels = {
+            admissional: 'Admissional', periodico: 'Periódico',
+            retorno_trabalho: 'Retorno ao Trabalho', mudanca_risco: 'Mudança de Risco',
+            demissional: 'Demissional'
+        };
+        const asoColors = { valido: '#16a34a', vencendo: '#f59e0b', vencido: '#ef4444' };
+        const color  = asoColors[emp.aso.status] || '#64748b';
+        const tipo   = asoLabels[emp.aso.tipo] || emp.aso.tipo;
+        const valStr = formatDateBR(emp.aso.validade);
+        const res    = emp.aso.resultado.charAt(0).toUpperCase() + emp.aso.resultado.slice(1);
+        asoEl.innerHTML =
+            '<div style="width:10px;height:10px;border-radius:50%;background:' + color + ';flex-shrink:0"></div>'
+          + '<span style="flex:1">' + escHtml(tipo) + ' · Validade: <strong>' + valStr + '</strong></span>'
+          + '<span style="font-weight:700;color:' + color + '">' + escHtml(res) + '</span>';
+    } else {
+        asoEl.innerHTML = '<span style="color:#94a3b8">Nenhum ASO registrado</span>';
+    }
+
     openModal('modal-carteirinha');
 }
 
@@ -719,53 +782,107 @@ function showCarteirinhaQr() {
 
 async function downloadCarteirinhaAsPdf() {
     const btn = document.getElementById('btn-pdf');
-    const origText = btn.innerHTML;
-    btn.innerHTML  = 'â³ Gerando PDF...';
-    btn.disabled   = true;
+    const origHTML = btn.innerHTML;
+    btn.innerHTML = '⏳ Gerando...';
+    btn.disabled  = true;
 
     try {
-        const element = document.getElementById('carteirinha-preview');
-        const canvas  = await html2canvas(element, {
-            scale: 2, useCORS: true, backgroundColor: '#ffffff',
-            logging: false
+        const el = document.getElementById('carteirinha-preview');
+
+        // Salva estado original
+        const origWidth    = el.style.width;
+        const origMaxWidth = el.style.maxWidth;
+        const origFontSize = el.style.fontSize;
+
+        // Força largura de impressão A4 (190mm ≈ 718px @96dpi)
+        el.style.width    = '718px';
+        el.style.maxWidth = '718px';
+        el.style.fontSize = '9pt';
+
+        // Aguarda re-render
+        await new Promise(r => setTimeout(r, 150));
+
+        const canvas = await html2canvas(el, {
+            scale: 2,
+            useCORS: true,
+            backgroundColor: '#ffffff',
+            logging: false,
+            width: 718,
+            windowWidth: 718,
         });
 
-        const imgData  = canvas.toDataURL('image/jpeg', 0.92);
+        // Restaura estado
+        el.style.width    = origWidth;
+        el.style.maxWidth = origMaxWidth;
+        el.style.fontSize = origFontSize;
+
         const { jsPDF } = window.jspdf;
-        const pdf       = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+        const pdf   = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+        const pageW = pdf.internal.pageSize.getWidth();
+        const pageH = pdf.internal.pageSize.getHeight();
+        const margin = 15;
+        const maxW  = pageW - margin * 2;
+        const maxH  = pageH - margin * 2;
 
-        const pageW  = pdf.internal.pageSize.getWidth();
-        const pageH  = pdf.internal.pageSize.getHeight();
-        const imgW   = pageW - 20; // 10mm margem cada lado
-        const imgH   = (canvas.height * imgW) / canvas.width;
-        const yPos   = imgH < pageH ? (pageH - imgH) / 2 : 10;
+        const ratio = canvas.width / canvas.height;
+        let imgW = maxW;
+        let imgH = imgW / ratio;
+        if (imgH > maxH) { imgH = maxH; imgW = imgH * ratio; }
 
-        pdf.addImage(imgData, 'JPEG', 10, yPos, imgW, Math.min(imgH, pageH - 20));
+        const xPos = (pageW - imgW) / 2;
+        const yPos = margin;  // topo com margem
 
-        const empName = (document.getElementById('cart-name').textContent || 'colaborador')
-                        .replace(/\s+/g, '-').toLowerCase();
-        pdf.save('carteirinha-' + empName + '.pdf');
+        pdf.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', xPos, yPos, imgW, imgH);
 
-    } catch(err) {
-        alert('Erro ao gerar PDF. Tente usar o botão Imprimir e salve como PDF.');
+        const nome = (document.getElementById('cart-name').textContent || 'colaborador')
+                     .replace(/\s+/g, '-').toLowerCase();
+        pdf.save('carteirinha-' + nome + '.pdf');
+
+    } catch (err) {
+        alert('Erro ao gerar PDF: ' + err.message);
         console.error(err);
     }
 
-    btn.innerHTML = origText;
+    btn.innerHTML = origHTML;
     btn.disabled  = false;
 }
-
 function printCarteirinha() {
-    const content = document.getElementById('carteirinha-preview').innerHTML;
-    const win = window.open('', '_blank', 'width=700,height=900');
+    const content = document.getElementById('carteirinha-preview').outerHTML;
+    const win = window.open('', '_blank', 'width=800,height=600');
     win.document.write(`<!DOCTYPE html><html lang="pt-BR"><head>
-        <meta charset="UTF-8"><title>Carteirinha de Autorização</title>
+        <meta charset="UTF-8">
+        <title>Carteirinha de Autorização</title>
         <style>
-            body { margin: 20px; font-family: Arial, sans-serif; }
-            @media print { body { margin: 0; } }
+            @page {
+                size: A4 portrait;
+                margin: 10mm;
+            }
+            * { box-sizing: border-box; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            body {
+                margin: 0;
+                padding: 10mm;
+                background: #fff;
+                font-family: Arial, sans-serif;
+                display: flex;
+                align-items: flex-start;
+                justify-content: center;
+            }
+            #carteirinha-preview {
+                width: 190mm;
+                max-width: 190mm;
+                background: #fff;
+                border: 1px solid #e2e8f0;
+                border-radius: 4px;
+                overflow: hidden;
+                font-size: 9pt;
+            }
         </style>
     </head><body>` + content + `
-    <script>window.onload = function() { window.print(); window.close(); }<\/script>
+    <script>
+        window.onload = function() {
+            setTimeout(function() { window.print(); }, 400);
+        };
+    <\/script>
     </body></html>`);
     win.document.close();
 }
