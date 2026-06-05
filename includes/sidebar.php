@@ -62,9 +62,13 @@ $base = BASE_URL;
         <?php elseif ($role === 'admin'): ?>
             <div class="nav-section-label">Gestão</div>
             <?php navLink("{$base}/admin/dashboard.php",    $icons['dashboard'],    'Dashboard') ?>
-            <?php navLink("{$base}/admin/employees.php",    $icons['employees'],    'Colaboradores') ?>
-            <?php navLink("{$base}/admin/departments.php",  $icons['departments'],  'Áreas e Setores') ?>
-            <?php navLink("{$base}/admin/certificates.php", $icons['certificates'], 'Certificados') ?>
+            <?php navLink("{$base}/admin/employees.php",          $icons['employees'],    'Colaboradores') ?>
+            <?php navLink("{$base}/admin/departments.php",        $icons['departments'], 'Áreas e Setores') ?>
+            <?php navLink("{$base}/admin/certificates.php",       $icons['certificates'],'Certificados') ?>
+            <?php navLink("{$base}/admin/employee-import.php",    $icons['export'],      'Importar Colaboradores') ?>
+            <?php navLink("{$base}/admin/certificate-import.php", $icons['export'],      'Importar Certificados') ?>
+            <?php navLink("{$base}/admin/aso-import.php",         $icons['export'],      'Importar ASO') ?>
+
             <div class="nav-section-label" style="margin-top:.75rem">Ferramentas</div>
             <?php navLink("{$base}/admin/notify-expiring.php",    $icons['notify'],  'Notificações') ?>
             <?php navLink("{$base}/admin/export.php",             $icons['export'],  'Exportar') ?>

@@ -12,7 +12,8 @@ $canEmail  = companyHasFeature($companyId, 'email_alerts');
 // Busca certificados vencendo ou vencidos, agrupados por funcionário
 $stmt = $db->prepare(
     'SELECT c.id, c.title, c.type, c.expiry_date, c.status,
-            e.id AS emp_id, e.name AS emp_name, e.email AS emp_email
+            e.id AS emp_id, e.name AS emp_name, e.email AS emp_email,
+            COALESCE(e.department, "") AS emp_dept
      FROM certificates c
      JOIN employees e ON e.id = c.employee_id
      WHERE e.company_id = ?
@@ -25,12 +26,19 @@ $stmt->execute([$companyId]);
 $rows = $stmt->fetchAll();
 
 // Agrupa por funcionário
-$byEmployee = [];
+$byEmployee  = [];
+$allTypes    = [];
+$allDepts    = [];
 foreach ($rows as $r) {
     $byEmployee[$r['emp_id']]['name']  = $r['emp_name'];
     $byEmployee[$r['emp_id']]['email'] = $r['emp_email'];
+    $byEmployee[$r['emp_id']]['dept']  = $r['emp_dept'];
     $byEmployee[$r['emp_id']]['certs'][] = $r;
+    if ($r['type'] !== '') $allTypes[$r['type']] = true;
+    if ($r['emp_dept'] !== '') $allDepts[$r['emp_dept']] = true;
 }
+ksort($allTypes);
+ksort($allDepts);
 
 $sent    = 0;
 $failed  = 0;
@@ -165,6 +173,7 @@ require_once __DIR__ . '/../includes/sidebar.php';
     <div class="flex items-center justify-between mb-3">
         <p class="text-sm text-gray-600">
             <strong><?= count($byEmployee) ?></strong> funcionário(s) precisam de notificação.
+            <span id="contador-filtro" class="text-gray-400"></span>
         </p>
         <div class="flex gap-2">
             <button type="button" onclick="toggleAll(true)"
@@ -175,9 +184,57 @@ require_once __DIR__ . '/../includes/sidebar.php';
         </div>
     </div>
 
-    <div class="space-y-3 mb-5">
-        <?php foreach ($byEmployee as $empId => $emp): ?>
-            <div class="bg-white rounded-lg shadow-sm border p-4">
+    <!-- ── FILTROS ─────────────────────────────────────────────────── -->
+    <div class="bg-gray-50 border rounded-lg p-4 mb-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div>
+            <label class="block text-xs font-medium text-gray-500 mb-1">Buscar nome ou e-mail</label>
+            <input id="f-busca" type="text" placeholder="Ex: João Silva"
+                   oninput="aplicarFiltros()"
+                   class="w-full text-sm border-gray-300 rounded-md shadow-sm focus:ring-industrial-blue focus:border-industrial-blue px-3 py-1.5">
+        </div>
+        <div>
+            <label class="block text-xs font-medium text-gray-500 mb-1">Tipo de certificado</label>
+            <select id="f-tipo" onchange="aplicarFiltros()"
+                    class="w-full text-sm border-gray-300 rounded-md shadow-sm focus:ring-industrial-blue focus:border-industrial-blue px-3 py-1.5">
+                <option value="">Todos</option>
+                <?php foreach (array_keys($allTypes) as $t): ?>
+                    <option value="<?= e($t) ?>"><?= e($t) ?></option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+        <div>
+            <label class="block text-xs font-medium text-gray-500 mb-1">Status</label>
+            <select id="f-status" onchange="aplicarFiltros()"
+                    class="w-full text-sm border-gray-300 rounded-md shadow-sm focus:ring-industrial-blue focus:border-industrial-blue px-3 py-1.5">
+                <option value="">Todos</option>
+                <option value="expired">Expirado (urgente)</option>
+                <option value="expiring">Expirando (a vencer)</option>
+            </select>
+        </div>
+        <div>
+            <label class="block text-xs font-medium text-gray-500 mb-1">Departamento</label>
+            <select id="f-dept" onchange="aplicarFiltros()"
+                    class="w-full text-sm border-gray-300 rounded-md shadow-sm focus:ring-industrial-blue focus:border-industrial-blue px-3 py-1.5">
+                <option value="">Todos</option>
+                <?php foreach (array_keys($allDepts) as $d): ?>
+                    <option value="<?= e($d) ?>"><?= e($d) ?></option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+    </div>
+    <!-- ── /FILTROS ────────────────────────────────────────────────── -->
+
+    <div class="space-y-3 mb-5" id="lista-funcionarios">
+        <?php foreach ($byEmployee as $empId => $emp):
+            $empTypes   = array_unique(array_column($emp['certs'], 'type'));
+            $empStatuses = array_unique(array_column($emp['certs'], 'status'));
+        ?>
+            <div class="bg-white rounded-lg shadow-sm border p-4 emp-card"
+                 data-nome="<?= strtolower(e($emp['name'])) ?>"
+                 data-email="<?= strtolower(e($emp['email'])) ?>"
+                 data-tipos="<?= e(implode('|', $empTypes)) ?>"
+                 data-statuses="<?= e(implode('|', $empStatuses)) ?>"
+                 data-dept="<?= strtolower(e($emp['dept'] ?? '')) ?>">
                 <label class="flex items-start gap-3 cursor-pointer">
                     <input type="checkbox" name="targets[]" value="<?= (int)$empId ?>"
                            class="emp-check mt-0.5 h-4 w-4 rounded border-gray-300 text-industrial-blue"
@@ -186,6 +243,9 @@ require_once __DIR__ . '/../includes/sidebar.php';
                         <div class="flex items-center gap-2 mb-1">
                             <span class="font-medium text-gray-900 text-sm"><?= e($emp['name']) ?></span>
                             <span class="text-xs text-gray-400"><?= e($emp['email']) ?></span>
+                            <?php if (!empty($emp['dept'])): ?>
+                                <span class="text-xs bg-gray-100 text-gray-500 border border-gray-200 rounded-full px-2 py-0.5"><?= e($emp['dept']) ?></span>
+                            <?php endif; ?>
                         </div>
                         <div class="flex flex-wrap gap-2">
                             <?php foreach ($emp['certs'] as $c):
@@ -206,7 +266,7 @@ require_once __DIR__ . '/../includes/sidebar.php';
         <?php endforeach; ?>
     </div>
 
-    <button type="submit" name="send" value="1"
+    <button type="button" id="btn-enviar" onclick="enviarEmLotes()"
             class="inline-flex items-center gap-2 bg-industrial-blue hover:bg-blue-800 text-white px-5 py-2.5 rounded-lg font-medium transition">
         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -214,12 +274,131 @@ require_once __DIR__ . '/../includes/sidebar.php';
         </svg>
         Enviar E-mails Selecionados
     </button>
+
+    <div id="progresso" class="hidden mt-5 bg-white border rounded-lg p-5 space-y-3">
+        <p class="text-sm font-medium text-gray-700">
+            Enviando lote <span id="prog-lote">1</span>…
+        </p>
+        <p class="text-sm text-gray-600">
+            <span id="prog-enviados">0</span> / <span id="prog-total">0</span> enviados
+        </p>
+        <div class="w-full bg-gray-200 rounded-full h-2.5">
+            <div id="prog-barra" class="bg-industrial-blue h-2.5 rounded-full transition-all duration-300" style="width:0%"></div>
+        </div>
+        <div id="prog-erros" class="text-xs text-red-600 space-y-0.5"></div>
+        <p id="prog-fim" class="hidden text-sm font-semibold text-green-700">✓ Todos os lotes foram processados!</p>
+    </div>
 </form>
 <?php endif; ?>
 
 <script>
 function toggleAll(v) {
-    document.querySelectorAll('.emp-check').forEach(c => c.checked = v);
+    document.querySelectorAll('.emp-card:not(.hidden) .emp-check').forEach(c => c.checked = v);
+}
+
+function aplicarFiltros() {
+    const busca  = document.getElementById('f-busca').value.toLowerCase().trim();
+    const tipo   = document.getElementById('f-tipo').value;
+    const status = document.getElementById('f-status').value;
+    const dept   = document.getElementById('f-dept').value.toLowerCase();
+
+    let visiveis = 0;
+
+    document.querySelectorAll('.emp-card').forEach(card => {
+        const nome     = card.dataset.nome     || '';
+        const email    = card.dataset.email    || '';
+        const tipos    = card.dataset.tipos    || '';
+        const statuses = card.dataset.statuses || '';
+        const cardDept = card.dataset.dept     || '';
+
+        const okBusca  = !busca  || nome.includes(busca)  || email.includes(busca);
+        const okTipo   = !tipo   || tipos.split('|').includes(tipo);
+        const okStatus = !status || statuses.split('|').includes(status);
+        const okDept   = !dept   || cardDept === dept;
+
+        const visivel = okBusca && okTipo && okStatus && okDept;
+        card.classList.toggle('hidden', !visivel);
+        if (visivel) visiveis++;
+    });
+
+    const contador = document.getElementById('contador-filtro');
+    if (contador) {
+        const total = document.querySelectorAll('.emp-card').length;
+        contador.textContent = visiveis < total ? `— ${visiveis} exibido(s)` : '';
+    }
+}
+
+async function enviarEmLotes() {
+    const checks  = [...document.querySelectorAll('.emp-check:checked')];
+    const targets = checks.map(c => c.value);
+
+    if (targets.length === 0) {
+        alert('Selecione ao menos um funcionário.');
+        return;
+    }
+
+    const LOTE     = 20;
+    const total    = targets.length;
+    const btn      = document.getElementById('btn-enviar');
+    const divProg  = document.getElementById('progresso');
+    const elLote   = document.getElementById('prog-lote');
+    const elEnv    = document.getElementById('prog-enviados');
+    const elTotal  = document.getElementById('prog-total');
+    const elBarra  = document.getElementById('prog-barra');
+    const elErros  = document.getElementById('prog-erros');
+    const elFim    = document.getElementById('prog-fim');
+    const csrf     = document.querySelector('input[name="csrf_token"]').value;
+
+    btn.disabled     = true;
+    divProg.classList.remove('hidden');
+    elTotal.textContent = total;
+    elErros.innerHTML   = '';
+    elFim.classList.add('hidden');
+
+    let enviados = 0;
+    let numLote  = 0;
+
+    for (let offset = 0; offset < total; offset += LOTE) {
+        numLote++;
+        const lote = targets.slice(offset, offset + LOTE);
+        elLote.textContent = numLote;
+
+        const fd = new FormData();
+        fd.append('send',       '1');
+        fd.append('csrf_token', csrf);
+        fd.append('offset',     offset);
+        lote.forEach(id => fd.append('targets[]', id));
+
+        try {
+            const resp = await fetch(window.location.href, { method: 'POST', body: fd });
+            const html = await resp.text();
+
+            const sucessos = (html.match(/✓/g) || []).length;
+            const falhas   = (html.match(/✗/g) || []).length;
+            enviados += sucessos;
+
+            if (falhas > 0) {
+                const p = document.createElement('p');
+                p.textContent = `Lote ${numLote}: ${falhas} falha(s) de envio.`;
+                elErros.appendChild(p);
+            }
+        } catch (err) {
+            const p = document.createElement('p');
+            p.textContent = `Lote ${numLote}: erro de rede — ${err.message}`;
+            elErros.appendChild(p);
+        }
+
+        elEnv.textContent  = enviados;
+        elBarra.style.width = Math.round(((offset + lote.length) / total) * 100) + '%';
+
+        if (offset + LOTE < total) {
+            await new Promise(r => setTimeout(r, 500));
+        }
+    }
+
+    elLote.closest('p').textContent = 'Processamento concluído.';
+    elFim.classList.remove('hidden');
+    btn.disabled = true;
 }
 </script>
 

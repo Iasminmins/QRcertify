@@ -114,7 +114,9 @@ $qrUrl = $certificate ? generateQRCodeUrl(getCertificatePublicUrl($certificate['
             <div class="bg-industrial-blue text-white p-4">
                 <div class="flex items-center gap-3">
                     <div class="h-10 w-10 rounded-full bg-white flex items-center justify-center flex-shrink-0">
-                        <div class="h-6 w-6 rounded-full bg-industrial-yellow"></div>
+                        <img src="<?= BASE_URL ?>/public/assets/logo-qrcertify.svg"
+                             alt="<?= e(SITE_NAME) ?>"
+                             class="h-7 w-7 object-contain">
                     </div>
                     <div>
                         <h1 class="text-lg font-bold">Carteira Digital</h1>
