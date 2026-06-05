@@ -12,7 +12,7 @@ $errors = [];
 
 $employee = [
     'name' => '', 'email' => '', 'cpf' => '', 'role' => '', 'department' => '',
-    'department_id' => null, 'phone' => '', 'photo' => '', 'status' => 'active',
+    'manager_name' => '', 'department_id' => null, 'phone' => '', 'photo' => '', 'status' => 'active',
     'cep' => '', 'address' => '', 'number' => '',
     'complement' => '', 'neighborhood' => '', 'city' => '', 'state' => '',
 ];
@@ -44,17 +44,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 redirect('/admin/employees.php');
             }
         }
-        $fields = ['name','email','cpf','role','department','phone','photo','status',
+        $fields = ['name','email','cpf','role','phone','photo','status',
                    'cep','address','number','complement','neighborhood','city','state'];
         foreach ($fields as $f) {
             $employee[$f] = trim($_POST[$f] ?? '');
         }
-        // department_id agora é texto livre — salva o nome digitado em 'department'
-        $deptText = trim($_POST['department_id'] ?? '');
-        if ($deptText !== '') {
-            $employee['department'] = $deptText;
-        }
-        $employee['department_id'] = null; // sem FK por enquanto
+        $employee['department']   = trim($_POST['department_id'] ?? ''); // área
+        $employee['manager_name'] = trim($_POST['gestor']        ?? ''); // gestor direto
+        $employee['department_id'] = null;
         // Remove máscaras — salva só dígitos
         $employee['phone'] = preg_replace('/\D/', '', $employee['phone']);
         $employee['cep']   = preg_replace('/\D/', '', $employee['cep']);
@@ -90,7 +87,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($isEdit) {
                 $stmt = $db->prepare(
                     'UPDATE employees
-                     SET name=?,email=?,cpf=?,role=?,department=?,department_id=?,phone=?,photo=?,status=?,
+                     SET name=?,email=?,cpf=?,role=?,department=?,department_id=?,manager_name=?,
+                         phone=?,photo=?,status=?,
                          cep=?,address=?,number=?,complement=?,neighborhood=?,city=?,state=?
                      WHERE id=? AND company_id=?'
                 );
@@ -98,6 +96,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $employee['name'],$employee['email'],$employee['cpf'],
                     $employee['role'],$employee['department']?:null,
                     $employee['department_id'],
+                    $employee['manager_name']?:null,
                     $employee['phone']?:null,$employee['photo']?:null,$employee['status'],
                     $employee['cep']?:null,$employee['address']?:null,$employee['number']?:null,
                     $employee['complement']?:null,$employee['neighborhood']?:null,
@@ -120,14 +119,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $publicHash = generateHash();
                 $stmt = $db->prepare(
                     'INSERT INTO employees
-                       (company_id,name,email,cpf,role,department,department_id,phone,photo,public_hash,status,
+                       (company_id,name,email,cpf,role,department,department_id,manager_name,
+                        phone,photo,public_hash,status,
                         cep,address,number,complement,neighborhood,city,state)
-                     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'
+                     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'
                 );
                 $stmt->execute([
                     $companyId,$employee['name'],$employee['email'],$employee['cpf'],
                     $employee['role'],$employee['department']?:null,
                     $employee['department_id'],
+                    $employee['manager_name']?:null,
                     $employee['phone']?:null,$employee['photo']?:null,$publicHash,$employee['status'],
                     $employee['cep']?:null,$employee['address']?:null,$employee['number']?:null,
                     $employee['complement']?:null,$employee['neighborhood']?:null,
@@ -268,11 +269,11 @@ require_once __DIR__ . '/../includes/sidebar.php';
                 <input type="text" name="department_id" id="inp_department"
                        value="<?= e($employee['department'] ?? '') ?>"
                        placeholder="Ex: Manutenção, Logística, RH..."
-                       list="dept_list"
+                       list="dept_list" autocomplete="off"
                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-industrial-blue outline-none">
                 <datalist id="dept_list">
                     <?php foreach ($deptOptions as $d): ?>
-                        <option value="<?= e($d['name']) ?>"><?= !empty($d['manager_name']) ? 'Gestor: ' . e($d['manager_name']) : '' ?></option>
+                        <option value="<?= e($d['name']) ?>">
                     <?php endforeach; ?>
                 </datalist>
                 <?php if (empty($deptOptions)): ?>
@@ -283,12 +284,36 @@ require_once __DIR__ . '/../includes/sidebar.php';
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Gestor Direto</label>
-                <input type="text" name="department" value="<?= e($employee['department'] ?? '') ?>"
-                       placeholder="Ex: Carlos Oliveira"
+                <input type="text" name="gestor" id="inp_gestor"
+                       value="<?= e($employee['manager_name'] ?? '') ?>"
+                       placeholder="Preenchido automaticamente pela área"
                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-industrial-blue outline-none">
-                <p class="text-xs text-gray-400 mt-1">Gestor específico deste colaborador.</p>
+                <p class="text-xs text-gray-400 mt-1">Preenchido automaticamente ao selecionar a área, ou edite manualmente.</p>
             </div>
         </div>
+
+        <!-- Mapa de áreas → gestores para JS -->
+        <script>
+        const deptManagerMap = {
+            <?php foreach ($deptOptions as $d): ?>
+            <?= json_encode($d['name']) ?>: <?= json_encode($d['manager_name'] ?? '') ?>,
+            <?php endforeach; ?>
+        };
+
+        const inpDept   = document.getElementById('inp_department');
+        const inpGestor = document.getElementById('inp_gestor');
+
+        function syncGestor() {
+            const val = inpDept.value.trim();
+            if (deptManagerMap.hasOwnProperty(val) && deptManagerMap[val]) {
+                inpGestor.value = deptManagerMap[val];
+                inpGestor.style.background = '#f0fdf4'; // verde claro indicando preenchimento automático
+            }
+        }
+
+        inpDept.addEventListener('change', syncGestor);
+        inpDept.addEventListener('input',  syncGestor);
+        </script>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
