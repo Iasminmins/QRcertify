@@ -41,17 +41,6 @@ $base = BASE_URL;
      ══════════════════════════════════════════════════════════ -->
 <aside id="sidebar">
 
-    <!-- Brand no topo da sidebar (desktop) -->
-    <div class="flex items-center gap-3 px-4 py-4 border-b border-gray-100 flex-shrink-0">
-        <img src="<?= BASE_URL ?>/public/assets/logo-qrcertify.svg"
-             alt="QRCertify"
-             class="brand-logo brand-logo-sidebar"
-             style="width:2rem;height:2rem;max-width:2rem;max-height:2rem;object-fit:contain">
-        <span class="sidebar-brand-text text-sm font-bold text-gray-700 leading-tight transition-all duration-200">
-            QRCertify
-        </span>
-    </div>
-
     <!-- Navegação -->
     <nav class="flex-1 overflow-y-auto px-3 py-3 space-y-0.5">
 
@@ -74,6 +63,7 @@ $base = BASE_URL;
             <?php navLink("{$base}/admin/export.php",             $icons['export'],  'Exportar') ?>
             <?php navLink("{$base}/admin/report-uncertified.php", $icons['report'],  'Conformidade') ?>
             <?php navLink("{$base}/admin/audit-log.php",          $icons['audit'],   'Auditoria') ?>
+
             <div class="nav-section-label" style="margin-top:.75rem">Conta</div>
             <?php navLink("{$base}/admin/settings.php", $icons['settings'], 'Configurações') ?>
             <?php navLink("{$base}/admin/plano.php",    $icons['billing'],  'Meu Plano') ?>
