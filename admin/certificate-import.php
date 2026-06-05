@@ -59,7 +59,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $tmp  = tmpfile();
             fwrite($tmp, $raw); rewind($tmp);
 
-            $header = fgetcsv($tmp, 0, $sep);
+            // Pula linhas de comentário que começam com #
+            while (($header = fgetcsv($tmp, 0, $sep)) !== false) {
+                if (!isset($header[0]) || strpos(trim($header[0]), '#') !== 0) break;
+            }
             if (!$header) {
                 $errors[] = 'Arquivo vazio ou cabeçalho inválido.';
             } else {
