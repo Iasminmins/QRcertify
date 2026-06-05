@@ -174,6 +174,7 @@ require_once __DIR__ . '/../includes/sidebar.php';
         <p class="text-sm text-gray-600">
             <strong><?= count($byEmployee) ?></strong> funcionário(s) precisam de notificação.
             <span id="contador-filtro" class="text-gray-400"></span>
+            <span id="contador-selecionados" class="text-industrial-blue font-medium"></span>
         </p>
         <div class="flex gap-2">
             <button type="button" onclick="toggleAll(true)"
@@ -292,8 +293,17 @@ require_once __DIR__ . '/../includes/sidebar.php';
 <?php endif; ?>
 
 <script>
+function atualizarSelecionados() {
+    const total = document.querySelectorAll('.emp-card:not(.hidden) .emp-check:checked').length;
+    const el    = document.getElementById('contador-selecionados');
+    if (el) {
+        el.textContent = total > 0 ? `· ${total} selecionado(s)` : '';
+    }
+}
+
 function toggleAll(v) {
     document.querySelectorAll('.emp-card:not(.hidden) .emp-check').forEach(c => c.checked = v);
+    atualizarSelecionados();
 }
 
 function aplicarFiltros() {
@@ -332,6 +342,7 @@ function aplicarFiltros() {
             contador.textContent = '';
         }
     }
+    atualizarSelecionados();
 }
 
 async function enviarEmLotes() {
@@ -406,6 +417,14 @@ async function enviarEmLotes() {
     elFim.classList.remove('hidden');
     btn.disabled = true;
 }
+
+// Atualiza contador ao clicar em checkbox individual
+document.addEventListener('change', e => {
+    if (e.target.classList.contains('emp-check')) atualizarSelecionados();
+});
+
+// Inicializa contador
+atualizarSelecionados();
 </script>
 
 <?php endif; ?>
