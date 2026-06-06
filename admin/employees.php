@@ -115,7 +115,9 @@ foreach ($employees as $emp) {
             'resultado'  => $aso['result_status'],
             'status'     => $aso['document_status'],
         ] : null,
-        'qr_url'  => getEmployeePublicUrl((int) $emp['id']),
+        'authorized_ops' => json_decode($emp['authorized_ops'] ?? '[]', true) ?: [],
+        'qr_url'        => getEmployeePublicUrl((int) $emp['id']),
+        'auth_url'      => getAuthorizationPublicUrl((int) $emp['id']),
     ];
 }
 
@@ -360,15 +362,14 @@ require_once __DIR__ . '/../includes/sidebar.php';
                 </svg>
                 Autorização
             </button>
-            <a href="<?= BASE_URL ?>/public/employee.php?hash=<?= e($emp['public_hash'] ?? '') ?>"
-               target="_blank"
-               class="btn btn-secondary btn-sm" style="flex:1;justify-content:center">
+            <button onclick="openCarteiraDigital(<?= (int)$emp['id'] ?>)"
+                    class="btn btn-secondary btn-sm" style="flex:1;justify-content:center">
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                           d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/>
                 </svg>
                 Carteira Digital
-            </a>
+            </button>
         </div>
 
     </div>
@@ -503,17 +504,7 @@ require_once __DIR__ . '/../includes/sidebar.php';
                                     padding:.3rem .5rem;text-align:center">
                             OPERAÇÃO / EXECUÇÃO
                         </div>
-                        <div style="padding:.35rem;font-size:.6rem">
-                            <?php
-                            $ops = ['Direção Defensiva','Veículo Grande Porte','Trabalho a Quente',
-                                    'Espaço Confinado','Altura (NR-35)','Eletricidade (NR-10)'];
-                            foreach ($ops as $op): ?>
-                            <div style="display:flex;align-items:center;gap:.3rem;padding:.1rem 0;border-bottom:1px solid #f8fafc">
-                                <div style="width:9px;height:9px;border:1px solid #94a3b8;border-radius:2px;flex-shrink:0"></div>
-                                <span><?= $op ?></span>
-                            </div>
-                            <?php endforeach; ?>
-                        </div>
+                        <div id="cart-ops" style="padding:.35rem;font-size:.6rem"></div>
                     </div>
                 </div>
 
@@ -531,11 +522,13 @@ require_once __DIR__ . '/../includes/sidebar.php';
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;border-bottom:1px solid #e2e8f0">
                     <div style="padding:.4rem .6rem;border-right:1px solid #e2e8f0;font-size:.6rem">
                         <div style="font-weight:700;color:#1e3a8a;margin-bottom:.2rem">SESMT · ELABORADO POR:</div>
-                        <div style="height:1.2rem;border-bottom:1px solid #e2e8f0"></div>
+                        <div id="cart-sesmt-elab" style="font-size:.6rem;color:#374151;min-height:.8rem;margin-bottom:.15rem"></div>
+                        <div style="height:.8rem;border-bottom:1px solid #94a3b8"></div>
                     </div>
                     <div style="padding:.4rem .6rem;font-size:.6rem">
                         <div style="font-weight:700;color:#1e3a8a;margin-bottom:.2rem">SESMT · APROVADO POR:</div>
-                        <div style="height:1.2rem;border-bottom:1px solid #e2e8f0"></div>
+                        <div id="cart-sesmt-aprov" style="font-size:.6rem;color:#374151;min-height:.8rem;margin-bottom:.15rem"></div>
+                        <div style="height:.8rem;border-bottom:1px solid #94a3b8"></div>
                     </div>
                 </div>
 
@@ -561,7 +554,7 @@ require_once __DIR__ . '/../includes/sidebar.php';
             </div><!-- /carteirinha-preview -->
         </div>
 
-        <!-- Botões SEMPRE visÃ­veis (flex-shrink:0) -->
+        <!-- Botões SEMPRE visíveis (flex-shrink:0) -->
         <div style="display:flex;gap:.5rem;padding:1rem 1.25rem;border-top:1px solid #f1f5f9;
                     flex-shrink:0;flex-wrap:wrap;background:#fff">
             <button onclick="closeModal('modal-carteirinha')" class="btn btn-secondary" style="font-size:.8rem">Fechar</button>
@@ -572,6 +565,14 @@ require_once __DIR__ . '/../includes/sidebar.php';
                 </svg>
                 QR Code
             </button>
+            <a id="btn-ver-online" href="#" target="_blank"
+               class="btn btn-secondary" style="flex:1;justify-content:center;font-size:.8rem">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                </svg>
+                Ver online
+            </a>
             <button onclick="downloadCarteirinhaAsPdf()" id="btn-pdf" class="btn btn-secondary" style="flex:1;justify-content:center;font-size:.8rem">
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -593,6 +594,74 @@ require_once __DIR__ . '/../includes/sidebar.php';
 <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
      PAGINAÇÃO
      â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+<!-- MODAL: Carteira Digital -->
+<div id="modal-carteira-digital" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);overflow-y:auto;padding:1.25rem;align-items:center;justify-content:center">
+    <div style="max-width:480px;width:100%;background:#fff;border-radius:1rem;box-shadow:0 24px 64px rgba(0,0,0,.3);display:flex;flex-direction:column;max-height:calc(100vh - 2.5rem);overflow:hidden">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:1rem 1.25rem;border-bottom:1px solid #f1f5f9;flex-shrink:0">
+            <h3 style="font-size:1rem;font-weight:700;color:#0f172a">Carteira Digital</h3>
+            <button onclick="closeModal('modal-carteira-digital')" style="background:none;border:none;cursor:pointer;color:#94a3b8;padding:.25rem">
+                <svg style="width:1.1rem;height:1.1rem" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+        <div style="flex:1;overflow-y:auto;padding:1rem;background:#f8fafc">
+            <div id="cd-preview" style="background:#fff;border-radius:.75rem;overflow:hidden;border:1px solid #e2e8f0;box-shadow:0 2px 12px rgba(0,0,0,.06)">
+                <div style="background:#1e3a8a;color:#fff;padding:1rem 1.25rem">
+                    <div style="display:flex;align-items:center;gap:.75rem">
+                        <div id="cd-avatar" style="width:48px;height:48px;border-radius:10px;background:rgba(255,255,255,.2);flex-shrink:0;display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:1.2rem;font-weight:700;color:#fff"></div>
+                        <div style="min-width:0;flex:1">
+                            <div id="cd-name" style="font-size:.95rem;font-weight:700;color:#fff"></div>
+                            <div id="cd-role" style="font-size:.78rem;color:rgba(255,255,255,.75);margin-top:1px"></div>
+                            <div id="cd-company" style="font-size:.7rem;color:rgba(255,255,255,.55);margin-top:2px"></div>
+                        </div>
+                    </div>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem;padding:.75rem;border-bottom:1px solid #f1f5f9">
+                    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:.5rem;padding:.5rem;text-align:center">
+                        <div id="cd-valid" style="font-size:1.1rem;font-weight:700;color:#16a34a"></div>
+                        <div style="font-size:.65rem;color:#15803d">Validos</div>
+                    </div>
+                    <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:.5rem;padding:.5rem;text-align:center">
+                        <div id="cd-expiring" style="font-size:1.1rem;font-weight:700;color:#d97706"></div>
+                        <div style="font-size:.65rem;color:#b45309">Expirando</div>
+                    </div>
+                    <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:.5rem;padding:.5rem;text-align:center">
+                        <div id="cd-expired" style="font-size:1.1rem;font-weight:700;color:#dc2626"></div>
+                        <div style="font-size:.65rem;color:#b91c1c">Expirados</div>
+                    </div>
+                </div>
+                <div style="display:flex;flex-direction:column;align-items:center;padding:.75rem;border-bottom:1px solid #f1f5f9">
+                    <div style="padding:.5rem;border:2px solid #e2e8f0;border-radius:.5rem;background:#fff">
+                        <img id="cd-qr-img" src="" alt="QR Code" style="width:100px;height:100px;object-fit:contain;display:block">
+                    </div>
+                    <p style="font-size:.65rem;color:#94a3b8;margin-top:.4rem;text-align:center">Escaneie para acessar a carteira digital</p>
+                </div>
+                <div style="padding:.75rem">
+                    <div style="font-size:.7rem;font-weight:600;color:#374151;margin-bottom:.5rem">Certificados</div>
+                    <div id="cd-certs"></div>
+                </div>
+            </div>
+        </div>
+        <div style="display:flex;gap:.5rem;padding:1rem 1.25rem;border-top:1px solid #f1f5f9;flex-shrink:0;flex-wrap:wrap;background:#fff">
+            <button onclick="closeModal('modal-carteira-digital')" class="btn btn-secondary" style="font-size:.8rem">Fechar</button>
+            <button onclick="showCarteiraDigitalQr()" class="btn btn-secondary" style="flex:1;justify-content:center;font-size:.8rem">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 3.5a.5.5 0 11-1 0 .5.5 0 011 0z"/></svg>
+                QR Code
+            </button>
+            <a id="cd-btn-online" href="#" target="_blank" class="btn btn-secondary" style="flex:1;justify-content:center;font-size:.8rem">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                Ver online
+            </a>
+            <button onclick="downloadCarteiraDigitalAsPdf()" id="btn-cd-pdf" class="btn btn-secondary" style="flex:1;justify-content:center;font-size:.8rem">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                Baixar PDF
+            </button>
+            <button onclick="printCarteiraDigital()" class="btn btn-primary" style="flex:1;justify-content:center;font-size:.8rem">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                Imprimir
+            </button>
+        </div>
+    </div>
+</div>
 <?= $pag['html'] ?>
 
 <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
@@ -602,6 +671,10 @@ require_once __DIR__ . '/../includes/sidebar.php';
 // Dados de todos os funcionários (PHP â†’ JS)
 const EMP_DATA = <?= json_encode($empData, JSON_UNESCAPED_UNICODE) ?>;
 const COMPANY_LOGO = <?= json_encode(!empty($company['logo']) ? BASE_URL . '/' . ltrim($company['logo'], '/') : '') ?>;
+const COMPANY_SESMT = {
+    elaborado: <?= json_encode($company['sesmt_elaborado'] ?? '', JSON_UNESCAPED_UNICODE) ?>,
+    aprovado:  <?= json_encode($company['sesmt_aprovado']  ?? '', JSON_UNESCAPED_UNICODE) ?>,
+};
 
 let _currentQrUrl = '';
 
@@ -616,7 +689,7 @@ function closeModal(id) {
     document.body.style.overflow = '';
 }
 // Fecha ao clicar fora
-['modal-qr','modal-carteirinha'].forEach(id => {
+['modal-qr','modal-carteirinha','modal-carteira-digital'].forEach(id => {
     document.getElementById(id).addEventListener('click', function(e) {
         if (e.target === this) closeModal(id);
     });
@@ -625,6 +698,7 @@ document.addEventListener('keydown', e => {
     if (e.key === 'Escape') {
         closeModal('modal-qr');
         closeModal('modal-carteirinha');
+        closeModal('modal-carteira-digital');
     }
 });
 
@@ -688,7 +762,7 @@ function openCarteirinha(empId) {
     document.getElementById('cart-id').textContent      = String(emp.id).padStart(4, '0');
     document.getElementById('cart-role').textContent    = emp.role;
     document.getElementById('cart-company').textContent = emp.company;
-    document.getElementById('cart-cpf').textContent     = emp.cpf;
+    document.getElementById('cart-cpf').textContent     = maskCpfJs(emp.cpf);
 
     // Logo da empresa
     const logoImg = document.getElementById('cart-logo-img');
@@ -728,9 +802,42 @@ function openCarteirinha(empId) {
         }).join('');
     }
 
-    // QR Code da carteira
-    const qrUrl = '<?= BASE_URL ?>/public/qr.php?size=90&data=' + encodeURIComponent(emp.qr_url);
+    // QR Code da Carteira de Autorização (aponta para authorization.php)
+    const authUrl = emp.auth_url || emp.qr_url;
+    const qrUrl = '<?= BASE_URL ?>/public/qr.php?size=90&data=' + encodeURIComponent(authUrl);
     document.getElementById('cart-qr-img').src = qrUrl;
+    document.getElementById('cart-qr-img').dataset.authUrl = authUrl;
+
+    // Botão "Ver online" aponta para authorization.php
+    const btnVerOnline = document.getElementById('btn-ver-online');
+    if (btnVerOnline) btnVerOnline.href = authUrl;
+
+    // Operações autorizadas — exibe apenas as marcadas, ou 5 placeholder se vazio
+    const empOps = emp.authorized_ops || [];
+    const opsEl  = document.getElementById('cart-ops');
+    if (opsEl) {
+        if (empOps.length === 0) {
+            const placeholders = [
+                'Direção Defensiva', 'Veículo Grande Porte', 'Trabalho a Quente (Solda / Corte)',
+                'Espaço Confinado (NR-33)', 'Trabalho em Altura (NR-35)'
+            ];
+            opsEl.innerHTML = placeholders.map(op =>
+                '<div style="display:flex;align-items:center;gap:.3rem;padding:.15rem 0;border-bottom:1px solid #f8fafc">'
+              + '<div style="width:9px;height:9px;border:1px solid #cbd5e1;border-radius:2px;flex-shrink:0"></div>'
+              + '<span style="font-size:.6rem;color:#94a3b8">' + escHtml(op) + '</span>'
+              + '</div>'
+            ).join('');
+        } else {
+            opsEl.innerHTML = empOps.map(op =>
+                '<div style="display:flex;align-items:center;gap:.3rem;padding:.15rem 0;border-bottom:1px solid #f8fafc">'
+              + '<div style="width:9px;height:9px;border-radius:2px;flex-shrink:0;background:#1e3a8a;display:flex;align-items:center;justify-content:center">'
+              + '<svg width="7" height="7" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>'
+              + '</div>'
+              + '<span style="font-size:.6rem;font-weight:600;color:#1e3a8a">' + escHtml(op) + '</span>'
+              + '</div>'
+            ).join('');
+        }
+    }
 
     // ASO
     const asoEl = document.getElementById('cart-aso');
@@ -753,11 +860,155 @@ function openCarteirinha(empId) {
         asoEl.innerHTML = '<span style="color:#94a3b8">Nenhum ASO registrado</span>';
     }
 
+    // SESMT da empresa (vem de COMPANY_SESMT, não do colaborador)
+    const sesmtElab  = document.getElementById('cart-sesmt-elab');
+    const sesmtAprov = document.getElementById('cart-sesmt-aprov');
+    if (sesmtElab)  sesmtElab.textContent  = COMPANY_SESMT.elaborado || '';
+    if (sesmtAprov) sesmtAprov.textContent = COMPANY_SESMT.aprovado  || '';
+
     openModal('modal-carteirinha');
 }
 
+/* ── Modal Carteira Digital ─────────────────────────────────── */
+function openCarteiraDigital(empId) {
+    const emp = EMP_DATA[empId];
+    if (!emp) return;
+
+    // Avatar
+    const avatar = document.getElementById('cd-avatar');
+    if (emp.photo) {
+        avatar.innerHTML = '<img src="' + emp.photo + '" style="width:100%;height:100%;object-fit:cover">';
+    } else {
+        avatar.textContent = escHtml(emp.name.charAt(0).toUpperCase());
+    }
+
+    // Dados
+    document.getElementById('cd-name').textContent    = emp.name;
+    document.getElementById('cd-role').textContent    = emp.role;
+    document.getElementById('cd-company').textContent = emp.company + (emp.cpf ? ' · CPF ' + maskCpfJs(emp.cpf) : '');
+
+    // Contadores
+    const valid    = emp.certs.filter(c => c.status === 'valid').length;
+    const expiring = emp.certs.filter(c => c.status === 'expiring').length;
+    const expired  = emp.certs.filter(c => c.status === 'expired').length;
+    document.getElementById('cd-valid').textContent    = valid;
+    document.getElementById('cd-expiring').textContent = expiring;
+    document.getElementById('cd-expired').textContent  = expired;
+
+    // QR Code aponta para employee.php
+    const qrUrl = '<?= BASE_URL ?>/public/qr.php?size=100&data=' + encodeURIComponent(emp.qr_url);
+    document.getElementById('cd-qr-img').src = qrUrl;
+
+    // Botão Ver online
+    document.getElementById('cd-btn-online').href = emp.qr_url;
+
+    // Lista de certificados
+    const certsEl = document.getElementById('cd-certs');
+    if (emp.certs.length === 0) {
+        certsEl.innerHTML = '<p style="font-size:.7rem;color:#94a3b8;text-align:center;padding:.5rem">Nenhum certificado cadastrado.</p>';
+    } else {
+        const colors = { valid: '#16a34a', expiring: '#d97706', expired: '#dc2626' };
+        const labels = { valid: 'Válido', expiring: 'Expirando', expired: 'Expirado' };
+        const bgs    = { valid: '#f0fdf4', expiring: '#fffbeb', expired: '#fef2f2' };
+        const bds    = { valid: '#bbf7d0', expiring: '#fde68a', expired: '#fecaca' };
+        certsEl.innerHTML = emp.certs.map(c => {
+            const color = colors[c.status] || '#64748b';
+            const label = labels[c.status] || c.status;
+            const bg    = bgs[c.status]    || '#f1f5f9';
+            const bd    = bds[c.status]    || '#e2e8f0';
+            return '<div style="border:1px solid #e2e8f0;border-radius:.5rem;padding:.5rem .75rem;margin-bottom:.4rem">'
+                 + '<div style="display:flex;align-items:center;justify-content:space-between;gap:.5rem">'
+                 + '<div style="min-width:0">'
+                 + '<div style="font-size:.65rem;font-weight:700;color:#1e3a8a">' + escHtml(c.type) + '</div>'
+                 + '<div style="font-size:.75rem;font-weight:600;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + escHtml(c.title) + '</div>'
+                 + '<div style="font-size:.65rem;color:#64748b;margin-top:1px">Validade: ' + formatDateBR(c.expiry_date) + '</div>'
+                 + '</div>'
+                 + '<span style="font-size:.6rem;padding:.15rem .5rem;border-radius:20px;font-weight:600;flex-shrink:0;background:' + bg + ';color:' + color + ';border:1px solid ' + bd + '">' + label + '</span>'
+                 + '</div>'
+                 + '</div>';
+        }).join('');
+    }
+
+    openModal('modal-carteira-digital');
+}
+
+function maskCpfJs(cpf) {
+    const d = cpf.replace(/\D/g, '');
+    if (d.length !== 11) return '***.***.***-**';
+    return '***.' + d.slice(3,6) + '.' + d.slice(6,9) + '-**';
+}
+
+function printCarteiraDigital() {
+    const content = document.getElementById('cd-preview').outerHTML;
+    const win = window.open('', '_blank', 'width=600,height=700');
+    win.document.write(`<!DOCTYPE html><html lang="pt-BR"><head>
+        <meta charset="UTF-8"><title>Carteira Digital</title>
+        <style>
+            * { box-sizing:border-box; -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
+            body { margin:0; padding:10mm; background:#fff; font-family:Arial,sans-serif; }
+            #cd-preview { max-width:400px; margin:0 auto; border:1px solid #e2e8f0; border-radius:8px; overflow:hidden; }
+        </style>
+    </head><body>` + content + `
+    <script>window.onload=function(){ setTimeout(function(){ window.print(); },400); };<\/script>
+    </body></html>`);
+    win.document.close();
+}
+
+function showCarteiraDigitalQr() {
+    const img = document.getElementById('cd-qr-img');
+    if (!img || !img.src) return;
+    const params  = new URL(img.src).searchParams;
+    const dataUrl = params.get('data') || '';
+    const empName = document.getElementById('cd-name').textContent || 'colaborador';
+
+    _currentQrUrl     = dataUrl;
+    _currentQrEmpName = empName;
+
+    document.getElementById('qr-modal-name').textContent = 'QR Code de ' + empName;
+    document.getElementById('qr-modal-url').textContent  = dataUrl;
+    document.getElementById('qr-open-link').href         = dataUrl;
+
+    const qrSrc = '<?= BASE_URL ?>/public/qr.php?size=160&data=' + encodeURIComponent(dataUrl);
+    document.getElementById('qr-modal-img').src = qrSrc;
+
+    closeModal('modal-carteira-digital');
+    openModal('modal-qr');
+}
+
+async function downloadCarteiraDigitalAsPdf() {
+    const btn = document.getElementById('btn-cd-pdf');
+    const origHTML = btn.innerHTML;
+    btn.innerHTML = '⏳ Gerando...';
+    btn.disabled  = true;
+    try {
+        const el = document.getElementById('cd-preview');
+        const canvas = await html2canvas(el, {
+            scale: 2, useCORS: true, backgroundColor: '#ffffff', logging: false,
+        });
+        const { jsPDF } = window.jspdf;
+        const pdf   = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+        const pageW = pdf.internal.pageSize.getWidth();
+        const pageH = pdf.internal.pageSize.getHeight();
+        const margin = 15;
+        const maxW  = pageW - margin * 2;
+        const maxH  = pageH - margin * 2;
+        const ratio = canvas.width / canvas.height;
+        let imgW = maxW;
+        let imgH = imgW / ratio;
+        if (imgH > maxH) { imgH = maxH; imgW = imgH * ratio; }
+        const xPos = (pageW - imgW) / 2;
+        pdf.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', xPos, margin, imgW, imgH);
+        const nome = (document.getElementById('cd-name').textContent || 'colaborador')
+                     .replace(/\s+/g, '-').toLowerCase();
+        pdf.save('carteira-digital-' + nome + '.pdf');
+    } catch (err) {
+        alert('Erro ao gerar PDF: ' + err.message);
+    }
+    btn.innerHTML = origHTML;
+    btn.disabled  = false;
+}
+
 function showCarteirinhaQr() {
-    // Abre o modal de QR com a URL já carregada na carteirinha
     const img = document.getElementById('cart-qr-img');
     if (!img || !img.src) return;
     const params  = new URL(img.src).searchParams;

@@ -13,6 +13,7 @@ $errors = [];
 $employee = [
     'name' => '', 'email' => '', 'cpf' => '', 'role' => '', 'department' => '',
     'manager_name' => '', 'department_id' => null, 'phone' => '', 'photo' => '', 'status' => 'active',
+    'authorized_ops' => null,
     'cep' => '', 'address' => '', 'number' => '',
     'complement' => '', 'neighborhood' => '', 'city' => '', 'state' => '',
 ];
@@ -44,6 +45,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 redirect('/admin/employees.php');
             }
         }
+        // Operações autorizadas (checkboxes)
+        $allOps = [
+            'Trabalho em Altura (NR-35)', 'Espaço Confinado (NR-33)', 'Trabalho em Telhado',
+            'Uso de Andaime', 'Uso de Plataforma Elevatória (PLEM)',
+            'Eletricidade — Baixa Tensão (NR-10)', 'Eletricidade — Alta Tensão (NR-10 SEP)',
+            'Bloqueio e Etiquetagem (Lockout/Tagout)',
+            'Operação de Empilhadeira', 'Veículo Grande Porte', 'Direção Defensiva',
+            'Movimentação de Cargas (NR-11)', 'Operação de Guincho / Guindaste', 'Operação de Caldeira (NR-13)',
+            'Trabalho a Quente (Solda / Corte)', 'Trabalho com Produtos Químicos (NR-26)',
+            'Trabalho em Instalações Frigoríficas', 'Trabalho com Radiação (NR-15)',
+            'Trabalho Noturno', 'Trabalho em Área Classificada',
+            'Uso de Respirador / Máscara PFF2', 'Uso de Equipamento Autônomo (SCBA)',
+            'Primeiros Socorros', 'Combate a Incêndio (Brigadista)', 'Resgate em Altura',
+        ];
+        $checkedOps = array_filter($_POST['authorized_ops'] ?? [], fn($v) => in_array($v, $allOps));
+        $employee['authorized_ops'] = json_encode(array_values($checkedOps));
+
         $fields = ['name','email','cpf','role','phone','photo','status',
                    'cep','address','number','complement','neighborhood','city','state'];
         foreach ($fields as $f) {
@@ -88,6 +106,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt = $db->prepare(
                     'UPDATE employees
                      SET name=?,email=?,cpf=?,role=?,department=?,department_id=?,manager_name=?,
+                         authorized_ops=?,
                          phone=?,photo=?,status=?,
                          cep=?,address=?,number=?,complement=?,neighborhood=?,city=?,state=?
                      WHERE id=? AND company_id=?'
@@ -97,6 +116,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $employee['role'],$employee['department']?:null,
                     $employee['department_id'],
                     $employee['manager_name']?:null,
+                    $employee['authorized_ops']?:null,
                     $employee['phone']?:null,$employee['photo']?:null,$employee['status'],
                     $employee['cep']?:null,$employee['address']?:null,$employee['number']?:null,
                     $employee['complement']?:null,$employee['neighborhood']?:null,
@@ -120,15 +140,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt = $db->prepare(
                     'INSERT INTO employees
                        (company_id,name,email,cpf,role,department,department_id,manager_name,
+                        authorized_ops,
                         phone,photo,public_hash,status,
                         cep,address,number,complement,neighborhood,city,state)
-                     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'
+                     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'
                 );
                 $stmt->execute([
                     $companyId,$employee['name'],$employee['email'],$employee['cpf'],
                     $employee['role'],$employee['department']?:null,
                     $employee['department_id'],
                     $employee['manager_name']?:null,
+                    $employee['authorized_ops']?:null,
                     $employee['phone']?:null,$employee['photo']?:null,$publicHash,$employee['status'],
                     $employee['cep']?:null,$employee['address']?:null,$employee['number']?:null,
                     $employee['complement']?:null,$employee['neighborhood']?:null,
@@ -343,6 +365,75 @@ require_once __DIR__ . '/../includes/sidebar.php';
                 </select>
             </div>
         </div>
+    </div>
+
+    <!-- OPERAÇÕES AUTORIZADAS -->
+    <?php
+    $allOpsGroups = [
+        'Trabalho em Altura e Espaço' => [
+            'Trabalho em Altura (NR-35)',
+            'Espaço Confinado (NR-33)',
+            'Trabalho em Telhado',
+            'Uso de Andaime',
+            'Uso de Plataforma Elevatória (PLEM)',
+        ],
+        'Eletricidade e Energia' => [
+            'Eletricidade — Baixa Tensão (NR-10)',
+            'Eletricidade — Alta Tensão (NR-10 SEP)',
+            'Bloqueio e Etiquetagem (Lockout/Tagout)',
+        ],
+        'Equipamentos e Veículos' => [
+            'Operação de Empilhadeira',
+            'Veículo Grande Porte',
+            'Direção Defensiva',
+            'Movimentação de Cargas (NR-11)',
+            'Operação de Guincho / Guindaste',
+            'Operação de Caldeira (NR-13)',
+        ],
+        'Trabalhos Especiais' => [
+            'Trabalho a Quente (Solda / Corte)',
+            'Trabalho com Produtos Químicos (NR-26)',
+            'Trabalho em Instalações Frigoríficas',
+            'Trabalho com Radiação (NR-15)',
+            'Trabalho Noturno',
+            'Trabalho em Área Classificada',
+        ],
+        'Saúde e Segurança' => [
+            'Uso de Respirador / Máscara PFF2',
+            'Uso de Equipamento Autônomo (SCBA)',
+            'Primeiros Socorros',
+            'Combate a Incêndio (Brigadista)',
+            'Resgate em Altura',
+        ],
+    ];
+
+    // Lista plana para validação no POST
+    $allOps = array_merge(...array_values($allOpsGroups));
+    $savedOps = json_decode($employee['authorized_ops'] ?? '[]', true) ?: [];
+    ?>
+    <div class="bg-white rounded-lg shadow-sm border p-6 space-y-5">
+        <div class="pb-2 border-b">
+            <h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Operação / Execução</h2>
+            <p class="text-xs text-gray-400 mt-0.5">Marque as operações que este colaborador está autorizado a executar. Aparecem na Carteira de Autorização.</p>
+        </div>
+
+        <?php foreach ($allOpsGroups as $groupLabel => $ops): ?>
+        <div>
+            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2"><?= e($groupLabel) ?></p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-y-1.5 gap-x-6">
+                <?php foreach ($ops as $op): ?>
+                <label class="flex items-center gap-3 cursor-pointer group">
+                    <input type="checkbox"
+                           name="authorized_ops[]"
+                           value="<?= e($op) ?>"
+                           <?= in_array($op, $savedOps, true) ? 'checked' : '' ?>
+                           class="w-4 h-4 rounded border-gray-300 text-industrial-blue focus:ring-industrial-blue cursor-pointer">
+                    <span class="text-sm text-gray-700 group-hover:text-industrial-blue transition"><?= e($op) ?></span>
+                </label>
+                <?php endforeach; ?>
+            </div>
+        </div>
+        <?php endforeach; ?>
     </div>
 
     <!-- ENDEREÇO -->

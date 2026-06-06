@@ -105,6 +105,17 @@ function getEmployeePublicUrl(int $employeeId): string {
 }
 
 /**
+ * Gera URL pública da Carteira de Autorização (NRs + ASO + ramais).
+ */
+function getAuthorizationPublicUrl(int $employeeId): string {
+    $hash = ensureEmployeePublicHash($employeeId);
+    if ($hash) {
+        return BASE_URL . '/public/authorization.php?hash=' . urlencode($hash);
+    }
+    return BASE_URL . '/public/authorization.php';
+}
+
+/**
  * Gera QR Code em SVG localmente (sem dependência externa).
  * Retorna uma string SVG pronta para uso como src em data URI ou inline.
  */

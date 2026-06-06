@@ -33,6 +33,12 @@ $employeeQrSrc = $employee
     ? BASE_URL . '/public/qr.php?size=112&data=' . urlencode(getEmployeePublicUrl((int)$employee['id']))
     : '';
 
+// URL e QR da Carteira de Autorização
+$authUrl   = $employee ? getAuthorizationPublicUrl((int)$employee['id']) : '';
+$authQrSrc = $employee
+    ? BASE_URL . '/public/qr.php?size=112&data=' . urlencode($authUrl)
+    : '';
+
 $pageTitle = 'Meus Certificados';
 require_once __DIR__ . '/../includes/header.php';
 require_once __DIR__ . '/../includes/sidebar.php';
@@ -100,23 +106,47 @@ require_once __DIR__ . '/../includes/sidebar.php';
             </div>
         </div>
 
-        <!-- QR Code da carteira pessoal -->
-        <div class="section-card flex flex-col items-center justify-center p-5 text-center">
-            <p class="text-sm font-semibold text-gray-700 mb-3">Minha Carteira Digital</p>
-            <div class="p-2.5 border-2 border-gray-200 rounded-xl bg-white shadow-sm inline-block mb-3">
-                <img src="<?= e($employeeQrSrc) ?>" alt="QR Code" width="112" height="112" style="display:block">
+        <!-- Carteiras digitais: QR Código + Autorização -->
+        <div class="section-card flex flex-col p-5 gap-4">
+            <p class="text-sm font-semibold text-gray-700 text-center">Minhas Carteiras</p>
+
+            <!-- Carteira Digital (certificados) -->
+            <div class="flex flex-col items-center text-center border border-gray-100 rounded-xl p-4 bg-gray-50">
+                <p class="text-xs font-semibold text-industrial-blue mb-2">📋 Carteira Digital</p>
+                <div class="p-2 border-2 border-gray-200 rounded-xl bg-white shadow-sm inline-block mb-2">
+                    <img src="<?= e($employeeQrSrc) ?>" alt="QR Code" width="96" height="96" style="display:block">
+                </div>
+                <p class="text-xs text-gray-400 mb-2">Todos os seus certificados</p>
+                <a href="<?= getEmployeePublicUrl((int)$employee['id']) ?>" target="_blank"
+                   class="btn btn-secondary btn-sm w-full justify-content:center">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                    </svg>
+                    Ver online
+                </a>
             </div>
-            <p class="text-xs text-gray-500 mb-3">Compartilhe este QR Code para mostrar todos os seus certificados</p>
-            <a href="<?= getEmployeePublicUrl((int)$employee['id']) ?>" target="_blank"
-               class="btn btn-secondary btn-sm w-full justify-center">
-                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
-                </svg>
-                Ver carteira pública
-            </a>
+
+            <!-- Carteira de Autorização -->
+            <div class="flex flex-col items-center text-center border border-blue-100 rounded-xl p-4 bg-blue-50">
+                <p class="text-xs font-semibold text-industrial-blue mb-2">🪪 Carteira de Autorização</p>
+                <div class="p-2 border-2 border-blue-200 rounded-xl bg-white shadow-sm inline-block mb-2">
+                    <img src="<?= e($authQrSrc) ?>" alt="QR Code Autorização" width="96" height="96" style="display:block">
+                </div>
+                <p class="text-xs text-gray-400 mb-2">NRs, ASO e ramais de emergência</p>
+                <a href="<?= e($authUrl) ?>" target="_blank"
+                   class="btn btn-primary btn-sm w-full justify-content:center">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                    </svg>
+                    Ver online
+                </a>
+            </div>
+
+            <!-- Alterar senha -->
             <a href="<?= BASE_URL ?>/employee/change-password.php"
-               class="btn btn-secondary btn-sm w-full justify-center mt-2">
+               class="btn btn-secondary btn-sm w-full justify-center">
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                           d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>

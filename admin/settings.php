@@ -28,10 +28,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_company'])) {
         $neigh  = trim($_POST['neighborhood'] ?? '');
         $city   = trim($_POST['city']         ?? '');
         $state  = strtoupper(trim($_POST['state'] ?? ''));
-        $emSesmt    = preg_replace('/\D/', '', $_POST['emergency_sesmt']    ?? '');
-        $emBombeiro = trim($_POST['emergency_bombeiro'] ?? '193');
-        $emSamu     = trim($_POST['emergency_samu']     ?? '192');
-        $emPolicia  = trim($_POST['emergency_policia']  ?? '190');
+        $emSesmt      = preg_replace('/\D/', '', $_POST['emergency_sesmt']    ?? '');
+        $emBombeiro   = trim($_POST['emergency_bombeiro'] ?? '193');
+        $emSamu       = trim($_POST['emergency_samu']     ?? '192');
+        $emPolicia    = trim($_POST['emergency_policia']  ?? '190');
+        $sesmtElab    = trim($_POST['sesmt_elaborado']    ?? '');
+        $sesmtAprov   = trim($_POST['sesmt_aprovado']     ?? '');
 
         if ($name === '') $errCompany[] = 'Nome da empresa é obrigatório.';
         if ($cep !== '' && strlen($cep) !== 8) $errCompany[] = 'CEP inválido.';
@@ -53,7 +55,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_company'])) {
                 'UPDATE companies
                  SET name=?,email=?,phone=?,cep=?,address=?,number=?,complement=?,
                      neighborhood=?,city=?,state=?,logo=?,
-                     emergency_sesmt=?,emergency_bombeiro=?,emergency_samu=?,emergency_policia=?
+                     emergency_sesmt=?,emergency_bombeiro=?,emergency_samu=?,emergency_policia=?,
+                     sesmt_elaborado=?,sesmt_aprovado=?
                  WHERE id=?'
             );
             $stmt->execute([
@@ -62,6 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_company'])) {
                 $comp ?: null, $neigh ?: null, $city ?: null, $state ?: null,
                 $logoPath,
                 $emSesmt ?: null, $emBombeiro ?: '193', $emSamu ?: '192', $emPolicia ?: '190',
+                $sesmtElab ?: null, $sesmtAprov ?: null,
                 $user['company_id']
             ]);
             auditLog('company.update', "company #{$user['company_id']}");
@@ -278,6 +282,32 @@ $sc         = $subColors[$coSub] ?? 'gray';
                        value="<?= e($company['emergency_policia'] ?? '190') ?>"
                        placeholder="190" maxlength="6"
                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-industrial-blue outline-none">
+            </div>
+        </div>
+
+        <!-- Responsáveis SESMT -->
+        <div class="pt-3 border-t border-gray-100">
+            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
+                Responsáveis SESMT — Carteira de Autorização
+            </p>
+            <p class="text-xs text-gray-400 mb-3">
+                Os nomes aparecem na carteira impressa. Deixe em branco para assinar à mão.
+            </p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Elaborado por</label>
+                    <input type="text" name="sesmt_elaborado"
+                           value="<?= e($company['sesmt_elaborado'] ?? '') ?>"
+                           placeholder="Nome do responsável pela elaboração"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-industrial-blue outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Aprovado por</label>
+                    <input type="text" name="sesmt_aprovado"
+                           value="<?= e($company['sesmt_aprovado'] ?? '') ?>"
+                           placeholder="Nome do responsável pela aprovação"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-industrial-blue outline-none">
+                </div>
             </div>
         </div>
     </div>
