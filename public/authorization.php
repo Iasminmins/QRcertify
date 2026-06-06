@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once __DIR__ . '/../config/config.php';
 
 $hash     = trim($_GET['hash'] ?? '');
@@ -169,11 +169,27 @@ $verifiedAt = date('d/m/Y \à\s H:i');
             .no-print { display: none !important; }
             body { background: white !important; }
             .card-authorization { box-shadow: none !important; border: 1px solid #e2e8f0 !important; }
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
+            }
         }
         body { font-family: Arial, sans-serif; }
+
+        /* Tamanhos mínimos para leitura no celular */
+        .auth-label  { font-size: 9px;  font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
+        .auth-value  { font-size: 11px; }
+        .auth-type   { font-size: 11px; font-weight: 700; }
+        .auth-date   { font-size: 10px; font-weight: 600; white-space: nowrap; }
+        .auth-op     { font-size: 10px; line-height: 1.35; }
+        .auth-header { font-size: 9px;  font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+        .auth-aso    { font-size: 11px; }
+        .auth-sesmt  { font-size: 9px;  }
+        .auth-ramais { font-size: 10px; }
     </style>
 </head>
-<body class="min-h-screen bg-gray-100 flex flex-col">
+<body class="min-h-screen bg-gray-50 flex flex-col">
 
 <div class="flex-1 flex flex-col items-center py-6 px-4">
 
@@ -200,72 +216,77 @@ $verifiedAt = date('d/m/Y \à\s H:i');
     <div class="card-authorization bg-white rounded-xl shadow-xl border border-gray-200 w-full max-w-lg overflow-hidden">
 
         <!-- ══ CABEÇALHO AZUL ══ -->
-        <div class="bg-industrial-blue text-white">
-
+        <div class="bg-industrial-blue text-white" style="-webkit-print-color-adjust:exact;print-color-adjust:exact;background-color:#1e3a8a!important;color:#fff!important">
             <!-- Topo: título centralizado -->
-            <div class="flex items-center justify-center gap-2 px-4 pt-4 pb-2 border-b border-white/10">
-                <div class="w-2.5 h-2.5 rounded-full bg-industrial-yellow flex-shrink-0"></div>
+            <div class="flex items-center justify-center gap-2 px-4 pt-4 pb-3">
+                <div class="w-2.5 h-2.5 rounded-full bg-industrial-yellow flex-shrink-0" style="background-color:#facc15!important"></div>
                 <span class="text-xs font-bold tracking-widest uppercase">Carteira de Autorização</span>
             </div>
+        </div>
 
-            <!-- Dados do colaborador -->
-            <div class="flex items-start gap-3 px-4 py-3">
+        <!-- ══ DADOS DO COLABORADOR (fundo branco) ══ -->
+        <div class="flex items-start gap-3 px-4 py-3 border-b border-gray-200 bg-white">
 
                 <!-- Logo da empresa -->
-                <div class="flex-shrink-0 w-14 h-14 rounded-lg border border-white/25 bg-white/10
+                <div class="flex-shrink-0 w-14 h-14 rounded-lg border border-gray-200 bg-gray-50
                             flex items-center justify-center overflow-hidden">
                     <?php if ($logoUrl): ?>
                         <img src="<?= e($logoUrl) ?>" alt="Logo" class="w-full h-full object-contain p-1">
                     <?php else: ?>
-                        <span class="text-xs text-white/50 text-center leading-tight px-1">LOGO</span>
+                        <span class="text-xs text-gray-400 text-center leading-tight px-1">LOGO</span>
                     <?php endif; ?>
                 </div>
 
                 <!-- Placeholder foto doc -->
-                <div class="flex-shrink-0 w-14 h-16 rounded-lg border border-dashed border-white/30
-                            bg-white/10 flex items-center justify-center">
+                <div class="flex-shrink-0 w-14 h-16 rounded-lg border border-dashed border-gray-300
+                            bg-gray-50 flex items-center justify-center">
                     <?php if (!empty($employee['photo'])): ?>
                         <img src="<?= e(BASE_URL . '/' . ltrim($employee['photo'], '/')) ?>"
                              alt="" class="w-full h-full object-cover rounded-lg">
                     <?php else: ?>
-                        <span class="text-[9px] text-white/50 text-center leading-tight px-1">Portar<br>doc.<br>foto</span>
+                        <span class="text-[9px] text-gray-400 text-center leading-tight px-1">Portar<br>doc.<br>foto</span>
                     <?php endif; ?>
                 </div>
 
                 <!-- Dados -->
                 <div class="flex-1 min-w-0 text-[11px] space-y-0.5">
-                    <div class="border-b border-white/15 pb-0.5">
-                        <span class="text-white/60">Nome: </span>
-                        <span class="font-semibold"><?= e($employee['name']) ?></span>
+                    <div class="border-b border-gray-100 pb-0.5">
+                        <span class="text-gray-500">Nome: </span>
+                        <span class="font-semibold text-gray-900"><?= e($employee['name']) ?></span>
                     </div>
-                    <div class="border-b border-white/15 pb-0.5">
-                        <span class="text-white/60">Matrícula: </span>
-                        <span class="font-semibold"><?= e(str_pad((string)$employeeId, 4, '0', STR_PAD_LEFT)) ?></span>
+                    <div class="border-b border-gray-100 pb-0.5">
+                        <span class="text-gray-500">Matrícula: </span>
+                        <span class="font-semibold text-gray-900"><?= e(str_pad((string)$employeeId, 4, '0', STR_PAD_LEFT)) ?></span>
                     </div>
-                    <div class="border-b border-white/15 pb-0.5">
-                        <span class="text-white/60">Função: </span>
-                        <span class="font-semibold"><?= e($employee['role']) ?></span>
+                    <div class="border-b border-gray-100 pb-0.5">
+                        <span class="text-gray-500">Função: </span>
+                        <span class="font-semibold text-gray-900"><?= e($employee['role']) ?></span>
                     </div>
-                    <div class="border-b border-white/15 pb-0.5">
-                        <span class="text-white/60">Empresa: </span>
-                        <span class="font-semibold"><?= e($employee['company_name']) ?></span>
+                    <?php if (!empty($employee['manager_name'])): ?>
+                    <div class="border-b border-gray-100 pb-0.5">
+                        <span class="text-gray-500">Gestor: </span>
+                        <span class="font-semibold text-gray-900"><?= e($employee['manager_name']) ?></span>
+                    </div>
+                    <?php endif; ?>
+                    <div class="border-b border-gray-100 pb-0.5">
+                        <span class="text-gray-500">Empresa: </span>
+                        <span class="font-semibold text-gray-900"><?= e($employee['company_name']) ?></span>
                     </div>
                     <?php if (!empty($employee['cpf'])): ?>
                     <div>
-                        <span class="text-white/60">CPF: </span>
-                        <span class="font-semibold"><?= e(maskCpfAuth($employee['cpf'])) ?></span>
+                        <span class="text-gray-500">CPF: </span>
+                        <span class="font-semibold text-gray-900"><?= e(maskCpfAuth($employee['cpf'])) ?></span>
                     </div>
                     <?php endif; ?>
                 </div>
             </div>
-        </div>
 
         <!-- ══ TABELA NRs + OPERAÇÕES ══ -->
-        <div class="grid grid-cols-2 border-b border-gray-200">
+        <div class="grid grid-cols-2 border-t border-gray-200 border-b border-gray-200">
 
             <!-- Coluna: NRs -->
             <div class="border-r border-gray-200">
-                <div class="bg-industrial-blue text-white text-[10px] font-bold text-center py-1.5 px-2 tracking-wide uppercase">
+                <div class="bg-industrial-blue text-white text-[10px] font-bold text-center py-1.5 px-2 tracking-wide uppercase" style="background-color:#1e3a8a!important;color:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact">
                     Trabalhador Autorizado / Validade
                 </div>
                 <div class="p-2 min-h-[80px]">
@@ -301,7 +322,7 @@ $verifiedAt = date('d/m/Y \à\s H:i');
 
             <!-- Coluna: Operações -->
             <div>
-                <div class="bg-industrial-blue text-white text-[10px] font-bold text-center py-1.5 px-2 tracking-wide uppercase">
+                <div class="bg-industrial-blue text-white text-[10px] font-bold text-center py-1.5 px-2 tracking-wide uppercase" style="background-color:#1e3a8a!important;color:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact">
                     Operação / Execução
                 </div>
                 <div class="p-2 min-h-[60px]">
@@ -335,7 +356,7 @@ $verifiedAt = date('d/m/Y \à\s H:i');
 
         <!-- ══ ASO ══ -->
         <div class="border-b border-gray-200">
-            <div class="bg-industrial-blue text-white text-[10px] font-bold text-center py-1.5 px-2 tracking-wide uppercase">
+            <div class="bg-industrial-blue text-white text-[10px] font-bold text-center py-1.5 px-2 tracking-wide uppercase" style="background-color:#1e3a8a!important;color:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact">
                 Atestado de Saúde Ocupacional (ASO)
             </div>
             <div class="px-3 py-2 min-h-[36px] flex items-center">
@@ -403,7 +424,7 @@ $verifiedAt = date('d/m/Y \à\s H:i');
             </div>
 
             <!-- Ramais de emergência -->
-            <div class="flex-1 bg-yellow-50 border border-yellow-300 rounded-md px-3 py-2 text-center">
+            <div class="flex-1 bg-yellow-50 border border-yellow-300 rounded-md px-3 py-2 text-center" style="background-color:#fefce8!important;-webkit-print-color-adjust:exact;print-color-adjust:exact">
                 <p class="text-[10px] font-bold text-amber-700 mb-1">RAMAIS DE EMERGÊNCIA</p>
                 <p class="text-[10px] text-amber-900">SESMT: <?= e($sesmt) ?></p>
                 <p class="text-[10px] text-amber-900 mt-0.5">

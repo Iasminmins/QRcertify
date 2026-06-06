@@ -100,6 +100,7 @@ foreach ($employees as $emp) {
         'cpf'     => $emp['cpf'],
         'email'   => $emp['email'],
         'photo'   => $emp['photo'] ?? '',
+        'manager' => $emp['manager_name'] ?? '',
         'company' => $company['name'] ?? '',
         'certs'   => array_map(fn($c) => [
             'title'       => $c['title'],
@@ -483,6 +484,9 @@ require_once __DIR__ . '/../includes/sidebar.php';
                         <div style="border-bottom:1px solid #f1f5f9;padding-bottom:.15rem">
                             <strong>Função:</strong> <span id="cart-role"></span>
                         </div>
+                        <div id="cart-gestor-row" style="border-bottom:1px solid #f1f5f9;padding-bottom:.15rem;display:none">
+                            <strong>Gestor:</strong> <span id="cart-gestor"></span>
+                        </div>
                         <div style="border-bottom:1px solid #f1f5f9;padding-bottom:.15rem">
                             <strong>Empresa:</strong> <span id="cart-company"></span>
                         </div>
@@ -763,6 +767,16 @@ function openCarteirinha(empId) {
     document.getElementById('cart-role').textContent    = emp.role;
     document.getElementById('cart-company').textContent = emp.company;
     document.getElementById('cart-cpf').textContent     = maskCpfJs(emp.cpf);
+
+    // Gestor — só exibe se preenchido
+    const gestorRow = document.getElementById('cart-gestor-row');
+    const gestorEl  = document.getElementById('cart-gestor');
+    if (emp.manager && emp.manager.trim() !== '') {
+        gestorEl.textContent       = emp.manager;
+        gestorRow.style.display    = '';
+    } else {
+        gestorRow.style.display    = 'none';
+    }
 
     // Logo da empresa
     const logoImg = document.getElementById('cart-logo-img');
