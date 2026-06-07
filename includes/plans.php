@@ -68,6 +68,19 @@ function getPlansCatalog(): array {
                 'export_reports'  => true,
             ],
         ],
+        'custom' => [
+            'name'      => 'Personalizado',
+            'price'     => 0,   // definido em contrato
+            'employees' => 0,   // 0 = ilimitado (ou usa plan_employee_limit da empresa)
+            'features'  => [
+                'qr'              => true,
+                'dashboard_basic' => true,
+                'email_alerts'    => true,
+                'csv_import'      => true,
+                'pdf_upload'      => true,
+                'export_reports'  => true,
+            ],
+        ],
     ];
 
     return $catalog;
@@ -86,6 +99,34 @@ function getPlanDefinition(?string $plan): array {
 
 function getPlanEmployeeLimit(?string $plan): int {
     return getPlanDefinition($plan)['employees'];
+}
+
+/**
+ * Retorna o limite real de colaboradores da empresa.
+ * Se o plano for 'custom' ou tiver plan_employee_limit no banco, usa esse valor.
+ * 0 = ilimitado.
+ */
+function getCompanyEmployeeLimit(int $companyId): int {
+    try {
+        $db   = getDB();
+        $stmt = $db->prepare('SELECT plan, plan_employee_limit FROM companies WHERE id = ? LIMIT 1');
+        $stmt->execute([$companyId]);
+        $row  = $stmt->fetch();
+        if (!$row) return 20;
+
+        $plan = normalizePlanKey($row['plan']);
+
+        // Plano custom ou limite personalizado definido na empresa
+        if (!empty($row['plan_employee_limit']) && (int)$row['plan_employee_limit'] > 0) {
+            return (int)$row['plan_employee_limit'];
+        }
+
+        $catalogLimit = getPlanEmployeeLimit($plan);
+        // 0 no catálogo = ilimitado
+        return $catalogLimit;
+    } catch (\Exception $e) {
+        return 20;
+    }
 }
 
 function planHasFeature(?string $plan, string $feature): bool {
@@ -113,7 +154,7 @@ function companyHasFeature(int $companyId, string $feature): bool {
  */
 function checkEmployeeCapacity(int $companyId, int $additional = 1): array {
     $plan    = getCompanyPlanKey($companyId);
-    $limit   = getPlanEmployeeLimit($plan);
+    $limit   = getCompanyEmployeeLimit($companyId);
     $current = 0;
 
     try {
@@ -133,7 +174,8 @@ function checkEmployeeCapacity(int $companyId, int $additional = 1): array {
         ];
     }
 
-    $ok = ($current + $additional) <= $limit;
+    // 0 = ilimitado (plano custom sem teto definido)
+    $ok = ($limit === 0) || ($current + $additional) <= $limit;
 
     return [
         'ok'      => $ok,
@@ -142,7 +184,7 @@ function checkEmployeeCapacity(int $companyId, int $additional = 1): array {
         'current' => $current,
         'message' => $ok
             ? ''
-            : "Limite do plano {$plan} atingido ({$current}/{$limit} funcionários). Faça upgrade para continuar.",
+            : "Limite atingido ({$current}/{$limit} colaboradores). Entre em contato para ampliar seu plano.",
     ];
 }
 
