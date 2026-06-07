@@ -520,7 +520,7 @@ function selectPlan(key) {
   if (radio) radio.className = 'w-4 h-4 rounded-full border-2 border-industrial-blue bg-industrial-blue';
   document.getElementById('planInput').value = key;
 
-  const prices = { starter: 'R$ 97/mês', pro: 'R$ 197/mês', business: 'R$ 397/mês' };
+  const prices = { starter: 'R$ 147/mês', pro: 'R$ 397/mês', business: 'R$ 997/mês' };
   const names  = { starter: 'Starter', pro: 'Pro', business: 'Business' };
   const el = document.getElementById('summaryPlanName');
   const pr = document.getElementById('summaryPrice');

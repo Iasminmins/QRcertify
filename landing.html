@@ -41,58 +41,21 @@ a { text-decoration: none; }
 h1, h2, h3, .balance-text { text-wrap: balance; }
 p, li { overflow-wrap: normal; word-break: normal; hyphens: none; }
 header a { white-space: nowrap; }
-.qrc-wordmark {
-  font-family: Arial, Helvetica, sans-serif;
-  font-weight: 700;
-  letter-spacing: 0;
-  line-height: 1;
-}
-.qr-text {
-  font-family: Arial, Helvetica, sans-serif;
-  font-size: inherit;
-  font-weight: inherit;
-  line-height: inherit;
-  letter-spacing: 0;
-}
-.grid-bg {
-  background-image:
-    linear-gradient(rgba(30,58,138,.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(30,58,138,.04) 1px, transparent 1px);
-  background-size: 40px 40px;
-}
+.qrc-wordmark { font-family: Arial, Helvetica, sans-serif; font-weight: 700; letter-spacing: 0; line-height: 1; }
+.qr-text { font-family: Arial, Helvetica, sans-serif; font-size: inherit; font-weight: inherit; line-height: inherit; letter-spacing: 0; }
+.grid-bg { background-image: linear-gradient(rgba(30,58,138,.04) 1px, transparent 1px), linear-gradient(90deg, rgba(30,58,138,.04) 1px, transparent 1px); background-size: 40px 40px; }
 .em-dia { position:relative; display:inline-block; color:#0a0a0a; }
-.em-dia::after {
-  content:''; position:absolute; left:0; right:0; bottom:2px;
-  height:10px; background:#facc15; z-index:-1;
-  border-radius:2px; transform:skewX(-2deg);
-}
+.em-dia::after { content:''; position:absolute; left:0; right:0; bottom:2px; height:10px; background:#facc15; z-index:-1; border-radius:2px; transform:skewX(-2deg); }
 .nav-link { font-size:.9rem; font-weight:500; color:#374151; transition:color .15s; }
 .nav-link:hover { color:#1e3a8a; }
-.phone {
-  width:220px; height:420px; border:3px solid #1e3a8a; border-radius:36px;
-  background:#f8faff; overflow:hidden; position:relative;
-  box-shadow:0 24px 60px rgba(30,58,138,.18), 0 4px 12px rgba(0,0,0,.08);
-}
-.phone::before {
-  content:''; position:absolute; top:10px; left:50%; transform:translateX(-50%);
-  width:60px; height:6px; background:#1e3a8a; border-radius:3px; opacity:.3;
-}
+.phone { width:220px; height:420px; border:3px solid #1e3a8a; border-radius:36px; background:#f8faff; overflow:hidden; position:relative; box-shadow:0 24px 60px rgba(30,58,138,.18), 0 4px 12px rgba(0,0,0,.08); }
+.phone::before { content:''; position:absolute; top:10px; left:50%; transform:translateX(-50%); width:60px; height:6px; background:#1e3a8a; border-radius:3px; opacity:.3; }
 .phone-screen { padding:28px 14px 14px; }
-.qr-block {
-  background:#fff; border-radius:14px; padding:12px;
-  box-shadow:0 2px 12px rgba(0,0,0,.07); margin-bottom:10px;
-}
+.qr-block { background:#fff; border-radius:14px; padding:12px; box-shadow:0 2px 12px rgba(0,0,0,.07); margin-bottom:10px; }
 .feat-card { transition:transform .2s ease, box-shadow .2s ease; }
 .feat-card:hover { transform:translateY(-4px); box-shadow:0 16px 40px rgba(30,58,138,.12); }
-.pricing-pro {
-  background:#1e3a8a; color:#fff; position:relative;
-  transform:scale(1.03); box-shadow:0 20px 60px rgba(30,58,138,.25);
-}
-.step-num {
-  font-family:'Bricolage Grotesque',sans-serif; font-size:7rem; font-weight:800;
-  line-height:1; color:rgba(30,58,138,.06); position:absolute;
-  top:-1rem; left:-1rem; user-select:none; pointer-events:none;
-}
+.pricing-pro { background:#1e3a8a; color:#fff; position:relative; transform:scale(1.03); box-shadow:0 20px 60px rgba(30,58,138,.25); }
+.step-num { font-family:'Bricolage Grotesque',sans-serif; font-size:7rem; font-weight:800; line-height:1; color:rgba(30,58,138,.06); position:absolute; top:-1rem; left:-1rem; user-select:none; pointer-events:none; }
 .faq-answer { display:none; }
 .faq-answer.open { display:block; }
 .faq-icon { transition:transform .2s; }
@@ -100,7 +63,6 @@ header a { white-space: nowrap; }
 </style>
 </head>
 <body>
-
 <!-- TOPBAR -->
 <header class="sticky top-0 z-50 bg-white/95 backdrop-blur border-b border-gray-100">
   <div class="max-w-6xl mx-auto px-5 h-16 flex items-center justify-between">
@@ -166,10 +128,7 @@ header a { white-space: nowrap; }
                 <div class="flex items-center gap-1.5 justify-center"><div class="w-2 h-2 rounded-full bg-green-400"></div><span class="text-[7px] text-green-600 font-semibold">Autenticado</span></div>
               </div>
               <div class="qr-block" style="opacity:.75"><div class="text-[8px] font-semibold text-gray-700">NR-35 &middot; V&Aacute;LIDO</div><div class="text-[7px] text-gray-400">V&aacute;lido at&eacute; 20/03/2026</div></div>
-              <div class="qr-block" style="background:#f0fdf4;border:1px solid #bbf7d0">
-                <div class="text-[8px] font-semibold text-green-700">ASO Peri&oacute;dico &middot; APTO</div>
-                <div class="text-[7px] text-green-500">V&aacute;lido at&eacute; 10/08/2026</div>
-              </div>
+              <div class="qr-block" style="background:#f0fdf4;border:1px solid #bbf7d0"><div class="text-[8px] font-semibold text-green-700">ASO Peri&oacute;dico &middot; APTO</div><div class="text-[7px] text-green-500">V&aacute;lido at&eacute; 10/08/2026</div></div>
               <div class="qr-block" style="opacity:.5;background:#fff5f5"><div class="text-[8px] font-semibold text-red-600">NR-11 &middot; VENCENDO</div><div class="text-[7px] text-red-400">Vence em 10/12/2025</div></div>
             </div>
           </div>
@@ -181,7 +140,7 @@ header a { white-space: nowrap; }
   </div>
 </section>
 
-<!-- FAIXA NRs SUPORTADAS -->
+<!-- FAIXA NRs -->
 <section class="py-12 border-y border-gray-100 bg-white">
   <div class="max-w-6xl mx-auto px-5">
     <p class="text-xs font-semibold uppercase tracking-widest text-gray-400 text-center mb-6">Certificações e NRs suportadas</p>
@@ -217,25 +176,19 @@ header a { white-space: nowrap; }
     <div class="grid md:grid-cols-3 gap-8">
       <div class="relative p-8 bg-white rounded-2xl border border-gray-100">
         <span class="step-num">01</span>
-        <div class="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center mb-5">
-          <svg width="24" height="24" fill="none" stroke="#1e3a8a" stroke-width="1.5" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-        </div>
+        <div class="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center mb-5"><svg width="24" height="24" fill="none" stroke="#1e3a8a" stroke-width="1.5" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
         <h3 class="font-display text-xl font-bold mb-2">Cadastre funcion&aacute;rios, certificados e ASOs</h3>
         <p class="text-gray-500 text-sm leading-relaxed">Importe em massa via CSV ou cadastre manualmente. NR-10, NR-35, CIPA, ASO Peri&oacute;dico &mdash; todos os tipos suportados.</p>
       </div>
       <div class="relative p-8 bg-white rounded-2xl border border-gray-100">
         <span class="step-num">02</span>
-        <div class="w-12 h-12 bg-yellow-50 rounded-xl flex items-center justify-center mb-5">
-          <svg width="24" height="24" fill="none" stroke="#b45309" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h.01M18 14h.01M14 18h.01M18 18h.01"/></svg>
-        </div>
+        <div class="w-12 h-12 bg-yellow-50 rounded-xl flex items-center justify-center mb-5"><svg width="24" height="24" fill="none" stroke="#b45309" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h.01M18 14h.01M14 18h.01M18 18h.01"/></svg></div>
         <h3 class="font-display text-xl font-bold mb-2">Gere <span class="qr-text">QR Codes</span> &uacute;nicos para cada NR</h3>
         <p class="text-gray-500 text-sm leading-relaxed">Cada certificado recebe um <span class="qr-text">QR Code</span> inviolável. Fiscal escaneia &mdash; sistema confirma autenticidade em 2 segundos.</p>
       </div>
       <div class="relative p-8 bg-white rounded-2xl border border-gray-100">
         <span class="step-num">03</span>
-        <div class="w-12 h-12 bg-green-50 rounded-xl flex items-center justify-center mb-5">
-          <svg width="24" height="24" fill="none" stroke="#15803d" stroke-width="1.5" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-        </div>
+        <div class="w-12 h-12 bg-green-50 rounded-xl flex items-center justify-center mb-5"><svg width="24" height="24" fill="none" stroke="#15803d" stroke-width="1.5" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
         <h3 class="font-display text-xl font-bold mb-2">Acompanhe vencimentos e fiscalize</h3>
         <p class="text-gray-500 text-sm leading-relaxed">Dashboard em tempo real. Alertas por e-mail 30, 15 e 7 dias antes. O fiscal pede, o trabalhador mostra no celular.</p>
       </div>
@@ -251,41 +204,13 @@ header a { white-space: nowrap; }
       <h2 class="font-display text-4xl md:text-5xl font-extrabold tracking-tight">Tudo que o seu time de SST precisa.</h2>
     </div>
     <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-      <div class="feat-card bg-white rounded-2xl p-7 border border-gray-100">
-        <div class="w-11 h-11 bg-green-50 rounded-xl flex items-center justify-center mb-5"><svg width="22" height="22" fill="none" stroke="#15803d" stroke-width="1.5" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg></div>
-        <h3 class="font-display text-base font-bold mb-2">Gest&atilde;o de ASO integrada</h3>
-        <p class="text-gray-500 text-sm leading-relaxed">Admissional, peri&oacute;dico, demissional. Controle validade, resultado (apto/inapto) e receba alertas antes do vencimento &mdash; junto com os certificados.</p>
-      </div>
-      <div class="feat-card bg-white rounded-2xl p-7 border border-gray-100">
-        <div class="w-11 h-11 bg-blue-50 rounded-xl flex items-center justify-center mb-5"><svg width="22" height="22" fill="none" stroke="#1e3a8a" stroke-width="1.5" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg></div>
-        <h3 class="font-display text-base font-bold mb-2">Carteira digital no celular</h3>
-        <p class="text-gray-500 text-sm leading-relaxed">Colaborador acessa todos os certificados em 1 toque, sem app para instalar. Funciona em qualquer navegador.</p>
-      </div>
-      <div class="feat-card bg-white rounded-2xl p-7 border border-gray-100">
-        <div class="w-11 h-11 bg-yellow-50 rounded-xl flex items-center justify-center mb-5"><svg width="22" height="22" fill="none" stroke="#b45309" stroke-width="1.5" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div>
-        <h3 class="font-display text-base font-bold mb-2">Valida&ccedil;&atilde;o por <span class="qr-text">QR Code</span></h3>
-        <p class="text-gray-500 text-sm leading-relaxed">Fiscal escaneia e confirma autenticidade em 2 segundos. Sem acesso ao sistema, sem login.</p>
-      </div>
-      <div class="feat-card bg-white rounded-2xl p-7 border border-gray-100">
-        <div class="w-11 h-11 bg-orange-50 rounded-xl flex items-center justify-center mb-5"><svg width="22" height="22" fill="none" stroke="#c2410c" stroke-width="1.5" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
-        <h3 class="font-display text-base font-bold mb-2">Alertas inteligentes</h3>
-        <p class="text-gray-500 text-sm leading-relaxed">Notifica&ccedil;&atilde;o por e-mail 30, 15 e 7 dias antes de cada vencimento. Nunca mais seja pego de surpresa.</p>
-      </div>
-      <div class="feat-card bg-white rounded-2xl p-7 border border-gray-100">
-        <div class="w-11 h-11 bg-green-50 rounded-xl flex items-center justify-center mb-5"><svg width="22" height="22" fill="none" stroke="#15803d" stroke-width="1.5" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div>
-        <h3 class="font-display text-base font-bold mb-2">Dashboard em tempo real</h3>
-        <p class="text-gray-500 text-sm leading-relaxed">Status de todas as NRs num s&oacute; lugar. V&aacute;lidas, expirando e vencidas &mdash; em n&uacute;meros e gr&aacute;ficos.</p>
-      </div>
-      <div class="feat-card bg-white rounded-2xl p-7 border border-gray-100">
-        <div class="w-11 h-11 bg-purple-50 rounded-xl flex items-center justify-center mb-5"><svg width="22" height="22" fill="none" stroke="#7c3aed" stroke-width="1.5" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
-        <h3 class="font-display text-base font-bold mb-2">Multi-empresa</h3>
-        <p class="text-gray-500 text-sm leading-relaxed">Gest&atilde;o centralizada por filial, obra ou cliente. Cada empresa v&ecirc; apenas seus pr&oacute;prios dados.</p>
-      </div>
-      <div class="feat-card bg-white rounded-2xl p-7 border border-gray-100">
-        <div class="w-11 h-11 bg-gray-100 rounded-xl flex items-center justify-center mb-5"><svg width="22" height="22" fill="none" stroke="#374151" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
-        <h3 class="font-display text-base font-bold mb-2">LGPD em foco</h3>
-        <p class="text-gray-500 text-sm leading-relaxed">Dados protegidos com boas pr&aacute;ticas de seguran&ccedil;a. Termos de uso e pol&iacute;tica de privacidade dispon&iacute;veis no site.</p>
-      </div>
+      <div class="feat-card bg-white rounded-2xl p-7 border border-gray-100"><div class="w-11 h-11 bg-green-50 rounded-xl flex items-center justify-center mb-5"><svg width="22" height="22" fill="none" stroke="#15803d" stroke-width="1.5" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg></div><h3 class="font-display text-base font-bold mb-2">Gest&atilde;o de ASO integrada</h3><p class="text-gray-500 text-sm leading-relaxed">Admissional, peri&oacute;dico, demissional. Controle validade, resultado (apto/inapto) e receba alertas antes do vencimento &mdash; junto com os certificados.</p></div>
+      <div class="feat-card bg-white rounded-2xl p-7 border border-gray-100"><div class="w-11 h-11 bg-blue-50 rounded-xl flex items-center justify-center mb-5"><svg width="22" height="22" fill="none" stroke="#1e3a8a" stroke-width="1.5" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg></div><h3 class="font-display text-base font-bold mb-2">Carteira digital no celular</h3><p class="text-gray-500 text-sm leading-relaxed">Colaborador acessa todos os certificados em 1 toque, sem app para instalar. Funciona em qualquer navegador.</p></div>
+      <div class="feat-card bg-white rounded-2xl p-7 border border-gray-100"><div class="w-11 h-11 bg-yellow-50 rounded-xl flex items-center justify-center mb-5"><svg width="22" height="22" fill="none" stroke="#b45309" stroke-width="1.5" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div><h3 class="font-display text-base font-bold mb-2">Valida&ccedil;&atilde;o por <span class="qr-text">QR Code</span></h3><p class="text-gray-500 text-sm leading-relaxed">Fiscal escaneia e confirma autenticidade em 2 segundos. Sem acesso ao sistema, sem login.</p></div>
+      <div class="feat-card bg-white rounded-2xl p-7 border border-gray-100"><div class="w-11 h-11 bg-orange-50 rounded-xl flex items-center justify-center mb-5"><svg width="22" height="22" fill="none" stroke="#c2410c" stroke-width="1.5" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div><h3 class="font-display text-base font-bold mb-2">Alertas inteligentes</h3><p class="text-gray-500 text-sm leading-relaxed">Notifica&ccedil;&atilde;o por e-mail 30, 15 e 7 dias antes de cada vencimento. Nunca mais seja pego de surpresa.</p></div>
+      <div class="feat-card bg-white rounded-2xl p-7 border border-gray-100"><div class="w-11 h-11 bg-green-50 rounded-xl flex items-center justify-center mb-5"><svg width="22" height="22" fill="none" stroke="#15803d" stroke-width="1.5" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div><h3 class="font-display text-base font-bold mb-2">Dashboard em tempo real</h3><p class="text-gray-500 text-sm leading-relaxed">Status de todas as NRs num s&oacute; lugar. V&aacute;lidas, expirando e vencidas &mdash; em n&uacute;meros e gr&aacute;ficos.</p></div>
+      <div class="feat-card bg-white rounded-2xl p-7 border border-gray-100"><div class="w-11 h-11 bg-purple-50 rounded-xl flex items-center justify-center mb-5"><svg width="22" height="22" fill="none" stroke="#7c3aed" stroke-width="1.5" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div><h3 class="font-display text-base font-bold mb-2">Multi-empresa</h3><p class="text-gray-500 text-sm leading-relaxed">Gest&atilde;o centralizada por filial, obra ou cliente. Cada empresa v&ecirc; apenas seus pr&oacute;prios dados.</p></div>
+      <div class="feat-card bg-white rounded-2xl p-7 border border-gray-100"><div class="w-11 h-11 bg-gray-100 rounded-xl flex items-center justify-center mb-5"><svg width="22" height="22" fill="none" stroke="#374151" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div><h3 class="font-display text-base font-bold mb-2">LGPD em foco</h3><p class="text-gray-500 text-sm leading-relaxed">Dados protegidos com boas pr&aacute;ticas de seguran&ccedil;a. Termos de uso e pol&iacute;tica de privacidade dispon&iacute;veis no site.</p></div>
     </div>
   </div>
 </section>
@@ -345,8 +270,8 @@ header a { white-space: nowrap; }
       <!-- Starter -->
       <div class="bg-white rounded-2xl border border-gray-200 p-8">
         <h3 class="font-display text-xl font-bold mb-1">Starter</h3>
-        <p class="text-sm text-gray-500 mb-4">Para testar e empresas pequenas</p>
-        <div class="flex items-baseline gap-1 mb-6"><span class="text-4xl font-display font-extrabold">R$&nbsp;97</span><span class="text-gray-400 text-sm">/m&ecirc;s</span></div>
+        <p class="text-sm text-gray-500 mb-4">Para empresas pequenas que querem sair da planilha</p>
+        <div class="flex items-baseline gap-1 mb-6"><span class="text-4xl font-display font-extrabold">R$&nbsp;147</span><span class="text-gray-400 text-sm">/m&ecirc;s</span></div>
         <ul class="space-y-3 mb-8 text-sm">
           <li class="flex items-center gap-2.5 text-gray-700"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1e3a8a" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>At&eacute; 20 funcion&aacute;rios</li>
           <li class="flex items-center gap-2.5 text-gray-700"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1e3a8a" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg><span class="qr-text">QR Code</span> de valida&ccedil;&atilde;o</li>
@@ -360,8 +285,8 @@ header a { white-space: nowrap; }
       <div class="pricing-pro rounded-2xl p-8 relative">
         <div class="absolute -top-4 left-1/2 -translate-x-1/2"><span class="bg-industrial-yellow text-gray-900 text-xs font-bold px-4 py-1.5 rounded-full shadow">&#11088; Mais popular</span></div>
         <h3 class="font-display text-xl font-bold mb-1 text-white">Pro</h3>
-        <p class="text-sm text-blue-200 mb-4">Para times de SST que levam a s&eacute;rio</p>
-        <div class="flex items-baseline gap-1 mb-6"><span class="text-4xl font-display font-extrabold text-white">R$&nbsp;197</span><span class="text-blue-300 text-sm">/m&ecirc;s</span></div>
+        <p class="text-sm text-blue-200 mb-4">Para times de SST que precisam de controle real</p>
+        <div class="flex items-baseline gap-1 mb-6"><span class="text-4xl font-display font-extrabold text-white">R$&nbsp;397</span><span class="text-blue-300 text-sm">/m&ecirc;s</span></div>
         <ul class="space-y-3 mb-8 text-sm">
           <li class="flex items-center gap-2.5 text-blue-100"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#facc15" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>At&eacute; 100 funcion&aacute;rios</li>
           <li class="flex items-center gap-2.5 text-blue-100"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#facc15" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg><span class="qr-text">QR Code</span> de valida&ccedil;&atilde;o</li>
@@ -376,8 +301,8 @@ header a { white-space: nowrap; }
       <!-- Business -->
       <div class="bg-white rounded-2xl border-2 border-industrial-blue p-8">
         <h3 class="font-display text-xl font-bold mb-1">Business</h3>
-        <p class="text-sm text-gray-500 mb-4">Para m&eacute;dias e grandes empresas</p>
-        <div class="flex items-baseline gap-1 mb-6"><span class="text-4xl font-display font-extrabold">R$&nbsp;397</span><span class="text-gray-400 text-sm">/m&ecirc;s</span></div>
+        <p class="text-sm text-gray-500 mb-4">Para empresas com m&uacute;ltiplas fun&ccedil;&otilde;es, setores e alto volume documental</p>
+        <div class="flex items-baseline gap-1 mb-6"><span class="text-4xl font-display font-extrabold">R$&nbsp;997</span><span class="text-gray-400 text-sm">/m&ecirc;s</span></div>
         <ul class="space-y-3 mb-8 text-sm">
           <li class="flex items-center gap-2.5 text-gray-700"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1e3a8a" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>At&eacute; 300 funcion&aacute;rios</li>
           <li class="flex items-center gap-2.5 text-gray-700"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1e3a8a" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg><span class="qr-text">QR Code</span> de valida&ccedil;&atilde;o</li>
@@ -392,10 +317,11 @@ header a { white-space: nowrap; }
       <!-- Enterprise -->
       <div class="bg-white rounded-2xl border border-gray-200 p-8">
         <h3 class="font-display text-xl font-bold mb-1">Enterprise</h3>
-        <p class="text-sm text-gray-500 mb-4">Para grupos industriais e terceirizadoras</p>
-        <div class="mb-1"><span class="text-2xl font-display font-extrabold">A partir de R$&nbsp;997</span><span class="text-gray-400 text-sm">/m&ecirc;s</span></div>
-        <p class="text-xs text-gray-400 mb-1">At&eacute; 800 funcion&aacute;rios &mdash; plano sob medida</p>
-        <p class="text-xs text-gray-400 mb-5">Acima de 800? Consulte-nos para valor personalizado.</p>
+        <p class="text-sm text-gray-500 mb-4">Para opera&ccedil;&otilde;es industriais, grandes terceirizadoras e grupos empresariais</p>
+        <div class="mb-1"><span class="text-2xl font-display font-extrabold">A partir de R$&nbsp;1.997</span><span class="text-gray-400 text-sm">/m&ecirc;s</span></div>
+        <p class="text-xs text-gray-400 mb-1">At&eacute; 800 colaboradores</p>
+        <p class="text-xs text-gray-400 mb-1">Acima de 800: plano Custom sob consulta</p>
+        <p class="text-xs text-gray-400 mb-5">Implanta&ccedil;&atilde;o dedicada inclu&iacute;da</p>
         <ul class="space-y-3 mb-8 text-sm">
           <li class="flex items-center gap-2.5 text-gray-700"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1e3a8a" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg><span class="qr-text">QR Code</span> de valida&ccedil;&atilde;o</li>
           <li class="flex items-center gap-2.5 text-gray-700"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1e3a8a" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Dashboard completo</li>
@@ -419,45 +345,27 @@ header a { white-space: nowrap; }
     </div>
     <div class="space-y-3" id="faq-list">
       <div class="faq-item open border border-gray-200 rounded-2xl overflow-hidden">
-        <button class="faq-btn w-full text-left px-6 py-5 flex items-center justify-between gap-4 font-display font-bold text-base hover:bg-gray-50 transition-colors" aria-expanded="true">
-          <span class="flex-1 min-w-0">Funciona em qualquer empresa?</span>
-          <svg class="faq-icon flex-shrink-0 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        </button>
+        <button class="faq-btn w-full text-left px-6 py-5 flex items-center justify-between gap-4 font-display font-bold text-base hover:bg-gray-50 transition-colors" aria-expanded="true"><span class="flex-1 min-w-0">Funciona em qualquer empresa?</span><svg class="faq-icon flex-shrink-0 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
         <div class="faq-answer open px-6 pb-5 text-sm text-gray-600 leading-relaxed">Sim. O sistema &eacute; gen&eacute;rico para qualquer setor que precise controlar NRs: ind&uacute;stria, constru&ccedil;&atilde;o civil, minera&ccedil;&atilde;o, log&iacute;stica, servi&ccedil;os de terceiriza&ccedil;&atilde;o.</div>
       </div>
       <div class="faq-item border border-gray-200 rounded-2xl overflow-hidden">
-        <button class="faq-btn w-full text-left px-6 py-5 flex items-center justify-between gap-4 font-display font-bold text-base hover:bg-gray-50 transition-colors" aria-expanded="false">
-          <span class="flex-1 min-w-0">Como funciona a valida&ccedil;&atilde;o por <span class="qr-text">QR Code</span> na fiscaliza&ccedil;&atilde;o?</span>
-          <svg class="faq-icon flex-shrink-0 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        </button>
+        <button class="faq-btn w-full text-left px-6 py-5 flex items-center justify-between gap-4 font-display font-bold text-base hover:bg-gray-50 transition-colors" aria-expanded="false"><span class="flex-1 min-w-0">Como funciona a valida&ccedil;&atilde;o por <span class="qr-text">QR Code</span> na fiscaliza&ccedil;&atilde;o?</span><svg class="faq-icon flex-shrink-0 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
         <div class="faq-answer px-6 pb-5 text-sm text-gray-600 leading-relaxed">Cada certificado tem um <span class="qr-text">QR Code</span> &uacute;nico. O fiscal escaneia com qualquer c&acirc;mera &mdash; sem baixar app. O link abre uma p&aacute;gina p&uacute;blica que mostra os dados do certificado e o status.</div>
       </div>
       <div class="faq-item border border-gray-200 rounded-2xl overflow-hidden">
-        <button class="faq-btn w-full text-left px-6 py-5 flex items-center justify-between gap-4 font-display font-bold text-base hover:bg-gray-50 transition-colors" aria-expanded="false">
-          <span class="flex-1 min-w-0">Preciso instalar algum app?</span>
-          <svg class="faq-icon flex-shrink-0 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        </button>
+        <button class="faq-btn w-full text-left px-6 py-5 flex items-center justify-between gap-4 font-display font-bold text-base hover:bg-gray-50 transition-colors" aria-expanded="false"><span class="flex-1 min-w-0">Preciso instalar algum app?</span><svg class="faq-icon flex-shrink-0 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
         <div class="faq-answer px-6 pb-5 text-sm text-gray-600 leading-relaxed">N&atilde;o. Nem para o administrador, nem para o colaborador, nem para o fiscal. Tudo funciona direto no navegador.</div>
       </div>
       <div class="faq-item border border-gray-200 rounded-2xl overflow-hidden">
-        <button class="faq-btn w-full text-left px-6 py-5 flex items-center justify-between gap-4 font-display font-bold text-base hover:bg-gray-50 transition-colors" aria-expanded="false">
-          <span class="flex-1 min-w-0">O sistema tamb&eacute;m controla ASO?</span>
-          <svg class="faq-icon flex-shrink-0 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        </button>
+        <button class="faq-btn w-full text-left px-6 py-5 flex items-center justify-between gap-4 font-display font-bold text-base hover:bg-gray-50 transition-colors" aria-expanded="false"><span class="flex-1 min-w-0">O sistema tamb&eacute;m controla ASO?</span><svg class="faq-icon flex-shrink-0 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
         <div class="faq-answer px-6 pb-5 text-sm text-gray-600 leading-relaxed">Sim. O QRCertify gerencia ASOs (admissional, peri&oacute;dico, retorno ao trabalho, mudan&ccedil;a de risco e demissional) junto com os certificados de NR. Voc&ecirc; v&ecirc; tudo em um &uacute;nico painel, recebe alertas de vencimento separados e pode importar ASOs em massa via CSV.</div>
       </div>
       <div class="faq-item border border-gray-200 rounded-2xl overflow-hidden">
-        <button class="faq-btn w-full text-left px-6 py-5 flex items-center justify-between gap-4 font-display font-bold text-base hover:bg-gray-50 transition-colors" aria-expanded="false">
-          <span class="flex-1 min-w-0">Como importo os certificados que j&aacute; tenho hoje?</span>
-          <svg class="faq-icon flex-shrink-0 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        </button>
+        <button class="faq-btn w-full text-left px-6 py-5 flex items-center justify-between gap-4 font-display font-bold text-base hover:bg-gray-50 transition-colors" aria-expanded="false"><span class="flex-1 min-w-0">Como importo os certificados que j&aacute; tenho hoje?</span><svg class="faq-icon flex-shrink-0 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
         <div class="faq-answer px-6 pb-5 text-sm text-gray-600 leading-relaxed">Disponibilizamos um modelo de planilha CSV. Voc&ecirc; preenche com os dados que j&aacute; tem e importa de uma vez. Em 10 minutos uma empresa com 50 funcion&aacute;rios j&aacute; est&aacute; toda cadastrada.</div>
       </div>
       <div class="faq-item border border-gray-200 rounded-2xl overflow-hidden">
-        <button class="faq-btn w-full text-left px-6 py-5 flex items-center justify-between gap-4 font-display font-bold text-base hover:bg-gray-50 transition-colors" aria-expanded="false">
-          <span class="flex-1 min-w-0">Posso cancelar quando quiser?</span>
-          <svg class="faq-icon flex-shrink-0 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        </button>
+        <button class="faq-btn w-full text-left px-6 py-5 flex items-center justify-between gap-4 font-display font-bold text-base hover:bg-gray-50 transition-colors" aria-expanded="false"><span class="flex-1 min-w-0">Posso cancelar quando quiser?</span><svg class="faq-icon flex-shrink-0 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
         <div class="faq-answer px-6 pb-5 text-sm text-gray-600 leading-relaxed">Sim. Sem multa, sem fidelidade. Voc&ecirc; cancela pelo painel a qualquer momento. Os dados ficam dispon&iacute;veis por 30 dias ap&oacute;s o cancelamento para exportar.</div>
       </div>
     </div>
@@ -480,20 +388,9 @@ header a { white-space: nowrap; }
   <div class="max-w-6xl mx-auto px-5">
     <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-10 mb-12">
       <div>
-        <a href="index.php" class="flex items-center gap-2.5 mb-4">
-          <img src="public/assets/logo-qrcertify.svg" alt="QRCertify" class="w-9 h-9 flex-shrink-0">
-          <span class="qrc-wordmark text-white text-sm">QRCertify</span>
-        </a>
+        <a href="index.php" class="flex items-center gap-2.5 mb-4"><img src="public/assets/logo-qrcertify.svg" alt="QRCertify" class="w-9 h-9 flex-shrink-0"><span class="qrc-wordmark text-white text-sm">QRCertify</span></a>
         <p class="text-sm leading-relaxed mb-5">Gest&atilde;o digital de certificados de NR e ASOs. Sem papel, sem planilha, sem multa.</p>
-        <a href="https://www.instagram.com/qrcertifytech/" target="_blank" rel="noopener" aria-label="Instagram QRCertify"
-           class="inline-flex items-center gap-2 text-sm text-gray-300 hover:text-white transition-colors">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" stroke-width="1.8"/>
-            <circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.8"/>
-            <circle cx="17.5" cy="6.5" r="1.2" fill="currentColor"/>
-          </svg>
-          @qrcertifytech
-        </a>
+        <a href="https://www.instagram.com/qrcertifytech/" target="_blank" rel="noopener" aria-label="Instagram QRCertify" class="inline-flex items-center gap-2 text-sm text-gray-300 hover:text-white transition-colors"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.8"/><circle cx="17.5" cy="6.5" r="1.2" fill="currentColor"/></svg>@qrcertifytech</a>
       </div>
       <div>
         <h4 style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700" class="text-white text-sm mb-4">Produto</h4>
@@ -531,40 +428,21 @@ header a { white-space: nowrap; }
 const menuBtn = document.getElementById('menu-btn');
 const mobileMenu = document.getElementById('mobile-menu');
 let menuOpen = false;
-menuBtn.addEventListener('click', () => {
-  menuOpen = !menuOpen;
-  mobileMenu.classList.toggle('hidden', !menuOpen);
-  menuBtn.setAttribute('aria-expanded', menuOpen);
-});
-document.querySelectorAll('.mobile-close').forEach(el => el.addEventListener('click', () => {
-  menuOpen = false; mobileMenu.classList.add('hidden');
-}));
-
+menuBtn.addEventListener('click', () => { menuOpen = !menuOpen; mobileMenu.classList.toggle('hidden', !menuOpen); menuBtn.setAttribute('aria-expanded', menuOpen); });
+document.querySelectorAll('.mobile-close').forEach(el => el.addEventListener('click', () => { menuOpen = false; mobileMenu.classList.add('hidden'); }));
 document.querySelectorAll('.faq-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     const item = btn.closest('.faq-item');
     const isOpen = item.classList.contains('open');
-    document.querySelectorAll('.faq-item').forEach(i => {
-      i.classList.remove('open');
-      i.querySelector('.faq-answer').classList.remove('open');
-      i.querySelector('.faq-btn').setAttribute('aria-expanded', false);
-    });
+    document.querySelectorAll('.faq-item').forEach(i => { i.classList.remove('open'); i.querySelector('.faq-answer').classList.remove('open'); i.querySelector('.faq-btn').setAttribute('aria-expanded', false); });
     if (!isOpen) { item.classList.add('open'); item.querySelector('.faq-answer').classList.add('open'); btn.setAttribute('aria-expanded', true); }
   });
 });
-
 document.querySelectorAll('a[href^="#"]').forEach(a => {
-  a.addEventListener('click', e => {
-    const id = a.getAttribute('href').slice(1);
-    const el = document.getElementById(id);
-    if (el) { e.preventDefault(); el.scrollIntoView({ behavior:'smooth', block:'start' }); }
-  });
+  a.addEventListener('click', e => { const id = a.getAttribute('href').slice(1); const el = document.getElementById(id); if (el) { e.preventDefault(); el.scrollIntoView({ behavior:'smooth', block:'start' }); } });
 });
-
 const header = document.querySelector('header');
-window.addEventListener('scroll', () => {
-  header.style.boxShadow = window.scrollY > 10 ? '0 2px 20px rgba(0,0,0,.08)' : 'none';
-}, { passive: true });
+window.addEventListener('scroll', () => { header.style.boxShadow = window.scrollY > 10 ? '0 2px 20px rgba(0,0,0,.08)' : 'none'; }, { passive: true });
 </script>
 </body>
 </html>

@@ -154,11 +154,11 @@ $empPct   = $empLimit > 0 ? min(100, round($empCount / $empLimit * 100)) : 0;
     <div>
       <p class="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-1">Precisa de mais?</p>
       <h2 class="text-xl font-bold text-gray-900 mb-1">Enterprise</h2>
-      <p class="text-2xl font-extrabold text-gray-900 mb-1">R$ 997<span class="text-xs font-normal text-gray-400">/mês</span></p>
+      <p class="text-2xl font-extrabold text-gray-900 mb-1">A partir de R$ 1.997<span class="text-xs font-normal text-gray-400">/mês</span></p>
       <p class="text-xs text-gray-500 mb-1">+ R$ 2.000 de implantação <span class="text-gray-400">(único)</span></p>
-      <p class="text-sm text-gray-500 mb-4 mt-2">Até 800 colaboradores, suporte dedicado e onboarding completo.</p>
+      <p class="text-sm text-gray-500 mb-4 mt-2">Até 800 colaboradores. Para operações industriais, terceirizadas grandes e grupos com necessidade de suporte, auditoria e implantação.</p>
     </div>
-    <a href="mailto:qrcertify@gmail.com?subject=Interesse+Enterprise" class="btn btn-secondary text-sm text-center">Falar com vendas</a>
+    <a href="mailto:qrcertify@gmail.com?subject=Interesse+Enterprise" class="btn btn-secondary text-sm text-center">Solicitar implantação</a>
   </div>
 </div>
 
