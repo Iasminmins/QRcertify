@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once __DIR__ . '/../config/config.php';
 requireRole('admin');
 
@@ -173,21 +173,18 @@ require_once __DIR__ . '/../includes/sidebar.php';
 </div>
 <?php endif; ?>
 
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-    <!-- ── Formulário principal ─────────────────────────────────────── -->
-    <div class="lg:col-span-2">
-        <div class="section-card">
-            <div class="section-card-header">
-                <h1 class="section-card-title flex items-center gap-2">
-                    <svg class="h-5 w-5 text-industrial-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                    </svg>
-                    <?= $isEdit ? 'Editar Documento' : 'Adicionar Documento' ?>
-                </h1>
-            </div>
-            <div class="section-card-body">
+<div class="section-card max-w-2xl">
+    <div class="section-card-header">
+        <h1 class="section-card-title flex items-center gap-2">
+            <svg class="h-5 w-5 text-industrial-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            <?= $isEdit ? 'Editar Documento' : 'Adicionar Documento' ?>
+        </h1>
+    </div>
+    <div class="section-card-body">
+        <form method="POST" enctype="multipart/form-data" id="doc-form">
                 <form method="POST" enctype="multipart/form-data" id="doc-form">
                     <?= csrfField() ?>
 
@@ -301,68 +298,12 @@ require_once __DIR__ . '/../includes/sidebar.php';
         </div>
     </div>
 
-    <!-- ── Painel lateral: leitura inteligente ──────────────────────── -->
-    <div>
-        <div class="section-card sticky top-4">
-            <div class="section-card-header">
-                <h2 class="section-card-title flex items-center gap-2">
-                    <svg class="h-5 w-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
-                    </svg>
-                    Leitura Inteligente
-                </h2>
-            </div>
-            <div class="section-card-body space-y-3">
-                <p class="text-sm text-gray-500">
-                    Envie o arquivo e clique em <strong>Ler Documento</strong> para extrair dados automaticamente (ASO, NR, certificados).
-                </p>
-                <button type="button" id="btn-read"
-                        class="btn btn-secondary w-full" disabled
-                        onclick="readDocument()">
-                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                    </svg>
-                    Ler Documento
-                </button>
-
-                <div id="ocr-loading" class="hidden text-center py-4">
-                    <div class="inline-flex items-center gap-2 text-sm text-gray-500">
-                        <svg class="animate-spin h-4 w-4 text-industrial-blue" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
-                        </svg>
-                        Analisando documento...
-                    </div>
-                </div>
-
-                <div id="ocr-result" class="hidden">
-                    <div class="bg-green-50 border border-green-200 rounded-lg p-3 text-sm text-green-800 mb-3">
-                        ✅ Dados extraídos! Campos preenchidos automaticamente.
-                    </div>
-                    <div id="ocr-fields" class="space-y-2 text-xs text-gray-600"></div>
-                </div>
-
-                <div id="ocr-error" class="hidden">
-                    <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-800">
-                        ⚠️ Não foi possível extrair dados automaticamente. Preencha manualmente.
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-</div><!-- /grid -->
+</div><!-- fecha section-card max-w-2xl -->
 
 <script>
 // ── Drop Zone ──────────────────────────────────────────────────────────
 const dropZone  = document.getElementById('drop-zone');
 const fileInput = document.getElementById('file-input');
-const btnRead   = document.getElementById('btn-read');
-let   selectedFile = null;
 
 fileInput.addEventListener('change', function() {
     if (this.files[0]) handleFile(this.files[0]);
@@ -407,12 +348,6 @@ function handleFile(file) {
             <p class="text-xs text-gray-400">${size}</p>`;
     }
 
-    // Habilita leitura inteligente para imagens e PDFs
-    if (['jpg','jpeg','png','gif','webp','pdf'].includes(ext)) {
-        btnRead.disabled = false;
-        btnRead.classList.remove('opacity-50');
-    }
-
     // Auto-preenche título se vazio
     const inp = document.getElementById('inp-title');
     if (!inp.value) {
@@ -420,153 +355,7 @@ function handleFile(file) {
     }
 }
 
-// ── Leitura Inteligente via IA ─────────────────────────────────────────
-async function readDocument() {
-    if (!selectedFile) return;
 
-    document.getElementById('ocr-loading').classList.remove('hidden');
-    document.getElementById('ocr-result').classList.add('hidden');
-    document.getElementById('ocr-error').classList.add('hidden');
-    btnRead.disabled = true;
-
-    try {
-        // Converte arquivo para base64
-        const base64 = await fileToBase64(selectedFile);
-        const ext     = selectedFile.name.split('.').pop().toLowerCase();
-        const isPdf   = ext === 'pdf';
-
-        // Monta o conteúdo para a API
-        let msgContent = [];
-        if (isPdf) {
-            msgContent.push({
-                type: 'document',
-                source: { type: 'base64', media_type: 'application/pdf', data: base64 }
-            });
-        } else {
-            const mt = ext === 'png' ? 'image/png' : 'image/jpeg';
-            msgContent.push({
-                type: 'image',
-                source: { type: 'base64', media_type: mt, data: base64 }
-            });
-        }
-
-        msgContent.push({
-            type: 'text',
-            text: `Analise este documento de segurança do trabalho (ASO, NR, certificado, etc).
-Extraia as seguintes informações em JSON puro (sem markdown):
-{
-  "tipo_documento": "aso|nr_certificado|certificado_assinado|foto|pdf_geral|outro",
-  "titulo_sugerido": "string",
-  "nome_colaborador": "string ou null",
-  "cpf_colaborador": "string ou null",
-  "cargo_colaborador": "string ou null",
-  "data_emissao": "YYYY-MM-DD ou null",
-  "data_validade": "YYYY-MM-DD ou null",
-  "medico_nome": "string ou null",
-  "medico_crm": "string ou null",
-  "resultado": "apto|inapto|null",
-  "tipo_aso": "admissional|periodico|retorno_trabalho|mudanca_risco|demissional|null",
-  "nr_numero": "string ou null (ex: NR-35)",
-  "observacoes": "string ou null"
-}
-Retorne APENAS o JSON, sem texto extra.`
-        });
-
-        const resp = await fetch('https://api.anthropic.com/v1/messages', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                model: 'claude-sonnet-4-20250514',
-                max_tokens: 1000,
-                messages: [{ role: 'user', content: msgContent }]
-            })
-        });
-
-        const data = await resp.json();
-        const text = (data.content || []).map(b => b.text || '').join('');
-
-        let parsed;
-        try {
-            parsed = JSON.parse(text.replace(/```json|```/g, '').trim());
-        } catch(e) {
-            throw new Error('JSON inválido');
-        }
-
-        applyOcrData(parsed);
-
-    } catch(e) {
-        console.error(e);
-        document.getElementById('ocr-error').classList.remove('hidden');
-    } finally {
-        document.getElementById('ocr-loading').classList.add('hidden');
-        btnRead.disabled = false;
-    }
-}
-
-function applyOcrData(data) {
-    const mapType = {
-        'aso':'aso','nr_certificado':'nr_certificado',
-        'certificado_assinado':'certificado_assinado',
-        'foto':'foto','pdf_geral':'pdf_geral','doc_word':'doc_word','outro':'outro'
-    };
-
-    if (data.tipo_documento && mapType[data.tipo_documento]) {
-        document.getElementById('sel-type').value = mapType[data.tipo_documento];
-    }
-    if (data.titulo_sugerido) {
-        document.getElementById('inp-title').value = data.titulo_sugerido;
-    }
-    if (data.data_emissao) {
-        document.querySelector('[name=issue_date]').value = data.data_emissao;
-    }
-    if (data.data_validade) {
-        document.querySelector('[name=expiry_date]').value = data.data_validade;
-    }
-    if (data.observacoes) {
-        document.querySelector('[name=description]').value = data.observacoes;
-    }
-
-    // Tenta selecionar colaborador por nome (busca parcial)
-    if (data.nome_colaborador) {
-        const sel   = document.getElementById('sel-employee');
-        const name  = data.nome_colaborador.toLowerCase();
-        for (const opt of sel.options) {
-            if (opt.text.toLowerCase().includes(name)) {
-                sel.value = opt.value;
-                break;
-            }
-        }
-    }
-
-    // Exibe campos extraídos
-    const fields = document.getElementById('ocr-fields');
-    const rows = [];
-    if (data.nome_colaborador) rows.push(['Colaborador', data.nome_colaborador]);
-    if (data.data_emissao)     rows.push(['Emissão', data.data_emissao]);
-    if (data.data_validade)    rows.push(['Validade', data.data_validade]);
-    if (data.resultado)        rows.push(['Resultado', data.resultado]);
-    if (data.medico_nome)      rows.push(['Médico', data.medico_nome]);
-    if (data.nr_numero)        rows.push(['NR', data.nr_numero]);
-    if (data.tipo_aso)         rows.push(['Tipo ASO', data.tipo_aso]);
-
-    fields.innerHTML = rows.map(([k,v]) =>
-        `<div class="flex justify-between gap-2 py-1 border-b border-gray-100">
-            <span class="font-medium text-gray-500">${k}:</span>
-            <span class="text-gray-800 text-right">${v}</span>
-         </div>`
-    ).join('');
-
-    document.getElementById('ocr-result').classList.remove('hidden');
-}
-
-function fileToBase64(file) {
-    return new Promise((res, rej) => {
-        const r = new FileReader();
-        r.onload  = () => res(r.result.split(',')[1]);
-        r.onerror = () => rej(new Error('Leitura falhou'));
-        r.readAsDataURL(file);
-    });
-}
 </script>
 
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>
