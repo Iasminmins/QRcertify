@@ -1,8 +1,8 @@
 <?php
 /**
- * Download protegido do PDF do ASO.
- * Exige login com role admin ou superadmin.
- * Registra acesso no audit log.
+ * Download/visualização protegida do arquivo do ASO.
+ * Aceita PDF, JPG, PNG, WEBP.
+ * Exige login com role admin.
  */
 require_once __DIR__ . '/../config/config.php';
 requireRole('admin');
@@ -39,12 +39,29 @@ auditLog('aso.download', "aso #{$id}", json_encode([
     'type'     => $aso['aso_type'],
 ]));
 
-$safeName = 'ASO_' . preg_replace('/[^a-zA-Z0-9_-]/', '_', $aso['emp_name'])
-          . '_' . $aso['aso_type'] . '_' . date('Ymd') . '.pdf';
+// Detecta o mime real do arquivo
+$finfo    = new finfo(FILEINFO_MIME_TYPE);
+$realMime = $finfo->file($fullPath);
 
-header('Content-Type: application/pdf');
-header('Content-Disposition: inline; filename="' . $safeName . '"');
+$mimeMap = [
+    'application/pdf' => ['ext' => 'pdf',  'disposition' => 'inline'],
+    'image/jpeg'      => ['ext' => 'jpg',  'disposition' => 'inline'],
+    'image/png'       => ['ext' => 'png',  'disposition' => 'inline'],
+    'image/webp'      => ['ext' => 'webp', 'disposition' => 'inline'],
+    'image/gif'       => ['ext' => 'gif',  'disposition' => 'inline'],
+];
+
+$info = $mimeMap[$realMime] ?? ['ext' => 'bin', 'disposition' => 'attachment'];
+
+$safeName = 'ASO_'
+    . preg_replace('/[^a-zA-Z0-9_-]/', '_', $aso['emp_name'])
+    . '_' . $aso['aso_type']
+    . '_' . date('Ymd')
+    . '.' . $info['ext'];
+
+header('Content-Type: ' . $realMime);
+header('Content-Disposition: ' . $info['disposition'] . '; filename="' . $safeName . '"');
 header('Content-Length: ' . filesize($fullPath));
-header('Cache-Control: private, no-cache');
+header('Cache-Control: private, max-age=3600');
 readfile($fullPath);
 exit;

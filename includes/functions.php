@@ -336,9 +336,9 @@ function uploadFile(array $fileInput, string $type, ?string $oldPath = null): ar
         ],
         'certificate' => [
             'dir'      => __DIR__ . '/../uploads/certificates/',
-            'maxBytes' => 10 * 1024 * 1024,       // 10 MB
-            'mimes'    => ['application/pdf'],
-            'exts'     => ['pdf'],
+            'maxBytes' => 20 * 1024 * 1024,       // 20 MB
+            'mimes'    => ['application/pdf','image/jpeg','image/png','image/webp','image/gif'],
+            'exts'     => ['pdf','jpg','jpeg','png','webp','gif'],
         ],
     ];
 
