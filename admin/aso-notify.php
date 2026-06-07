@@ -326,7 +326,7 @@ require_once __DIR__ . '/../includes/sidebar.php';
                     class="w-full text-sm border-gray-300 rounded-md shadow-sm px-3 py-1.5 focus:ring-industrial-blue focus:border-industrial-blue">
                 <option value="">Todos</option>
                 <?php foreach (array_keys($allDepts) as $d): ?>
-                <option value="<?= e($d) ?>"><?= e($d) ?></option>
+                <option value="<?= mb_strtolower(e($d), 'UTF-8') ?>"><?= e($d) ?></option>
                 <?php endforeach; ?>
             </select>
         </div>
@@ -341,7 +341,7 @@ require_once __DIR__ . '/../includes/sidebar.php';
              data-nome="<?= strtolower(e($emp['name'])) ?>"
              data-email="<?= strtolower(e($emp['email'])) ?>"
              data-statuses="<?= e(implode('|', $empStatuses)) ?>"
-             data-dept="<?= strtolower(e($emp['dept'] ?? '')) ?>">
+             data-dept="<?= mb_strtolower(e($emp['dept'] ?? ''), 'UTF-8') ?>">
             <label class="flex items-start gap-3 cursor-pointer">
                 <input type="checkbox" name="targets[]" value="<?= (int)$empId ?>"
                        class="emp-check mt-1 h-4 w-4 rounded border-gray-300 text-industrial-blue" checked>
@@ -445,12 +445,13 @@ function toggleAll(v) {
 function aplicarFiltros() {
     const busca  = document.getElementById('f-busca')?.value.toLowerCase().trim() ?? '';
     const status = document.getElementById('f-status')?.value ?? '';
-    const dept   = document.getElementById('f-dept')?.value.toLowerCase() ?? '';
+    const dept   = document.getElementById('f-dept')?.value.toLowerCase().trim() ?? '';
     let visiveis = 0;
     document.querySelectorAll('.emp-card').forEach(card => {
+        const cardDept = (card.dataset.dept || '').toLowerCase().trim();
         const ok = (!busca  || card.dataset.nome.includes(busca) || card.dataset.email.includes(busca))
                 && (!status || card.dataset.statuses.split('|').includes(status))
-                && (!dept   || card.dataset.dept === dept);
+                && (!dept   || cardDept === dept || cardDept.includes(dept));
         card.classList.toggle('hidden', !ok);
         if (ok) visiveis++;
     });
