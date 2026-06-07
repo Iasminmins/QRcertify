@@ -98,6 +98,22 @@ foreach ($totStmt->fetchAll() as $row) {
 }
 $totalDocs = array_sum($typeTotals);
 
+// ── Agrupa docs por colaborador (para modo "Por Colaborador") ─────────────────
+$byEmployee = [];
+foreach ($allDocs as $doc) {
+    $eid = $doc['employee_id'];
+    if (!isset($byEmployee[$eid])) {
+        $byEmployee[$eid] = [
+            'name'  => $doc['employee_name'],
+            'role'  => $doc['employee_role'],
+            'docs'  => [],
+        ];
+    }
+    $byEmployee[$eid]['docs'][] = $doc;
+}
+// Ordena por nome do colaborador
+uasort($byEmployee, fn($a, $b) => strcmp($a['name'], $b['name']));
+
 $pageTitle = 'Documentos';
 require_once __DIR__ . '/../includes/header.php';
 require_once __DIR__ . '/../includes/sidebar.php';
@@ -119,13 +135,35 @@ require_once __DIR__ . '/../includes/sidebar.php';
             ASOs, NRs, certificados, fotos e arquivos dos colaboradores
         </p>
     </div>
-    <a href="<?= BASE_URL ?>/admin/document-upload.php"
-       class="btn btn-primary flex-shrink-0">
-        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-        </svg>
-        Adicionar Documento
-    </a>
+    <div class="flex items-center gap-3 flex-shrink-0">
+
+        <!-- Toggle de visualização -->
+        <div class="flex items-center bg-gray-100 rounded-lg p-1 gap-1">
+            <button id="btn-grid" onclick="setView('grid')"
+                    class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition view-btn active-view">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+                </svg>
+                Grid
+            </button>
+            <button id="btn-emp" onclick="setView('employee')"
+                    class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition view-btn">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+                Por Colaborador
+            </button>
+        </div>
+
+        <a href="<?= BASE_URL ?>/admin/document-upload.php" class="btn btn-primary">
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            Adicionar Documento
+        </a>
+    </div>
 </div>
 
 <?php renderFlashes(); ?>
@@ -188,6 +226,7 @@ require_once __DIR__ . '/../includes/sidebar.php';
 <!-- ══════════════════════════════════════════════════════════
      TABELA / GRID DE DOCUMENTOS
 ═══════════════════════════════════════════════════════════ -->
+<div id="view-grid">
 <div class="section-card">
     <div class="section-card-header flex items-center justify-between">
         <h2 class="section-card-title">
@@ -349,5 +388,270 @@ require_once __DIR__ . '/../includes/sidebar.php';
 
     <?php endif; ?>
 </div>
+</div><!-- /view-grid -->
+
+<!-- ══════════════════════════════════════════════════════════
+     MODO: POR COLABORADOR
+═══════════════════════════════════════════════════════════ -->
+<div id="view-employee" class="hidden">
+    <?php if (empty($byEmployee)): ?>
+    <div class="section-card">
+        <div class="py-16 text-center">
+            <div class="text-5xl mb-4">📂</div>
+            <p class="text-gray-500 font-medium">Nenhum documento encontrado.</p>
+        </div>
+    </div>
+    <?php else: ?>
+    <div class="section-card">
+        <!-- Barra de busca rápida por colaborador -->
+        <div class="section-card-body pb-3 border-b border-gray-100">
+            <div class="relative max-w-sm">
+                <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+                <input type="text" id="emp-view-search" placeholder="Buscar colaborador..."
+                       oninput="filterEmpView(this.value)"
+                       class="form-input pl-9 w-full">
+            </div>
+        </div>
+
+        <div id="emp-view-list" class="divide-y divide-gray-100">
+            <?php foreach ($byEmployee as $empId => $empData):
+                $totalEmp    = count($empData['docs']);
+                $vencidos    = count(array_filter($empData['docs'], fn($d) => $d['status'] === 'vencido'));
+                $vencendo    = count(array_filter($empData['docs'], fn($d) => $d['status'] === 'vencendo'));
+                $inicial     = strtoupper(mb_substr($empData['name'], 0, 1));
+            ?>
+            <div class="emp-view-row" data-name="<?= mb_strtolower(htmlspecialchars($empData['name']), 'UTF-8') ?>">
+
+                <!-- Cabeçalho do colaborador (clicável) -->
+                <button type="button"
+                        onclick="toggleEmpDocs(<?= $empId ?>)"
+                        class="w-full flex items-center gap-4 px-5 py-4 hover:bg-gray-50 transition text-left group">
+                    <!-- Avatar -->
+                    <div class="h-10 w-10 rounded-full bg-industrial-blue/10 flex items-center justify-center text-industrial-blue font-bold text-sm flex-shrink-0">
+                        <?= $inicial ?>
+                    </div>
+                    <!-- Nome e cargo -->
+                    <div class="flex-1 min-w-0">
+                        <p class="font-semibold text-gray-900 text-sm"><?= htmlspecialchars($empData['name']) ?></p>
+                        <p class="text-xs text-gray-500"><?= htmlspecialchars($empData['role']) ?></p>
+                    </div>
+                    <!-- Contadores -->
+                    <div class="flex items-center gap-2 flex-shrink-0">
+                        <span class="text-xs font-semibold text-gray-500 bg-gray-100 px-2.5 py-1 rounded-full">
+                            <?= $totalEmp ?> doc<?= $totalEmp !== 1 ? 's' : '' ?>
+                        </span>
+                        <?php if ($vencidos > 0): ?>
+                        <span class="text-xs font-semibold text-red-600 bg-red-50 border border-red-200 px-2 py-0.5 rounded-full">
+                            <?= $vencidos ?> vencido<?= $vencidos !== 1 ? 's' : '' ?>
+                        </span>
+                        <?php elseif ($vencendo > 0): ?>
+                        <span class="text-xs font-semibold text-amber-600 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
+                            <?= $vencendo ?> vencendo
+                        </span>
+                        <?php endif; ?>
+                        <!-- Chevron -->
+                        <svg id="chevron-<?= $empId ?>" class="h-4 w-4 text-gray-400 transition-transform"
+                             fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                        </svg>
+                    </div>
+                </button>
+
+                <!-- Documentos do colaborador (expandido/retraído) -->
+                <div id="emp-docs-<?= $empId ?>" class="hidden bg-gray-50 border-t border-gray-100">
+                    <?php foreach ($empData['docs'] as $doc):
+                        $type  = $docTypes[$doc['doc_type']] ?? $docTypes['outro'];
+                        $sc    = $statusColors[$doc['status']] ?? 'gray';
+                        $sl    = $statusLabels[$doc['status']] ?? '';
+                        $ext   = strtolower($doc['file_ext'] ?? '');
+                        $isImg = in_array($ext, ['jpg','jpeg','png','gif','webp','bmp']);
+                        $isPdf = $ext === 'pdf';
+                    ?>
+                    <div class="flex items-center gap-4 px-5 py-3 hover:bg-white transition border-b border-gray-100 last:border-0">
+
+                        <!-- Ícone do arquivo -->
+                        <div class="h-10 w-10 rounded-lg flex items-center justify-center flex-shrink-0 bg-white border border-gray-200 overflow-hidden">
+                            <?php if ($isImg): ?>
+                                <img src="<?= BASE_URL ?>/admin/document-view.php?id=<?= $doc['id'] ?>&thumb=1"
+                                     class="h-full w-full object-cover"
+                                     onerror="this.parentNode.innerHTML='<span class=\'text-lg\'>🖼️</span>'">
+                            <?php elseif ($isPdf): ?>
+                                <span class="text-lg">📄</span>
+                            <?php elseif (in_array($ext, ['doc','docx'])): ?>
+                                <span class="text-lg">📝</span>
+                            <?php else: ?>
+                                <span class="text-lg"><?= $type['icon'] ?></span>
+                            <?php endif; ?>
+                        </div>
+
+                        <!-- Info do doc -->
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <span class="text-xs font-medium text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">
+                                    <?= $type['label'] ?>
+                                </span>
+                                <?php if ($doc['status'] !== 'sem_validade'): ?>
+                                <span class="text-xs font-semibold text-<?= $sc ?>-600 bg-<?= $sc ?>-50 border border-<?= $sc ?>-200 px-1.5 py-0.5 rounded">
+                                    <?= $sl ?>
+                                </span>
+                                <?php endif; ?>
+                            </div>
+                            <p class="text-sm font-medium text-gray-900 truncate mt-0.5" title="<?= htmlspecialchars($doc['title']) ?>">
+                                <?= htmlspecialchars($doc['title']) ?>
+                            </p>
+                            <?php if (!empty($doc['expiry_date'])): ?>
+                            <p class="text-xs text-<?= $sc ?>-600">
+                                Validade: <?= date('d/m/Y', strtotime($doc['expiry_date'])) ?>
+                            </p>
+                            <?php endif; ?>
+                        </div>
+
+                        <!-- Ações -->
+                        <div class="flex gap-2 flex-shrink-0">
+                            <button onclick="openDocViewer(<?= $doc['id'] ?>, '<?= addslashes(htmlspecialchars($doc['title'])) ?>', '<?= $ext ?>', <?= $isImg ? 'true' : 'false' ?>, <?= $isPdf ? 'true' : 'false' ?>)"
+                                    class="btn btn-secondary btn-sm text-xs">
+                                👁 Ver
+                            </button>
+                            <a href="<?= BASE_URL ?>/admin/document-upload.php?id=<?= $doc['id'] ?>"
+                               class="btn btn-secondary btn-sm text-xs px-2">✏️</a>
+                            <form method="POST" action="<?= BASE_URL ?>/admin/document-delete.php"
+                                  onsubmit="return confirm('Excluir este documento?')" class="inline">
+                                <?= csrfField() ?>
+                                <input type="hidden" name="id" value="<?= $doc['id'] ?>">
+                                <button type="submit" class="btn btn-danger btn-sm text-xs px-2">🗑</button>
+                            </form>
+                        </div>
+                    </div>
+                    <?php endforeach; ?>
+
+                    <!-- Adicionar doc para este colaborador -->
+                    <div class="px-5 py-3">
+                        <a href="<?= BASE_URL ?>/admin/document-upload.php?employee_id=<?= $empId ?>"
+                           class="inline-flex items-center gap-1.5 text-xs text-industrial-blue hover:underline font-medium">
+                            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                            </svg>
+                            Adicionar documento para <?= htmlspecialchars(explode(' ', $empData['name'])[0]) ?>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <?php endforeach; ?>
+        </div>
+    </div>
+    <?php endif; ?>
+</div>
+
+<!-- Modal visualizador (compartilhado entre os dois modos) -->
+<div id="doc-viewer-modal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true">
+    <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" onclick="closeDocViewer()"></div>
+    <div class="absolute inset-4 sm:inset-8 bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+        <div class="flex items-center justify-between px-5 py-3 border-b border-gray-200 bg-gray-50 flex-shrink-0">
+            <h3 class="font-semibold text-gray-900 truncate mr-4 flex items-center gap-2">
+                <svg class="h-5 w-5 text-industrial-blue flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                <span id="doc-viewer-title-text">Documento</span>
+            </h3>
+            <div class="flex items-center gap-2 flex-shrink-0">
+                <a id="doc-viewer-download" href="#" target="_blank" class="btn btn-secondary btn-sm hidden">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                    </svg>
+                    Abrir / Baixar
+                </a>
+                <button onclick="closeDocViewer()" class="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <div id="doc-viewer-body" class="flex-1 overflow-auto flex items-center justify-center bg-gray-100 p-4"></div>
+    </div>
+</div>
+
+<style>
+.view-btn { color: #6b7280; }
+.view-btn.active-view { background: white; color: #1e3a8a; box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+</style>
+
+<script>
+// ── Toggle de visualização ────────────────────────────────────────────
+let currentView = localStorage.getItem('docs_view') || 'grid';
+
+function setView(v) {
+    currentView = v;
+    localStorage.setItem('docs_view', v);
+    document.getElementById('view-grid').classList.toggle('hidden', v !== 'grid');
+    document.getElementById('view-employee').classList.toggle('hidden', v !== 'employee');
+    document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active-view'));
+    document.getElementById('btn-' + (v === 'grid' ? 'grid' : 'emp')).classList.add('active-view');
+}
+
+// Inicializa com a preferência salva
+document.addEventListener('DOMContentLoaded', () => setView(currentView));
+
+// ── Expande/recolhe colaborador ───────────────────────────────────────
+function toggleEmpDocs(empId) {
+    const panel   = document.getElementById('emp-docs-' + empId);
+    const chevron = document.getElementById('chevron-' + empId);
+    const isOpen  = !panel.classList.contains('hidden');
+    panel.classList.toggle('hidden', isOpen);
+    chevron.style.transform = isOpen ? '' : 'rotate(180deg)';
+}
+
+// ── Filtro de busca no modo por colaborador ───────────────────────────
+function filterEmpView(q) {
+    q = q.toLowerCase().trim();
+    document.querySelectorAll('.emp-view-row').forEach(row => {
+        const name = row.dataset.name || '';
+        row.style.display = !q || name.includes(q) ? '' : 'none';
+    });
+}
+
+// ── Visualizador de documento (modal) ────────────────────────────────
+function openDocViewer(docId, title, ext, isImg, isPdf) {
+    const modal   = document.getElementById('doc-viewer-modal');
+    const titleEl = document.getElementById('doc-viewer-title-text');
+    const body    = document.getElementById('doc-viewer-body');
+    const dlBtn   = document.getElementById('doc-viewer-download');
+    const viewUrl = '<?= BASE_URL ?>/admin/document-view.php?id=' + docId;
+
+    titleEl.textContent = title;
+    dlBtn.href = viewUrl;
+    dlBtn.classList.remove('hidden');
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+
+    if (isImg) {
+        body.innerHTML = `<div class="flex items-center justify-center w-full h-full">
+            <img src="${viewUrl}" alt="${title}" class="max-w-full max-h-full object-contain rounded-lg shadow-lg" style="max-height:calc(100vh - 160px)">
+        </div>`;
+    } else if (isPdf) {
+        body.innerHTML = `<iframe src="${viewUrl}" class="w-full h-full rounded-lg" style="min-height:500px" frameborder="0"></iframe>`;
+    } else {
+        body.innerHTML = `<div class="text-center">
+            <div class="text-7xl mb-4">📎</div>
+            <p class="text-gray-600 font-medium mb-6">${title}</p>
+            <a href="${viewUrl}" target="_blank" class="btn btn-primary">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                </svg>Baixar arquivo
+            </a>
+        </div>`;
+    }
+}
+
+function closeDocViewer() {
+    document.getElementById('doc-viewer-modal').classList.add('hidden');
+    document.body.style.overflow = '';
+    document.getElementById('doc-viewer-body').innerHTML = '';
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDocViewer(); });
+</script>
 
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>
