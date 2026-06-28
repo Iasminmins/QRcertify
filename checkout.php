@@ -121,9 +121,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
 
                     // Salva plano e marca como TRIAL. Sem checkout, sem cobrança.
+                    // Define explicitamente o fim do trial (30 dias a partir de hoje).
+                    $trialEndsAt = (new \DateTime('+30 days'))->format('Y-m-d');
                     $db->prepare(
-                        'UPDATE companies SET plan = ?, asaas_customer_id = ?, subscription_status = "trialing" WHERE id = ?'
-                    )->execute([$plan, $asaasCustomerId, $companyId]);
+                        'UPDATE companies SET plan = ?, asaas_customer_id = ?, subscription_status = "trialing", trial_ends_at = ? WHERE id = ?'
+                    )->execute([$plan, $asaasCustomerId, $trialEndsAt, $companyId]);
                 }
 
                 $db->commit();

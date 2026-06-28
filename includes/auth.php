@@ -111,7 +111,7 @@ function requireLogin(): void {
     if ($user['role'] !== 'superadmin' && !empty($user['company_id'])) {
         try {
             $db   = getDB();
-            $stmt = $db->prepare('SELECT subscription_status, overdue_since, created_at FROM companies WHERE id = ?');
+            $stmt = $db->prepare('SELECT subscription_status, overdue_since, trial_ends_at FROM companies WHERE id = ?');
             $stmt->execute([$user['company_id']]);
             $row = $stmt->fetch();
             $status = $row ? ($row['subscription_status'] ?? null) : null;
@@ -125,12 +125,11 @@ function requireLogin(): void {
                 setFlash('error', 'Sua assinatura foi cancelada. Entre em contato ou assine novamente.');
                 redirect('/login.php');
             }
-            // Trial de 30 dias + carência: ao terminar o trial, ainda há 10 dias
+            // Trial + carência: ao terminar o trial (trial_ends_at), ainda há 10 dias
             // de tolerância (com aviso) antes de bloquear. Nunca apaga dados.
-            if ($status === 'trialing' && !empty($row['created_at'])) {
+            if ($status === 'trialing' && !empty($row['trial_ends_at'])) {
                 try {
-                    $created   = new DateTimeImmutable($row['created_at']);
-                    $trialEnds = $created->modify('+30 days');
+                    $trialEnds = new DateTimeImmutable($row['trial_ends_at']);
                     if (new DateTimeImmutable('today') > $trialEnds) {
                         // Trial venceu: conta a carência a partir do fim do trial.
                         $grace = subscriptionGraceState($trialEnds->format('Y-m-d'));
@@ -138,7 +137,7 @@ function requireLogin(): void {
                             redirect('/admin/pending-checkout.php');
                         }
                         // Dentro da carência (grace/critical): continua usando.
-                        // O aviso de "assine para continuar" aparece na tela de plano.
+                        // O aviso de "assine para continuar" aparece na faixa do topo.
                     }
                 } catch (\Exception $e) { /* data inválida: não bloqueia */ }
             }

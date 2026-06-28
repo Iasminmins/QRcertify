@@ -40,6 +40,48 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             $stmt->execute([$id]);
             setFlash('success', 'Status atualizado.');
             redirect('/superadmin/companies.php');
+        } elseif ($action === 'set_subscription') {
+            $id   = (int) ($_POST['id'] ?? 0);
+            $plan = $_POST['plan'] ?? 'starter';
+            $sub  = $_POST['subscription_status'] ?? 'trialing';
+            $renewTrial = !empty($_POST['renew_trial']);
+
+            $validPlans = array_keys(getPlansCatalog());
+            $validSubs  = ['trialing', 'active', 'pending_checkout', 'overdue', 'canceled'];
+            if (!in_array($plan, $validPlans, true)) $plan = 'starter';
+            if (!in_array($sub, $validSubs, true))   $sub  = 'trialing';
+
+            // Monta o UPDATE. overdue_since acompanha o status:
+            //  - overdue  -> grava hoje (inicia a régua de carência) se ainda vazio
+            //  - active/trialing/outros -> limpa
+            // renew_trial: zera a contagem do trial (trial_ends_at = hoje + 30) e força 'trialing'.
+            if ($renewTrial) {
+                $stmt = $db->prepare(
+                    'UPDATE companies
+                        SET plan = ?, subscription_status = "trialing",
+                            overdue_since = NULL,
+                            trial_ends_at = (CURDATE() + INTERVAL 30 DAY)
+                      WHERE id = ?'
+                );
+                $stmt->execute([$plan, $id]);
+            } elseif ($sub === 'overdue') {
+                $stmt = $db->prepare(
+                    'UPDATE companies
+                        SET plan = ?, subscription_status = ?,
+                            overdue_since = COALESCE(overdue_since, CURDATE())
+                      WHERE id = ?'
+                );
+                $stmt->execute([$plan, $sub, $id]);
+            } else {
+                $stmt = $db->prepare(
+                    'UPDATE companies
+                        SET plan = ?, subscription_status = ?, overdue_since = NULL
+                      WHERE id = ?'
+                );
+                $stmt->execute([$plan, $sub, $id]);
+            }
+            setFlash('success', 'Assinatura atualizada.');
+            redirect('/superadmin/companies.php');
         }
     }
 }
@@ -148,14 +190,67 @@ require_once __DIR__ . '/../includes/sidebar.php';
                             </span>
                         </td>
                         <td class="px-5 py-3 text-right">
-                            <form method="POST" class="inline">
-                                <?= csrfField() ?>
-                                <input type="hidden" name="action" value="toggle">
-                                <input type="hidden" name="id" value="<?= (int) $c['id'] ?>">
-                                <button type="submit" class="text-sm text-gray-600 hover:text-industrial-blue hover:underline">
-                                    <?= $c['status'] === 'active' ? 'Desativar' : 'Ativar' ?>
+                            <div class="flex items-center justify-end gap-3">
+                                <button type="button"
+                                    onclick="document.getElementById('sub-<?= (int)$c['id'] ?>').showModal()"
+                                    class="text-sm text-industrial-blue hover:underline font-medium">
+                                    Assinatura
                                 </button>
-                            </form>
+                                <form method="POST" class="inline">
+                                    <?= csrfField() ?>
+                                    <input type="hidden" name="action" value="toggle">
+                                    <input type="hidden" name="id" value="<?= (int) $c['id'] ?>">
+                                    <button type="submit" class="text-sm text-gray-600 hover:text-industrial-blue hover:underline">
+                                        <?= $c['status'] === 'active' ? 'Desativar' : 'Ativar' ?>
+                                    </button>
+                                </form>
+                            </div>
+
+                            <!-- Modal de assinatura -->
+                            <dialog id="sub-<?= (int)$c['id'] ?>" class="rounded-xl p-0 w-full max-w-md backdrop:bg-black/40">
+                                <form method="POST" class="text-left">
+                                    <?= csrfField() ?>
+                                    <input type="hidden" name="action" value="set_subscription">
+                                    <input type="hidden" name="id" value="<?= (int) $c['id'] ?>">
+                                    <div class="flex items-center justify-between border-b p-4">
+                                        <h3 class="font-bold text-gray-900">Assinatura — <?= e($c['name']) ?></h3>
+                                        <button type="button" onclick="document.getElementById('sub-<?= (int)$c['id'] ?>').close()" class="text-gray-400 hover:text-gray-700 text-lg leading-none">&times;</button>
+                                    </div>
+                                    <div class="p-4 space-y-4">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Plano</label>
+                                            <select name="plan" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm">
+                                                <?php foreach (getPlansCatalog() as $pk => $pdef): ?>
+                                                    <option value="<?= e($pk) ?>" <?= ($c['plan'] ?? 'starter') === $pk ? 'selected' : '' ?>>
+                                                        <?= e($pdef['name']) ?> — R$ <?= number_format($pdef['price'], 0, ',', '.') ?>/mês
+                                                    </option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Status da assinatura</label>
+                                            <select name="subscription_status" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm">
+                                                <?php
+                                                $subOptions = ['trialing'=>'Trial','active'=>'Ativo','pending_checkout'=>'Checkout pendente','overdue'=>'Inadimplente','canceled'=>'Cancelado'];
+                                                $curSub = $c['subscription_status'] ?? 'trialing';
+                                                foreach ($subOptions as $sv => $slabel): ?>
+                                                    <option value="<?= $sv ?>" <?= $curSub === $sv ? 'selected' : '' ?>><?= $slabel ?></option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                            <p class="text-xs text-gray-400 mt-1">"Ativo" libera o acesso. "Cancelado/Inadimplente" inicia o bloqueio conforme a régua.</p>
+                                        </div>
+                                        <label class="flex items-start gap-2 text-sm text-gray-700 bg-amber-50 border border-amber-200 rounded-md p-3">
+                                            <input type="checkbox" name="renew_trial" value="1" class="mt-0.5">
+                                            <span><strong>Renovar trial (+30 dias)</strong><br>
+                                            <span class="text-xs text-gray-500">Zera a contagem e coloca em Trial por mais 30 dias a partir de hoje. Sobrepõe o status acima.</span></span>
+                                        </label>
+                                    </div>
+                                    <div class="flex justify-end gap-2 border-t p-4">
+                                        <button type="button" onclick="document.getElementById('sub-<?= (int)$c['id'] ?>').close()" class="px-4 py-2 text-sm border border-gray-200 rounded-md text-gray-600 hover:bg-gray-50">Cancelar</button>
+                                        <button type="submit" class="px-4 py-2 text-sm bg-industrial-blue text-white rounded-md font-medium hover:bg-blue-800">Salvar</button>
+                                    </div>
+                                </form>
+                            </dialog>
                         </td>
                     </tr>
                 <?php endforeach; ?>

@@ -250,7 +250,7 @@ function subscriptionNoticeForCompany(int $companyId): ?array {
     try {
         $db = getDB();
         $stmt = $db->prepare(
-            'SELECT subscription_status, overdue_since, created_at FROM companies WHERE id = ? LIMIT 1'
+            'SELECT subscription_status, overdue_since, trial_ends_at FROM companies WHERE id = ? LIMIT 1'
         );
         $stmt->execute([$companyId]);
         $row = $stmt->fetch();
@@ -270,9 +270,9 @@ function subscriptionNoticeForCompany(int $companyId): ?array {
     }
 
     // Caso 2: trial terminou e está na carência
-    if ($status === 'trialing' && !empty($row['created_at'])) {
+    if ($status === 'trialing' && !empty($row['trial_ends_at'])) {
         try {
-            $trialEnds = (new DateTimeImmutable($row['created_at']))->modify('+30 days');
+            $trialEnds = new DateTimeImmutable($row['trial_ends_at']);
             if (new DateTimeImmutable('today') > $trialEnds) {
                 $g = subscriptionGraceState($trialEnds->format('Y-m-d'));
                 if (in_array($g['phase'], ['grace', 'critical'], true)) {
