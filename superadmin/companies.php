@@ -5,6 +5,33 @@ requireRole('superadmin');
 $db = getDB();
 $errors = [];
 
+function superadminTableExists(PDO $db, string $table): bool {
+    static $cache = [];
+    if (array_key_exists($table, $cache)) {
+        return $cache[$table];
+    }
+
+    $stmt = $db->prepare(
+        'SELECT COUNT(*)
+           FROM information_schema.TABLES
+          WHERE TABLE_SCHEMA = DATABASE()
+            AND TABLE_NAME = ?'
+    );
+    $stmt->execute([$table]);
+    $cache[$table] = (int) $stmt->fetchColumn() > 0;
+
+    return $cache[$table];
+}
+
+function superadminDeleteByCompany(PDO $db, string $table, int $companyId): void {
+    if (!superadminTableExists($db, $table)) {
+        return;
+    }
+
+    $stmt = $db->prepare("DELETE FROM `{$table}` WHERE company_id = ?");
+    $stmt->execute([$companyId]);
+}
+
 // Criar nova empresa (formulário simples no topo da página)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     if (!csrfCheck()) {
@@ -40,6 +67,66 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             $stmt->execute([$id]);
             setFlash('success', 'Status atualizado.');
             redirect('/superadmin/companies.php');
+        } elseif ($action === 'delete') {
+            $id = (int) ($_POST['id'] ?? 0);
+
+            if ($id <= 0) {
+                $errors[] = 'Empresa invalida.';
+            } else {
+                $stmt = $db->prepare('SELECT name FROM companies WHERE id = ? LIMIT 1');
+                $stmt->execute([$id]);
+                $company = $stmt->fetch();
+
+                if (!$company) {
+                    $errors[] = 'Empresa nao encontrada.';
+                } else {
+                    try {
+                        $db->beginTransaction();
+
+                        if (superadminTableExists($db, 'password_resets')) {
+                            $stmt = $db->prepare(
+                                'DELETE pr
+                                   FROM password_resets pr
+                                   INNER JOIN users u ON u.email = pr.email
+                                  WHERE u.company_id = ?'
+                            );
+                            $stmt->execute([$id]);
+                        }
+
+                        superadminDeleteByCompany($db, 'employee_documents', $id);
+                        superadminDeleteByCompany($db, 'employee_asos', $id);
+
+                        $stmt = $db->prepare(
+                            'DELETE cert
+                               FROM certificates cert
+                               INNER JOIN employees e ON e.id = cert.employee_id
+                              WHERE e.company_id = ?'
+                        );
+                        $stmt->execute([$id]);
+
+                        $stmt = $db->prepare('DELETE FROM employees WHERE company_id = ?');
+                        $stmt->execute([$id]);
+
+                        superadminDeleteByCompany($db, 'departments', $id);
+                        superadminDeleteByCompany($db, 'audit_log', $id);
+
+                        $stmt = $db->prepare('DELETE FROM users WHERE company_id = ?');
+                        $stmt->execute([$id]);
+
+                        $stmt = $db->prepare('DELETE FROM companies WHERE id = ?');
+                        $stmt->execute([$id]);
+
+                        $db->commit();
+                        setFlash('success', 'Empresa excluida do banco com sucesso.');
+                        redirect('/superadmin/companies.php');
+                    } catch (Throwable $e) {
+                        if ($db->inTransaction()) {
+                            $db->rollBack();
+                        }
+                        $errors[] = 'Erro ao excluir empresa: ' . $e->getMessage();
+                    }
+                }
+            }
         } elseif ($action === 'set_subscription') {
             $id   = (int) ($_POST['id'] ?? 0);
             $plan = $_POST['plan'] ?? 'starter';
@@ -165,7 +252,12 @@ require_once __DIR__ . '/../includes/sidebar.php';
                 <?php foreach ($companies as $c): ?>
                     <?php $badge = getStatusBadge($c['status']); ?>
                     <tr class="hover:bg-gray-50">
-                        <td class="px-5 py-3 text-sm font-medium"><?= e($c['name']) ?></td>
+                        <td class="px-5 py-3 text-sm font-medium">
+                            <a href="<?= BASE_URL ?>/superadmin/company.php?id=<?= (int) $c['id'] ?>"
+                               class="text-gray-900 hover:text-industrial-blue hover:underline">
+                                <?= e($c['name']) ?>
+                            </a>
+                        </td>
                         <td class="px-5 py-3 text-sm text-gray-600 hidden md:table-cell"><?= e($c['cnpj'] ?? '-') ?></td>
                         <td class="px-5 py-3 text-sm text-gray-600 hidden lg:table-cell"><?= e($c['email'] ?? '-') ?></td>
                         <td class="px-5 py-3 text-sm">
@@ -191,6 +283,10 @@ require_once __DIR__ . '/../includes/sidebar.php';
                         </td>
                         <td class="px-5 py-3 text-right">
                             <div class="flex items-center justify-end gap-3">
+                                <a href="<?= BASE_URL ?>/superadmin/company.php?id=<?= (int) $c['id'] ?>"
+                                   class="text-sm text-gray-600 hover:text-industrial-blue hover:underline">
+                                    Detalhes
+                                </a>
                                 <button type="button"
                                     onclick="document.getElementById('sub-<?= (int)$c['id'] ?>').showModal()"
                                     class="text-sm text-industrial-blue hover:underline font-medium">
@@ -202,6 +298,15 @@ require_once __DIR__ . '/../includes/sidebar.php';
                                     <input type="hidden" name="id" value="<?= (int) $c['id'] ?>">
                                     <button type="submit" class="text-sm text-gray-600 hover:text-industrial-blue hover:underline">
                                         <?= $c['status'] === 'active' ? 'Desativar' : 'Ativar' ?>
+                                    </button>
+                                </form>
+                                <form method="POST" class="inline"
+                                      onsubmit="return confirm('Excluir esta empresa definitivamente do banco? Esta acao tambem remove usuarios, funcionarios, certificados e documentos vinculados.');">
+                                    <?= csrfField() ?>
+                                    <input type="hidden" name="action" value="delete">
+                                    <input type="hidden" name="id" value="<?= (int) $c['id'] ?>">
+                                    <button type="submit" class="text-sm text-red-600 hover:text-red-700 hover:underline">
+                                        Excluir
                                     </button>
                                 </form>
                             </div>
