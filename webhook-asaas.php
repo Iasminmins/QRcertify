@@ -123,6 +123,17 @@ $statusMap = [
 
 $newStatus = $statusMap[$event] ?? null;
 
+// Régua de carência: define como a coluna overdue_since deve mudar conforme o status.
+//  - overdue  -> grava a data de hoje SE ainda não houver (início da contagem)
+//  - active   -> limpa (pagou, zera a carência)
+//  - demais   -> não mexe
+$overdueSql = '';        // fragmento extra no SET
+if ($newStatus === 'overdue') {
+    $overdueSql = ', overdue_since = COALESCE(overdue_since, CURDATE())';
+} elseif ($newStatus === 'active') {
+    $overdueSql = ', overdue_since = NULL';
+}
+
 if ($newStatus) {
     $updatedCompanyId = null;
 
@@ -131,7 +142,7 @@ if ($newStatus) {
         $stmt = $db->prepare(
             'UPDATE companies
                 SET subscription_status = ?,
-                    asaas_customer_id   = COALESCE(asaas_customer_id, ?)
+                    asaas_customer_id   = COALESCE(asaas_customer_id, ?)' . $overdueSql . '
               WHERE asaas_subscription_id = ?'
         );
         $stmt->execute([$newStatus, $customerId, $subscriptionId]);
@@ -151,7 +162,7 @@ if ($newStatus) {
                 SET subscription_status   = ?,
                     plan                  = COALESCE(?, plan),
                     asaas_customer_id     = COALESCE(asaas_customer_id, ?),
-                    asaas_subscription_id = COALESCE(asaas_subscription_id, ?)
+                    asaas_subscription_id = COALESCE(asaas_subscription_id, ?)' . $overdueSql . '
               WHERE id = ?'
         );
         $stmt->execute([$newStatus, $planFromRef, $customerId, $subscriptionId, $companyIdFromRef]);

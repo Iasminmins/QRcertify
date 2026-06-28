@@ -110,5 +110,30 @@ if ($user) {
 
 </header>
 
+<?php
+// Faixa de aviso de assinatura (carência do trial ou de vencimento).
+// Aparece só para admin dentro da janela de carência; some quando ativo ou bloqueado.
+$subNotice = ($user && $user['role'] === 'admin' && !empty($user['company_id']))
+    ? subscriptionNoticeForCompany((int) $user['company_id'])
+    : null;
+if ($subNotice):
+    $isCritical = $subNotice['phase'] === 'critical';
+    $barClass = $isCritical
+        ? 'bg-red-600 text-white'
+        : 'bg-amber-400 text-amber-950';
+    $dias = (int) $subNotice['days_left'];
+    $diasTxt = $dias . ' dia' . ($dias !== 1 ? 's' : '');
+    $msg = $subNotice['kind'] === 'trial'
+        ? 'Seu período de teste terminou.'
+        : 'Seu pagamento está vencido.';
+?>
+<div class="<?= $barClass ?> px-4 py-2 text-sm text-center font-medium">
+    <?= e($msg) ?> Assine para continuar usando —
+    <strong>bloqueio em <?= e($diasTxt) ?></strong>.
+    <a href="<?= BASE_URL ?>/admin/pending-checkout.php"
+       class="underline font-bold ml-1 hover:opacity-80">Assinar agora</a>
+</div>
+<?php endif; ?>
+
 <!-- Overlay mobile -->
 <div id="sidebar-overlay"></div>

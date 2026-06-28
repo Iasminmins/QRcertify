@@ -91,30 +91,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmtU->execute([$companyId, $userName, $email, $hash]);
                 $userId = (int) $db->lastInsertId();
 
-                // ── Integração Asaas Checkout recorrente (sem cartão no servidor) ──
+                // ── Trial sem cartão: cria a conta com 30 dias grátis. ──
+                // Não gera checkout nem cobra agora. Criamos o cliente no Asaas
+                // (útil para cobrar depois), mas a pessoa entra direto no sistema.
                 $asaasCustomerId     = null;
                 $asaasSubscriptionId = null;
-                $checkoutId          = null;
-                $checkoutUrl         = null;
-
-                $planPrices = array_map(
-                    fn(array $p) => $p['price'],
-                    getPlansCatalog()
-                );
 
                 if (in_array($plan, ['starter', 'pro', 'business', 'enterprise'], true)) {
 
-                    $trialEnd = (new \DateTime('+30 days'))->format('Y-m-d');
-                    $successQuery = http_build_query([
-                        'nome'  => $userName,
-                        'plano' => $plan,
-                        'email' => $email,
-                    ]);
                     $externalReference = "company_{$companyId}_plan_{$plan}";
 
-                    // 1) Cria o cliente no Asaas ANTES do checkout e salva o ID no banco.
-                    //    Isso permite que o webhook encontre a empresa pelo customer_id
-                    //    caso o externalReference não venha no payload.
+                    // Cria o cliente no Asaas e guarda o ID (sem cobrar).
+                    // Se falhar, não impede o cadastro — apenas seguimos sem o ID.
                     $customerPayload = array_filter([
                         'name'          => $userName,
                         'email'         => $email,
@@ -130,55 +118,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $customerResp = asaasRequest('POST', '/customers', $customerPayload);
                     if (!empty($customerResp['id'])) {
                         $asaasCustomerId = $customerResp['id'];
-                        $db->prepare('UPDATE companies SET asaas_customer_id = ? WHERE id = ?')
-                           ->execute([$asaasCustomerId, $companyId]);
                     }
 
-                    // 2) Cria o checkout recorrente usando o customer já criado
-                    $checkoutPayload = [
-                        'billingTypes'      => ['CREDIT_CARD'],
-                        'chargeTypes'       => ['RECURRENT'],
-                        'minutesToExpire'   => 1440,
-                        'externalReference' => $externalReference,
-                        'callback'          => [
-                            'successUrl' => BASE_URL . '/sucesso.php?' . $successQuery,
-                            'cancelUrl'  => BASE_URL . '/checkout.php?status=cancelado',
-                            'expiredUrl' => BASE_URL . '/checkout.php?status=expirado',
-                        ],
-                        'items' => [[
-                            'name'        => 'Plano ' . ucfirst($plan) . ' - QRCertify',
-                            'description' => 'Assinatura mensal QRCertify com 30 dias grátis',
-                            'quantity'    => 1,
-                            'value'       => $planPrices[$plan],
-                        ]],
-                        'subscription' => [
-                            'cycle'       => 'MONTHLY',
-                            'nextDueDate' => $trialEnd,
-                        ],
-                    ];
-
-                    // Se conseguimos criar o cliente, usa o ID; senão, passa os dados brutos
-                    if ($asaasCustomerId) {
-                        $checkoutPayload['customer'] = $asaasCustomerId;
-                    } else {
-                        $checkoutPayload['customerData'] = $customerPayload;
-                    }
-
-                    $checkoutResp = asaasRequest('POST', '/checkouts', $checkoutPayload);
-                    if (empty($checkoutResp['id'])) {
-                        $asaasErr = $checkoutResp['errors'][0]['description'] ?? 'Erro desconhecido';
-                        throw new \Exception('Não foi possível gerar o checkout seguro: ' . $asaasErr);
-                    }
-
-                    $checkoutId  = $checkoutResp['id'];
-                    $checkoutUrl = $checkoutResp['link']
-                        ?? $checkoutResp['url']
-                        ?? buildAsaasCheckoutUrl($checkoutId);
-
-                    // 3) Salva plano e status; IDs de assinatura chegam via webhook
+                    // Salva plano e marca como TRIAL. Sem checkout, sem cobrança.
                     $db->prepare(
-                        'UPDATE companies SET plan = ?, subscription_status = "pending_checkout" WHERE id = ?'
-                    )->execute([$plan, $companyId]);
+                        'UPDATE companies SET plan = ?, asaas_customer_id = ?, subscription_status = "trialing" WHERE id = ?'
+                    )->execute([$plan, $asaasCustomerId, $companyId]);
                 }
 
                 $db->commit();
@@ -187,29 +132,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'plan'           => $plan,
                     'email'          => $email,
                     'asaas_customer' => $asaasCustomerId,
-                    'asaas_sub'      => $asaasSubscriptionId,
-                    'asaas_checkout' => $checkoutId,
+                    'trial'          => '30 days',
                 ]));
 
-                if ($checkoutUrl) {
-                    $welcomeHtml = '<h2>Bem-vindo, ' . htmlspecialchars($userName) . '!</h2>'
-                        . '<p>Sua conta do <strong>QRCertify</strong> foi criada. Complete o checkout seguro do Asaas para ativar a assinatura.</p>'
-                        . '<p>Seu período de <strong>30 dias grátis</strong> começa agora. A primeira cobrança será após esse período.</p>'
-                        . '<a class="btn" href="' . BASE_URL . '/login.php">Acessar o sistema</a>';
-                    @sendMail($email, 'Bem-vindo ao QRCertify — 30 dias grátis', $welcomeHtml);
-
-                    header('Location: ' . $checkoutUrl);
-                    exit;
-                }
-
-                // Fallback se plano não exigir Asaas (não deve ocorrer nos planos atuais)
+                // Trial sem cartão: entra direto no sistema, sem pagamento agora.
                 $welcomeHtml = '<h2>Bem-vindo, ' . htmlspecialchars($userName) . '!</h2>'
-                    . '<p>Sua conta do <strong>QRCertify</strong> foi criada com sucesso. Seu período de 30 dias grátis começa agora.</p>'
-                    . '<p>Acesse o sistema e comece cadastrando seus funcionários e certificados.</p>'
+                    . '<p>Sua conta do <strong>QRCertify</strong> foi criada com sucesso. '
+                    . 'Seu período de <strong>30 dias grátis</strong> começa agora, sem cobrança.</p>'
+                    . '<p>Você pode começar a usar o sistema imediatamente. A escolha da forma de '
+                    . 'pagamento só será necessária ao final do período grátis.</p>'
                     . '<a class="btn" href="' . BASE_URL . '/login.php">Acessar o sistema</a>';
                 @sendMail($email, 'Bem-vindo ao QRCertify — 30 dias grátis', $welcomeHtml);
 
-                setFlash('success', 'Conta criada! Seu período de 30 dias grátis começou.');
+                setFlash('success', 'Conta criada! Seu período de 30 dias grátis começou. Bom trabalho!');
                 header('Location: ' . BASE_URL . '/sucesso.php?' . http_build_query([
                     'nome'  => $userName,
                     'plano' => $plan,
@@ -285,7 +220,7 @@ tailwind.config = {
 <div class="max-w-xl mx-auto px-5 pt-8 pb-4">
   <div class="flex items-center gap-0">
     <?php
-    $steps = ['Plano', 'Sua conta', 'Pagamento'];
+    $steps = ['Plano', 'Sua conta', 'Confirmar'];
     foreach ($steps as $i => $label):
         $n = $i + 1;
     ?>
@@ -425,32 +360,32 @@ tailwind.config = {
     </div>
   </div>
 
-  <!-- ─── STEP 3: Pagamento (checkout hospedado no Asaas) ─── -->
+  <!-- ─── STEP 3: Confirmação (trial sem cartão, sem pagamento agora) ─── -->
   <div id="step3" class="step-panel hidden">
-    <h1 class="text-2xl font-bold mb-1" style="font-family:'Bricolage Grotesque',sans-serif">Forma de pagamento</h1>
+    <h1 class="text-2xl font-bold mb-1" style="font-family:'Bricolage Grotesque',sans-serif">Tudo pronto para começar</h1>
     <p class="text-gray-500 text-sm mb-6" id="paySubtitle">
-      Na próxima etapa você define como deseja pagar. Hoje não há cobrança — os 30 dias grátis começam agora.
+      Sem cartão e sem cobrança hoje. Seus 30 dias grátis começam assim que você criar a conta.
     </p>
 
     <!-- Resumo do plano -->
     <div class="bg-gray-50 rounded-xl border border-gray-200 p-4 mb-5" id="orderSummary">
       <div class="flex items-center justify-between text-sm">
         <span class="font-medium text-gray-700">Plano <span id="summaryPlanName">Pro</span></span>
-        <span class="font-bold text-gray-900" id="summaryPrice">R$ 99/mês</span>
+        <span class="font-bold text-gray-900" id="summaryPrice">R$ 397/mês</span>
       </div>
-      <div class="text-xs text-gray-500 mt-1">30 dias grátis · após isso, cobrança automática mensal</div>
+      <div class="text-xs text-gray-500 mt-1">30 dias grátis · você só decide a forma de pagamento depois desse período</div>
     </div>
 
     <div class="space-y-2 text-sm text-gray-600 bg-gray-50 border border-gray-200 rounded-xl p-4 mb-2">
-      <p class="font-medium text-gray-800">Próximos passos</p>
+      <p class="font-medium text-gray-800">Como funciona</p>
       <ol class="list-decimal list-inside space-y-1.5 text-gray-600">
-        <li>Criamos sua conta no QRCertify.</li>
-        <li>Você escolhe a forma de pagamento na página segura do <strong>Asaas</strong>.</li>
-        <li>Em seguida, voltamos você para confirmar que está tudo certo.</li>
+        <li>Criamos sua conta no QRCertify agora.</li>
+        <li>Você usa o sistema completo por <strong>30 dias, grátis</strong>.</li>
+        <li>Perto do fim do período, você escolhe como pagar para continuar.</li>
       </ol>
       <div class="flex items-center gap-2 text-xs text-gray-500 pt-2 border-t border-gray-200 mt-2">
         <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-        Cobrança processada com segurança pelo Asaas, nosso parceiro de pagamentos.
+        Nenhuma cobrança hoje. Cancele quando quiser, sem multa.
       </div>
     </div>
 
@@ -462,11 +397,11 @@ tailwind.config = {
     <div class="flex gap-3 mt-6">
       <button type="button" onclick="goStep(2)" class="px-5 py-3 border border-gray-200 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors">← Voltar</button>
       <button type="submit" class="flex-1 bg-industrial-blue text-white font-bold py-3.5 rounded-xl hover:bg-blue-900 transition-colors text-sm">
-        Criar conta e ir para pagamento →
+        Começar 30 dias grátis →
       </button>
     </div>
 
-    <p class="text-xs text-gray-400 text-center mt-4">Sem cobrança hoje · Cancele quando quiser</p>
+    <p class="text-xs text-gray-400 text-center mt-4">Sem cartão · Sem cobrança hoje · Cancele quando quiser</p>
   </div>
 
 </form>

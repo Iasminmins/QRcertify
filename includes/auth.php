@@ -111,9 +111,10 @@ function requireLogin(): void {
     if ($user['role'] !== 'superadmin' && !empty($user['company_id'])) {
         try {
             $db   = getDB();
-            $stmt = $db->prepare('SELECT subscription_status FROM companies WHERE id = ?');
+            $stmt = $db->prepare('SELECT subscription_status, overdue_since, created_at FROM companies WHERE id = ?');
             $stmt->execute([$user['company_id']]);
-            $status = $stmt->fetchColumn();
+            $row = $stmt->fetch();
+            $status = $row ? ($row['subscription_status'] ?? null) : null;
             if ($status === 'pending_checkout') {
                 // Não destrói a sessão — mantém o usuário logado e redireciona
                 // para uma página explicando que o checkout precisa ser concluído.
@@ -123,6 +124,32 @@ function requireLogin(): void {
                 session_destroy();
                 setFlash('error', 'Sua assinatura foi cancelada. Entre em contato ou assine novamente.');
                 redirect('/login.php');
+            }
+            // Trial de 30 dias + carência: ao terminar o trial, ainda há 10 dias
+            // de tolerância (com aviso) antes de bloquear. Nunca apaga dados.
+            if ($status === 'trialing' && !empty($row['created_at'])) {
+                try {
+                    $created   = new DateTimeImmutable($row['created_at']);
+                    $trialEnds = $created->modify('+30 days');
+                    if (new DateTimeImmutable('today') > $trialEnds) {
+                        // Trial venceu: conta a carência a partir do fim do trial.
+                        $grace = subscriptionGraceState($trialEnds->format('Y-m-d'));
+                        if ($grace['phase'] === 'blocked') {
+                            redirect('/admin/pending-checkout.php');
+                        }
+                        // Dentro da carência (grace/critical): continua usando.
+                        // O aviso de "assine para continuar" aparece na tela de plano.
+                    }
+                } catch (\Exception $e) { /* data inválida: não bloqueia */ }
+            }
+            // Régua de carência: vencido (overdue) só bloqueia depois que a carência estoura.
+            // Dentro da carência o acesso continua; o aviso aparece na tela de plano.
+            // Bloquear = apenas redirecionar para o checkout. Nenhum dado é apagado.
+            if ($status === 'overdue') {
+                $grace = subscriptionGraceState($row['overdue_since'] ?? null);
+                if ($grace['phase'] === 'blocked') {
+                    redirect('/admin/pending-checkout.php');
+                }
             }
         } catch (\Exception $e) { /* não bloqueia por erro de DB */ }
     }

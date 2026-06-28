@@ -197,3 +197,90 @@ function plansRequiringEmailAlerts(): array {
     }
     return $keys;
 }
+
+
+/**
+ * Régua de carência (grace period) da assinatura.
+ *
+ * A partir de overdue_since (data em que a cobrança venceu), calcula a fase:
+ *   'ok'       -> não está vencida
+ *   'grace'    -> vencida, dentro da carência (aviso normal)
+ *   'critical' -> vencida, últimos dias da carência (aviso urgente)
+ *   'blocked'  -> carência estourou (acesso suspenso; dados nunca apagados)
+ *
+ * @return array{phase: string, days_left: int, days_overdue: int}
+ */
+function GRACE_TOTAL_DAYS(): int { return 10; } // dias de tolerância após vencer
+function GRACE_CRITICAL_DAYS(): int { return 3; } // últimos dias com aviso urgente
+
+function subscriptionGraceState(?string $overdueSince): array {
+    if (empty($overdueSince)) {
+        return ['phase' => 'ok', 'days_left' => 0, 'days_overdue' => 0];
+    }
+    try {
+        $start = new DateTimeImmutable($overdueSince);
+    } catch (\Exception $e) {
+        return ['phase' => 'ok', 'days_left' => 0, 'days_overdue' => 0];
+    }
+    $today   = new DateTimeImmutable('today');
+    $overdue = (int) $start->diff($today)->days;
+    $total   = GRACE_TOTAL_DAYS();
+    $crit    = GRACE_CRITICAL_DAYS();
+    $toBlock = $total - $overdue;
+
+    if ($overdue > $total) {
+        return ['phase' => 'blocked', 'days_left' => 0, 'days_overdue' => $overdue];
+    }
+    if ($toBlock <= $crit) {
+        return ['phase' => 'critical', 'days_left' => max(0, $toBlock), 'days_overdue' => $overdue];
+    }
+    return ['phase' => 'grace', 'days_left' => max(0, $toBlock), 'days_overdue' => $overdue];
+}
+
+
+/**
+ * Estado de aviso de assinatura para exibir na interface (faixa no topo).
+ * Considera tanto o fim do trial quanto o vencimento (overdue), aplicando
+ * a mesma régua de carência. Retorna null quando não há nada a avisar.
+ *
+ * @return array{phase: string, days_left: int, kind: string}|null
+ *   kind: 'trial' | 'overdue'
+ */
+function subscriptionNoticeForCompany(int $companyId): ?array {
+    try {
+        $db = getDB();
+        $stmt = $db->prepare(
+            'SELECT subscription_status, overdue_since, created_at FROM companies WHERE id = ? LIMIT 1'
+        );
+        $stmt->execute([$companyId]);
+        $row = $stmt->fetch();
+    } catch (\Exception $e) {
+        return null;
+    }
+    if (!$row) return null;
+
+    $status = $row['subscription_status'] ?? null;
+
+    // Caso 1: vencido (cliente pagante atrasou)
+    if ($status === 'overdue' && !empty($row['overdue_since'])) {
+        $g = subscriptionGraceState($row['overdue_since']);
+        if (in_array($g['phase'], ['grace', 'critical'], true)) {
+            return ['phase' => $g['phase'], 'days_left' => $g['days_left'], 'kind' => 'overdue'];
+        }
+    }
+
+    // Caso 2: trial terminou e está na carência
+    if ($status === 'trialing' && !empty($row['created_at'])) {
+        try {
+            $trialEnds = (new DateTimeImmutable($row['created_at']))->modify('+30 days');
+            if (new DateTimeImmutable('today') > $trialEnds) {
+                $g = subscriptionGraceState($trialEnds->format('Y-m-d'));
+                if (in_array($g['phase'], ['grace', 'critical'], true)) {
+                    return ['phase' => $g['phase'], 'days_left' => $g['days_left'], 'kind' => 'trial'];
+                }
+            }
+        } catch (\Exception $e) { /* ignora */ }
+    }
+
+    return null;
+}
