@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /employee/
+Disallow: /superadmin/
+Disallow: /config/
+Disallow: /includes/
+Disallow: /vendor/
+Disallow: /logs/
+Disallow: /uploads/
+
+Sitemap: https://qrcertify.com.br/sitemap.xml
