@@ -173,12 +173,92 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     }
 }
 
+$filter = $_GET['filter'] ?? 'all';
+$filterLabels = [
+    'all' => 'Todas as empresas',
+    'overdue' => 'Inadimplentes',
+    'trialing' => 'Em trial',
+    'trials_ending' => 'Trials vencendo',
+    'no_employees' => 'Sem funcionarios',
+    'canceled_month' => 'Canceladas este mes',
+    'active_canceled' => 'Ativas com assinatura cancelada',
+    'no_recent_access' => 'Sem acesso recente',
+    'risk' => 'Empresas em risco',
+];
+if (!array_key_exists($filter, $filterLabels)) {
+    $filter = 'all';
+}
+
+$where = '';
+switch ($filter) {
+    case 'overdue':
+        $where = 'WHERE c.subscription_status = "overdue"';
+        break;
+    case 'trialing':
+        $where = 'WHERE c.status = "active" AND c.subscription_status = "trialing"';
+        break;
+    case 'trials_ending':
+        $where = 'WHERE c.status = "active" AND c.subscription_status = "trialing"
+                  AND c.trial_ends_at IS NOT NULL
+                  AND c.trial_ends_at BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 7 DAY)';
+        break;
+    case 'no_employees':
+        $where = 'WHERE c.status = "active"
+                  AND NOT EXISTS (
+                      SELECT 1 FROM employees e
+                       WHERE e.company_id = c.id AND e.status = "active"
+                  )';
+        break;
+    case 'canceled_month':
+        $where = 'WHERE c.subscription_status = "canceled"
+                  AND MONTH(c.updated_at) = MONTH(CURDATE())
+                  AND YEAR(c.updated_at) = YEAR(CURDATE())';
+        break;
+    case 'active_canceled':
+        $where = 'WHERE c.status = "active" AND c.subscription_status = "canceled"';
+        break;
+    case 'no_recent_access':
+        $where = 'WHERE c.status = "active"
+                  AND NOT EXISTS (
+                      SELECT 1
+                        FROM audit_log a
+                       WHERE a.action = "login.success"
+                         AND a.created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+                         AND (
+                             a.company_id = c.id
+                             OR a.user_id IN (SELECT u.id FROM users u WHERE u.company_id = c.id)
+                         )
+                  )';
+        break;
+    case 'risk':
+        $where = 'WHERE c.status = "active"
+                  AND (
+                      c.subscription_status IN ("overdue", "canceled")
+                      OR NOT EXISTS (
+                          SELECT 1 FROM employees e
+                           WHERE e.company_id = c.id AND e.status = "active"
+                      )
+                      OR NOT EXISTS (
+                          SELECT 1
+                            FROM audit_log a
+                           WHERE a.action = "login.success"
+                             AND a.created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+                             AND (
+                                 a.company_id = c.id
+                                 OR a.user_id IN (SELECT u.id FROM users u WHERE u.company_id = c.id)
+                             )
+                      )
+                  )';
+        break;
+}
+
 $companies = $db->query(
     'SELECT c.*,
             (SELECT COUNT(*) FROM employees WHERE company_id = c.id) AS emp_count,
             (SELECT COUNT(*) FROM users WHERE company_id = c.id) AS user_count
-     FROM companies c
-     ORDER BY c.created_at DESC'
+       FROM companies c
+     ' . $where . '
+      ORDER BY c.created_at DESC'
 )->fetchAll();
 
 $pageTitle = 'Empresas';
@@ -191,6 +271,15 @@ require_once __DIR__ . '/../includes/sidebar.php';
         <h1 class="text-2xl font-bold text-gray-900">Empresas (Tenants)</h1>
         <p class="text-gray-600">Gerenciamento de empresas da plataforma</p>
     </div>
+</div>
+
+<div class="flex flex-wrap items-center gap-2 mb-4">
+    <?php foreach ($filterLabels as $key => $label): ?>
+        <a href="<?= BASE_URL ?>/superadmin/companies.php<?= $key === 'all' ? '' : '?filter=' . e($key) ?>"
+           class="px-3 py-1.5 rounded-md border text-sm font-medium <?= $filter === $key ? 'bg-industrial-blue text-white border-industrial-blue' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50' ?>">
+            <?= e($label) ?>
+        </a>
+    <?php endforeach; ?>
 </div>
 
 <?php renderFlashes(); ?>

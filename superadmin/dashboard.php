@@ -71,6 +71,46 @@ $companiesWithoutEmployees = (int) $db->query(
        )'
 )->fetchColumn();
 
+$activeCanceled = (int) $db->query(
+    'SELECT COUNT(*) FROM companies
+      WHERE status = "active" AND subscription_status = "canceled"'
+)->fetchColumn();
+
+$accessesLast7Days = (int) $db->query(
+    'SELECT COUNT(*)
+       FROM audit_log
+      WHERE action = "login.success"
+        AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)'
+)->fetchColumn();
+
+$companiesWithoutRecentAccess = (int) $db->query(
+    'SELECT COUNT(*)
+       FROM companies c
+      WHERE c.status = "active"
+        AND NOT EXISTS (
+            SELECT 1
+              FROM audit_log a
+             WHERE a.action = "login.success"
+               AND a.created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+               AND (
+                   a.company_id = c.id
+                   OR a.user_id IN (SELECT u.id FROM users u WHERE u.company_id = c.id)
+               )
+        )'
+)->fetchColumn();
+
+$certsThisMonth = (int) $db->query(
+    'SELECT COUNT(*) FROM certificates
+      WHERE MONTH(created_at) = MONTH(CURDATE())
+        AND YEAR(created_at) = YEAR(CURDATE())'
+)->fetchColumn();
+
+$employeesThisMonth = (int) $db->query(
+    'SELECT COUNT(*) FROM employees
+      WHERE MONTH(created_at) = MONTH(CURDATE())
+        AND YEAR(created_at) = YEAR(CURDATE())'
+)->fetchColumn();
+
 $stmtMrr = $db->query(
     'SELECT plan, COUNT(*) AS qty
      FROM companies
@@ -114,19 +154,52 @@ $topCompanies = $db->query(
 )->fetchAll();
 
 $attentionCompanies = $db->query(
-    'SELECT name, plan, subscription_status, trial_ends_at, overdue_since, updated_at
-     FROM companies
-     WHERE status = "active"
-       AND (
-           subscription_status = "overdue"
-           OR (subscription_status = "trialing"
-               AND trial_ends_at IS NOT NULL
-               AND trial_ends_at <= DATE_ADD(CURDATE(), INTERVAL 7 DAY))
-       )
-     ORDER BY
-       CASE subscription_status WHEN "overdue" THEN 0 ELSE 1 END,
-       COALESCE(trial_ends_at, updated_at) ASC
-     LIMIT 5'
+    'SELECT *
+       FROM (
+            SELECT c.id, c.name, c.plan, c.subscription_status, c.trial_ends_at, c.overdue_since, "Inadimplente" AS reason,
+                   COALESCE(c.overdue_since, c.updated_at) AS sort_date, 1 AS priority
+              FROM companies c
+             WHERE c.status = "active" AND c.subscription_status = "overdue"
+            UNION ALL
+            SELECT c.id, c.name, c.plan, c.subscription_status, c.trial_ends_at, c.overdue_since, "Trial vencendo" AS reason,
+                   c.trial_ends_at AS sort_date, 2 AS priority
+              FROM companies c
+             WHERE c.status = "active"
+               AND c.subscription_status = "trialing"
+               AND c.trial_ends_at IS NOT NULL
+               AND c.trial_ends_at <= DATE_ADD(CURDATE(), INTERVAL 7 DAY)
+            UNION ALL
+            SELECT c.id, c.name, c.plan, c.subscription_status, c.trial_ends_at, c.overdue_since, "Sem funcionarios ativos" AS reason,
+                   c.updated_at AS sort_date, 3 AS priority
+              FROM companies c
+             WHERE c.status = "active"
+               AND NOT EXISTS (
+                   SELECT 1 FROM employees e
+                    WHERE e.company_id = c.id AND e.status = "active"
+               )
+            UNION ALL
+            SELECT c.id, c.name, c.plan, c.subscription_status, c.trial_ends_at, c.overdue_since, "Assinatura cancelada" AS reason,
+                   c.updated_at AS sort_date, 4 AS priority
+              FROM companies c
+             WHERE c.status = "active" AND c.subscription_status = "canceled"
+            UNION ALL
+            SELECT c.id, c.name, c.plan, c.subscription_status, c.trial_ends_at, c.overdue_since, "Sem login recente" AS reason,
+                   c.updated_at AS sort_date, 5 AS priority
+              FROM companies c
+             WHERE c.status = "active"
+               AND NOT EXISTS (
+                   SELECT 1
+                     FROM audit_log a
+                    WHERE a.action = "login.success"
+                      AND a.created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+                      AND (
+                          a.company_id = c.id
+                          OR a.user_id IN (SELECT u.id FROM users u WHERE u.company_id = c.id)
+                      )
+               )
+        ) alerts
+      ORDER BY priority ASC, sort_date ASC
+      LIMIT 8'
 )->fetchAll();
 
 $topUsageCompanies = $db->query(
@@ -167,6 +240,25 @@ foreach ($monthlyRows as $row) {
 $monthlyLabels = array_column($monthlyBuckets, 'label');
 $monthlyCompanies = array_column($monthlyBuckets, 'total');
 
+$monthlyCertRows = $db->query(
+    'SELECT DATE_FORMAT(created_at, "%Y-%m") AS month_key,
+            COUNT(*) AS total
+       FROM certificates
+      WHERE created_at >= DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 5 MONTH), "%Y-%m-01")
+      GROUP BY month_key
+      ORDER BY month_key ASC'
+)->fetchAll();
+$monthlyCertBuckets = $monthlyBuckets;
+foreach ($monthlyCertBuckets as $key => $bucket) {
+    $monthlyCertBuckets[$key]['total'] = 0;
+}
+foreach ($monthlyCertRows as $row) {
+    if (isset($monthlyCertBuckets[$row['month_key']])) {
+        $monthlyCertBuckets[$row['month_key']]['total'] = (int) $row['total'];
+    }
+}
+$monthlyCerts = array_column($monthlyCertBuckets, 'total');
+
 $lastUpdatedAt = date('d/m/Y H:i');
 $pageTitle = 'Dashboard Plataforma';
 
@@ -186,6 +278,16 @@ require_once __DIR__ . '/../includes/sidebar.php';
 </div>
 
 <?php renderFlashes(); ?>
+
+<?php if ($activeCanceled > 0): ?>
+<div class="mb-6 rounded-lg border border-amber-200 bg-amber-50 p-4 flex flex-wrap items-center justify-between gap-3">
+    <div>
+        <p class="text-sm font-semibold text-amber-900"><?= $activeCanceled ?> empresa(s) ativa(s) com assinatura cancelada</p>
+        <p class="text-xs text-amber-700 mt-1">Revise estes casos para evitar acesso indevido ou status comercial inconsistente.</p>
+    </div>
+    <a href="<?= BASE_URL ?>/superadmin/companies.php?filter=active_canceled" class="btn btn-secondary btn-sm">Ver casos</a>
+</div>
+<?php endif; ?>
 
 <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
     <div class="card p-5">
@@ -230,6 +332,29 @@ require_once __DIR__ . '/../includes/sidebar.php';
     </div>
 </div>
 
+<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+    <div class="card p-5">
+        <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Acessos 7 dias</p>
+        <p class="text-2xl font-extrabold text-gray-900"><?= $accessesLast7Days ?></p>
+        <p class="text-xs text-gray-400 mt-1">logins bem-sucedidos</p>
+    </div>
+    <a href="<?= BASE_URL ?>/superadmin/companies.php?filter=no_recent_access" class="card p-5 hover:border-industrial-blue hover:bg-blue-50 transition">
+        <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Sem acesso 30 dias</p>
+        <p class="text-2xl font-extrabold text-amber-600"><?= $companiesWithoutRecentAccess ?></p>
+        <p class="text-xs text-gray-400 mt-1">empresas sem login recente</p>
+    </a>
+    <div class="card p-5">
+        <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Certificados no mes</p>
+        <p class="text-2xl font-extrabold text-gray-900"><?= $certsThisMonth ?></p>
+        <p class="text-xs text-gray-400 mt-1">emitidos este mes</p>
+    </div>
+    <div class="card p-5">
+        <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Funcionarios no mes</p>
+        <p class="text-2xl font-extrabold text-gray-900"><?= $employeesThisMonth ?></p>
+        <p class="text-xs text-gray-400 mt-1">novos cadastros</p>
+    </div>
+</div>
+
 <div class="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-6">
     <div class="card p-6 xl:col-span-2">
         <div class="flex flex-wrap items-start justify-between gap-3 mb-4">
@@ -237,29 +362,29 @@ require_once __DIR__ . '/../includes/sidebar.php';
                 <h2 class="font-bold text-gray-900">Atencao operacional</h2>
                 <p class="text-sm text-gray-400">Itens que merecem acompanhamento comercial ou de suporte.</p>
             </div>
-            <a href="<?= BASE_URL ?>/superadmin/companies.php" class="btn btn-secondary btn-sm">Gerenciar</a>
+            <a href="<?= BASE_URL ?>/superadmin/companies.php?filter=risk" class="btn btn-secondary btn-sm">Gerenciar</a>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
-            <div class="rounded-lg border border-red-100 bg-red-50 p-4">
+            <a href="<?= BASE_URL ?>/superadmin/companies.php?filter=overdue" class="rounded-lg border border-red-100 bg-red-50 p-4 hover:border-red-300 transition">
                 <p class="text-xs font-semibold uppercase tracking-wide text-red-700">Cobranca</p>
                 <p class="text-2xl font-extrabold text-red-600 mt-1"><?= $overdue ?></p>
                 <p class="text-xs text-red-700 mt-1">pendentes de regularizacao</p>
-            </div>
-            <div class="rounded-lg border border-amber-100 bg-amber-50 p-4">
+            </a>
+            <a href="<?= BASE_URL ?>/superadmin/companies.php?filter=trials_ending" class="rounded-lg border border-amber-100 bg-amber-50 p-4 hover:border-amber-300 transition">
                 <p class="text-xs font-semibold uppercase tracking-wide text-amber-700">Trial</p>
                 <p class="text-2xl font-extrabold text-amber-600 mt-1"><?= $trialsEndingSoon ?></p>
                 <p class="text-xs text-amber-700 mt-1">terminam nos proximos 7 dias</p>
-            </div>
-            <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">
+            </a>
+            <a href="<?= BASE_URL ?>/superadmin/companies.php?filter=no_employees" class="rounded-lg border border-slate-200 bg-slate-50 p-4 hover:border-slate-300 transition">
                 <p class="text-xs font-semibold uppercase tracking-wide text-slate-600">Ativacao</p>
                 <p class="text-2xl font-extrabold text-slate-900 mt-1"><?= $companiesWithoutEmployees ?></p>
                 <p class="text-xs text-slate-500 mt-1">sem funcionarios ativos</p>
-            </div>
-            <div class="rounded-lg border border-gray-200 bg-gray-50 p-4">
+            </a>
+            <a href="<?= BASE_URL ?>/superadmin/companies.php?filter=canceled_month" class="rounded-lg border border-gray-200 bg-gray-50 p-4 hover:border-gray-300 transition">
                 <p class="text-xs font-semibold uppercase tracking-wide text-gray-600">Cancelamentos</p>
                 <p class="text-2xl font-extrabold text-gray-900 mt-1"><?= $canceledThisMonth ?></p>
                 <p class="text-xs text-gray-500 mt-1">registrados este mes</p>
-            </div>
+            </a>
         </div>
     </div>
 
@@ -270,17 +395,17 @@ require_once __DIR__ . '/../includes/sidebar.php';
                 <span class="block text-sm font-semibold text-gray-900">Nova empresa</span>
                 <span class="block text-xs text-gray-400 mt-1">cadastro e contrato</span>
             </a>
-            <a href="<?= BASE_URL ?>/superadmin/companies.php" class="rounded-lg border border-gray-200 p-3 hover:border-industrial-blue hover:bg-blue-50 transition">
-                <span class="block text-sm font-semibold text-gray-900">Trials</span>
-                <span class="block text-xs text-gray-400 mt-1">acompanhar conversao</span>
+            <a href="<?= BASE_URL ?>/superadmin/companies.php?filter=risk" class="rounded-lg border border-gray-200 p-3 hover:border-industrial-blue hover:bg-blue-50 transition">
+                <span class="block text-sm font-semibold text-gray-900">Empresas em risco</span>
+                <span class="block text-xs text-gray-400 mt-1">priorizar suporte</span>
             </a>
-            <a href="<?= BASE_URL ?>/superadmin/companies.php" class="rounded-lg border border-gray-200 p-3 hover:border-industrial-blue hover:bg-blue-50 transition">
-                <span class="block text-sm font-semibold text-gray-900">Inadimplentes</span>
-                <span class="block text-xs text-gray-400 mt-1">cobranca pendente</span>
+            <a href="<?= BASE_URL ?>/superadmin/companies.php?filter=no_employees" class="rounded-lg border border-gray-200 p-3 hover:border-industrial-blue hover:bg-blue-50 transition">
+                <span class="block text-sm font-semibold text-gray-900">Sem ativacao</span>
+                <span class="block text-xs text-gray-400 mt-1">sem funcionarios</span>
             </a>
-            <a href="<?= BASE_URL ?>/superadmin/companies.php" class="rounded-lg border border-gray-200 p-3 hover:border-industrial-blue hover:bg-blue-50 transition">
-                <span class="block text-sm font-semibold text-gray-900">Planos</span>
-                <span class="block text-xs text-gray-400 mt-1">ajustar assinatura</span>
+            <a href="<?= BASE_URL ?>/superadmin/companies.php?filter=no_recent_access" class="rounded-lg border border-gray-200 p-3 hover:border-industrial-blue hover:bg-blue-50 transition">
+                <span class="block text-sm font-semibold text-gray-900">Sem uso</span>
+                <span class="block text-xs text-gray-400 mt-1">30 dias sem login</span>
             </a>
         </div>
     </div>
@@ -289,8 +414,8 @@ require_once __DIR__ . '/../includes/sidebar.php';
 <div class="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-6">
     <div class="card p-6 xl:col-span-2">
         <div class="flex items-center justify-between gap-3 mb-4">
-            <h2 class="font-bold text-gray-900">Novas empresas por mes</h2>
-            <span class="text-xs text-gray-400">ultimos 6 meses</span>
+            <h2 class="font-bold text-gray-900">Tendencia da plataforma</h2>
+            <span class="text-xs text-gray-400">empresas e certificados nos ultimos 6 meses</span>
         </div>
         <div class="h-64">
             <canvas id="companiesChart"></canvas>
@@ -304,18 +429,19 @@ require_once __DIR__ . '/../includes/sidebar.php';
                 <?php
                     $status = $co['subscription_status'] ?? 'pending_checkout';
                     $badgeClass = $subBadgeClasses[$status] ?? 'bg-gray-100 text-gray-600';
-                    $dateText = $status === 'overdue'
-                        ? (!empty($co['overdue_since']) ? 'desde ' . date('d/m/Y', strtotime($co['overdue_since'])) : 'regularizar cobranca')
-                        : (!empty($co['trial_ends_at']) ? 'vence em ' . date('d/m/Y', strtotime($co['trial_ends_at'])) : 'trial sem data');
+                    $dateText = $co['reason'] ?? 'Revisar empresa';
                 ?>
                 <div class="flex items-center justify-between gap-3 border-b border-gray-100 pb-3 last:border-0 last:pb-0">
                     <div class="min-w-0">
                         <p class="text-sm font-semibold text-gray-900 truncate"><?= e($co['name']) ?></p>
                         <p class="text-xs text-gray-400"><?= e($planName($co['plan'] ?? 'starter')) ?> · <?= e($dateText) ?></p>
                     </div>
-                    <span class="text-xs px-2 py-0.5 rounded-full font-medium <?= $badgeClass ?>">
-                        <?= e($subLabels[$status] ?? $status) ?>
-                    </span>
+                    <div class="flex items-center gap-2 flex-shrink-0">
+                        <span class="text-xs px-2 py-0.5 rounded-full font-medium <?= $badgeClass ?>">
+                            <?= e($subLabels[$status] ?? $status) ?>
+                        </span>
+                        <a href="<?= BASE_URL ?>/superadmin/company.php?id=<?= (int) $co['id'] ?>" class="text-xs text-industrial-blue font-medium hover:underline">Ver</a>
+                    </div>
                 </div>
             <?php endforeach; ?>
             <?php if (empty($attentionCompanies)): ?>
@@ -414,19 +540,28 @@ if (companiesCanvas && window.Chart) {
         type: 'bar',
         data: {
             labels: <?= json_encode($monthlyLabels, JSON_UNESCAPED_UNICODE) ?>,
-            datasets: [{
-                label: 'Novas empresas',
-                data: <?= json_encode($monthlyCompanies) ?>,
-                backgroundColor: '#1e3a8a',
-                borderRadius: 6,
-                maxBarThickness: 42
-            }]
+            datasets: [
+                {
+                    label: 'Novas empresas',
+                    data: <?= json_encode($monthlyCompanies) ?>,
+                    backgroundColor: '#1e3a8a',
+                    borderRadius: 6,
+                    maxBarThickness: 42
+                },
+                {
+                    label: 'Certificados',
+                    data: <?= json_encode($monthlyCerts) ?>,
+                    backgroundColor: '#facc15',
+                    borderRadius: 6,
+                    maxBarThickness: 42
+                }
+            ]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: { display: false },
+                legend: { position: 'bottom' },
                 tooltip: { displayColors: false }
             },
             scales: {
