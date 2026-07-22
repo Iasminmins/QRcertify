@@ -1,5 +1,7 @@
 <?php
 
+require_once __DIR__ . '/seo_components.php';
+
 function seoPages(): array {
     return [
         'sistema-controle-aso' => [
@@ -94,6 +96,54 @@ function seoPages(): array {
                 ['Funciona para terceirizados?', 'Sim. O controle pode ser usado para trabalhadores proprios, prestadores e equipes mobilizadas.'],
             ],
         ],
+        'gestao-conformidade-sst' => [
+            'title' => 'Gestao de conformidade SST com ASO, certificados e documentos | QRCertify',
+            'description' => 'Veja como organizar a gestao de conformidade SST com controle de ASOs, certificados, documentos, vencimentos, colaboradores e relatorios em uma unica plataforma.',
+            'eyebrow' => 'Gestao de conformidade SST',
+            'h1' => 'Gestao de conformidade SST sem depender de planilhas espalhadas',
+            'lead' => 'A QRCertify ajuda empresas, RH, SESMT e consultorias SST a controlar ASOs, certificados, documentos, treinamentos, colaboradores, areas, setores e vencimentos em um fluxo unico, com QR Code, alertas e relatorios.',
+            'primary' => 'Comecar gratis agora',
+            'problem' => 'Conformidade nao falha apenas por falta de documento. Ela falha quando ASO, certificado, treinamento, area, setor, colaborador e vencimento ficam em lugares diferentes e ninguem enxerga o risco antes da auditoria.',
+            'outcomes' => [
+                'Visao unica de documentos validos, vencendo e vencidos.',
+                'Rastreabilidade para entender historico, alteracoes e pendencias.',
+                'Rotina mais previsivel para RH, SESMT, diretoria e consultorias.',
+            ],
+            'features' => [
+                ['Controle por colaborador', 'Centralize ASOs, certificados, treinamentos e documentos no cadastro do trabalhador.'],
+                ['Vencimentos priorizados', 'Veja o que exige acao agora, o que vence em breve e o que ainda esta regular.'],
+                ['Relatorio de conformidade', 'Acompanhe indicadores para auditoria, gestao interna e tomada de decisao.'],
+            ],
+            'longform' => [
+                'title' => 'O que uma boa gestao de conformidade SST precisa controlar?',
+                'intro' => 'Uma operacao minimamente organizada precisa responder rapido: quem esta apto, qual documento vence primeiro, onde esta o comprovante, qual setor esta mais exposto e o que precisa ser renovado antes de virar urgencia.',
+                'items' => [
+                    ['ASOs e exames ocupacionais', 'Controle admissionais, periodicos, retorno ao trabalho, mudanca de risco e demissionais com validade por colaborador.'],
+                    ['Certificados e treinamentos', 'Organize NRs, treinamentos internos, certificados externos e autorizacoes necessarias para executar atividades.'],
+                    ['Documentos e evidencias', 'Mantenha arquivos importantes em um lugar consultavel, reduzindo busca em e-mails, pastas e computadores.'],
+                    ['Areas, setores e responsaveis', 'Enxergue a conformidade por estrutura da empresa, nao apenas por lista solta de nomes.'],
+                    ['Auditoria e historico', 'Registre alteracoes relevantes para ter confianca nos dados e menos improviso em fiscalizacoes.'],
+                    ['Relatorios e exportacoes', 'Transforme a rotina documental em informacao para gestao, contratos e reunioes de acompanhamento.'],
+                ],
+            ],
+            'comparison' => [
+                ['Planilha manual', 'Depende de alguem lembrar, atualizar e conferir celula por celula.'],
+                ['Pastas e e-mails', 'Arquivos existem, mas ficam dificeis de encontrar no momento de pressao.'],
+                ['QRCertify', 'Centraliza documentos, status, alertas, QR Code e relatorios em um fluxo unico.'],
+            ],
+            'checklist' => [
+                'Mapear colaboradores, areas e setores.',
+                'Cadastrar ASOs, certificados, treinamentos e documentos recorrentes.',
+                'Definir rotina de renovacao antes do vencimento.',
+                'Acompanhar pendencias por status e prioridade.',
+                'Gerar relatorios para auditoria, diretoria e clientes.',
+            ],
+            'faq' => [
+                ['Essa pagina e diferente da landing principal?', 'Sim. Ela e uma pagina SEO educativa para quem pesquisa gestao de conformidade SST, enquanto a landing principal vende o produto de forma mais direta.'],
+                ['Posso comecar sem falar com vendas?', 'Sim. O fluxo principal e comecar gratis pelo checkout e testar a plataforma antes de escalar o uso.'],
+                ['Serve para empresa e consultoria SST?', 'Sim. Empresas usam para controle interno; consultorias podem organizar a gestao documental de clientes e reduzir retrabalho.'],
+            ],
+        ],
         'controle-documentos-vencimento' => [
             'title' => 'Controle de documentos com vencimento | QRCertify',
             'description' => 'Controle documentos com vencimento, receba alertas e acompanhe ASOs e certificados antes que expirem.',
@@ -134,27 +184,8 @@ function renderSeoPage(string $slug): void {
     $logo = $base . '/public/assets/logo-qrcertify.svg';
     $checkout = $base . '/checkout.php';
     $whatsapp = 'https://wa.me/5524999327549?text=' . rawurlencode('Ola, quero conhecer o QRCertify.');
-    $related = array_filter(array_keys($pages), fn($key) => $key !== $slug);
-    $related = array_slice($related, 0, 3);
     $plans = getPlansCatalog();
-    $pricing = [
-        'starter' => [
-            'summary' => 'Para empresas pequenas que querem sair da planilha.',
-            'items' => ['Ate 20 colaboradores', 'Carteira digital com QR Code', 'Dashboard essencial'],
-        ],
-        'pro' => [
-            'summary' => 'Para operacoes que precisam de alertas, importacao e relatorios.',
-            'items' => ['Ate 100 colaboradores', 'Alertas de vencimento', 'Importacao CSV e exportacoes'],
-        ],
-        'business' => [
-            'summary' => 'Para empresas com mais setores, equipes e documentos recorrentes.',
-            'items' => ['Ate 300 colaboradores', 'Recursos avancados do Pro', 'Mais escala para SST e RH'],
-        ],
-        'enterprise' => [
-            'summary' => 'Para operacoes maiores com implantacao dedicada.',
-            'items' => ['Ate 800 colaboradores', 'Implantacao dedicada', 'Suporte para operacao complexa'],
-        ],
-    ];
+    $pricing = seoPlansPricing();
 
     header('Content-Type: text/html; charset=UTF-8');
     ?>
@@ -169,7 +200,13 @@ function renderSeoPage(string $slug): void {
 <meta property="og:title" content="<?= e($page['title']) ?>">
 <meta property="og:description" content="<?= e($page['description']) ?>">
 <meta property="og:url" content="<?= e($url) ?>">
+<meta property="og:site_name" content="QRCertify">
 <meta property="og:type" content="website">
+<meta property="og:image" content="<?= e($logo) ?>">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="<?= e($page['title']) ?>">
+<meta name="twitter:description" content="<?= e($page['description']) ?>">
+<meta name="twitter:image" content="<?= e($logo) ?>">
 <link rel="icon" type="image/svg+xml" href="<?= e($logo) ?>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -190,17 +227,7 @@ a { text-decoration: none; }
 .nav-link:hover { color:#1e3a8a; }
 .metric { border-left: 3px solid #facc15; }
 </style>
-<script type="application/ld+json">
-<?= json_encode([
-    '@context' => 'https://schema.org',
-    '@type' => 'SoftwareApplication',
-    'name' => 'QRCertify',
-    'applicationCategory' => 'BusinessApplication',
-    'operatingSystem' => 'Web',
-    'url' => $url,
-    'description' => $page['description'],
-], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>
-</script>
+<?php renderSeoJsonLd($page, $base, $url, $logo); ?>
 </head>
 <body>
 <header class="sticky top-0 z-50 bg-white/95 backdrop-blur border-b border-gray-100">
@@ -226,6 +253,7 @@ a { text-decoration: none; }
   <section class="grid-bg py-20 md:py-28 overflow-hidden">
     <div class="max-w-6xl mx-auto px-5">
       <div class="max-w-3xl">
+        <?php renderSeoBreadcrumb($base, $page['eyebrow']); ?>
         <p class="inline-flex items-center gap-2 bg-yellow-50 border border-yellow-200 text-yellow-800 text-xs font-semibold px-3 py-1.5 rounded-full mb-6"><?= e($page['eyebrow']) ?></p>
         <h1 class="font-display text-4xl md:text-6xl font-extrabold leading-[1.05] tracking-tight mb-6"><?= e($page['h1']) ?></h1>
         <p class="text-gray-600 text-lg md:text-xl leading-relaxed mb-8"><?= e($page['lead']) ?></p>
@@ -270,6 +298,59 @@ a { text-decoration: none; }
       </div>
     </div>
   </section>
+
+  <?php if (!empty($page['longform'])): ?>
+  <section class="py-20">
+    <div class="max-w-6xl mx-auto px-5 grid lg:grid-cols-[.85fr_1.15fr] gap-12 items-start">
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-widest text-industrial-blue mb-3">Guia pratico</p>
+        <h2 class="font-display text-3xl md:text-4xl font-extrabold tracking-tight mb-5"><?= e($page['longform']['title']) ?></h2>
+        <p class="text-gray-600 leading-relaxed"><?= e($page['longform']['intro']) ?></p>
+      </div>
+      <div class="grid sm:grid-cols-2 gap-4">
+        <?php foreach ($page['longform']['items'] as $item): ?>
+          <article class="bg-white border border-gray-200 rounded-lg p-5 shadow-sm">
+            <h3 class="font-display text-lg font-bold mb-2"><?= e($item[0]) ?></h3>
+            <p class="text-sm text-gray-600 leading-relaxed"><?= e($item[1]) ?></p>
+          </article>
+        <?php endforeach; ?>
+      </div>
+    </div>
+  </section>
+  <?php endif; ?>
+
+  <?php if (!empty($page['comparison']) || !empty($page['checklist'])): ?>
+  <section class="py-20 bg-gray-50">
+    <div class="max-w-6xl mx-auto px-5 grid lg:grid-cols-2 gap-8">
+      <?php if (!empty($page['comparison'])): ?>
+      <div class="bg-white border border-gray-200 rounded-lg p-7 shadow-sm">
+        <p class="text-xs font-semibold uppercase tracking-widest text-industrial-blue mb-3">Comparativo</p>
+        <h2 class="font-display text-3xl font-extrabold tracking-tight mb-6">Por que sair do controle manual?</h2>
+        <div class="space-y-4">
+          <?php foreach ($page['comparison'] as $row): ?>
+            <div class="border-t border-gray-100 pt-4">
+              <h3 class="font-display text-lg font-bold mb-1"><?= e($row[0]) ?></h3>
+              <p class="text-sm text-gray-600 leading-relaxed"><?= e($row[1]) ?></p>
+            </div>
+          <?php endforeach; ?>
+        </div>
+      </div>
+      <?php endif; ?>
+      <?php if (!empty($page['checklist'])): ?>
+      <div class="bg-industrial-blue text-white rounded-lg p-7 shadow-xl">
+        <p class="text-xs font-semibold uppercase tracking-widest text-industrial-yellow mb-3">Checklist</p>
+        <h2 class="font-display text-3xl font-extrabold tracking-tight mb-6">Primeiros passos para organizar a conformidade</h2>
+        <ul class="space-y-4">
+          <?php foreach ($page['checklist'] as $item): ?>
+            <li class="flex gap-3 text-blue-50"><span class="text-industrial-yellow font-bold">&#10003;</span><span><?= e($item) ?></span></li>
+          <?php endforeach; ?>
+        </ul>
+        <a href="<?= e($checkout) ?>" class="inline-block mt-8 bg-industrial-yellow text-gray-900 font-bold px-6 py-3 rounded-xl hover:bg-yellow-300 transition-colors">Come&ccedil;ar gr&aacute;tis</a>
+      </div>
+      <?php endif; ?>
+    </div>
+  </section>
+  <?php endif; ?>
 
   <section class="py-20">
     <div class="max-w-6xl mx-auto px-5">
@@ -351,9 +432,7 @@ a { text-decoration: none; }
     <div>
       <h4 class="text-white text-sm mb-4 font-bold">Solu&ccedil;&otilde;es</h4>
       <ul class="space-y-2.5 text-sm">
-        <?php foreach ($related as $relatedSlug): ?>
-          <li><a href="<?= e($base . '/' . $relatedSlug . '/') ?>" class="hover:text-white transition-colors"><?= e($pages[$relatedSlug]['eyebrow']) ?></a></li>
-        <?php endforeach; ?>
+        <?php renderSeoFooterSolutions($pages, $base, $slug); ?>
       </ul>
     </div>
     <div>

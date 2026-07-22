@@ -15,8 +15,8 @@
 })();
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="Gerencie certificados de NR e ASOs com QR Code, alertas autom&aacute;ticos e valida&ccedil;&atilde;o p&uacute;blica. Sem papel, sem planilha, sem multa do MTE.">
-<title>QRCertify &mdash; Certificados de NR e ASOs sempre em dia</title>
+<meta name="description" content="Controle ASOs, certificados de NR e documentos com vencimento em um sistema com QR Code, alertas autom&aacute;ticos, Carteira Digital e relat&oacute;rios. Saia da planilha e comprove conformidade mais r&aacute;pido.">
+<title>QRCertify &mdash; Controle de ASO, NR e vencimentos com QR Code</title>
 <link rel="icon" type="image/svg+xml" href="public/assets/logo-qrcertify.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -26,7 +26,7 @@
 tailwind.config = {
   theme: {
     extend: {
-      colors: { 'industrial-blue': '#1e3a8a', 'industrial-yellow': '#facc15' },
+      colors: { 'industrial-blue': '#28459A', 'industrial-yellow': '#FFC928' },
       fontFamily: { display: ['Bricolage Grotesque','sans-serif'], body: ['IBM Plex Sans','sans-serif'] }
     }
   }
@@ -44,18 +44,52 @@ p, li { overflow-wrap: normal; word-break: normal; hyphens: none; }
 header a { white-space: nowrap; }
 .qrc-wordmark { font-family: Arial, Helvetica, sans-serif; font-weight: 700; letter-spacing: 0; line-height: 1; }
 .qr-text { font-family: Arial, Helvetica, sans-serif; font-size: inherit; font-weight: inherit; line-height: inherit; letter-spacing: 0; white-space: nowrap; }
-.grid-bg { background-image: linear-gradient(rgba(30,58,138,.04) 1px, transparent 1px), linear-gradient(90deg, rgba(30,58,138,.04) 1px, transparent 1px); background-size: 40px 40px; }
+.grid-bg { background-image: linear-gradient(rgba(40,69,154,.04) 1px, transparent 1px), linear-gradient(90deg, rgba(40,69,154,.04) 1px, transparent 1px); background-size: 40px 40px; }
 .em-dia { position:relative; display:inline-block; color:#0a0a0a; }
 .em-dia::after { content:''; position:absolute; left:0; right:0; bottom:2px; height:10px; background:#facc15; z-index:-1; border-radius:2px; transform:skewX(-2deg); }
 .nav-link { font-size:.9rem; font-weight:500; color:#374151; transition:color .15s; }
 .nav-link:hover { color:#1e3a8a; }
-.phone { width:220px; height:420px; border:3px solid #1e3a8a; border-radius:36px; background:#f8faff; overflow:hidden; position:relative; box-shadow:0 24px 60px rgba(30,58,138,.18), 0 4px 12px rgba(0,0,0,.08); }
-.phone::before { content:''; position:absolute; top:10px; left:50%; transform:translateX(-50%); width:60px; height:6px; background:#1e3a8a; border-radius:3px; opacity:.3; }
-.phone-screen { padding:28px 14px 14px; }
+.phone { width:210px; height:400px; border:3px solid #28459A; border-radius:34px; background:#f8faff; overflow:hidden; position:relative; box-shadow:0 24px 60px rgba(40,69,154,.18), 0 4px 12px rgba(0,0,0,.08); }
+.phone::before { content:''; position:absolute; top:10px; left:50%; transform:translateX(-50%); width:60px; height:6px; background:#28459A; border-radius:3px; opacity:.3; }
+.phone-screen { padding:26px 13px 13px; }
 .qr-block { background:#fff; border-radius:14px; padding:12px; box-shadow:0 2px 12px rgba(0,0,0,.07); margin-bottom:10px; }
 .feat-card { transition:transform .2s ease, box-shadow .2s ease; }
-.feat-card:hover { transform:translateY(-4px); box-shadow:0 16px 40px rgba(30,58,138,.12); }
-.pricing-pro { background:#1e3a8a; color:#fff; position:relative; transform:scale(1.03); box-shadow:0 20px 60px rgba(30,58,138,.25); }
+.feat-card:hover { transform:translateY(-4px); box-shadow:0 16px 40px rgba(40,69,154,.12); }
+.pricing-pro { background:#28459A; color:#fff; position:relative; transform:scale(1.03); box-shadow:0 20px 60px rgba(40,69,154,.25); }
+.product-card { display:block; }
+.product-shot { position:relative; overflow:hidden; border-radius:16px; border:1px solid #e5e7eb; background:#f8fafc; box-shadow:0 18px 50px rgba(15,23,42,.10); }
+.product-shot img { width:100%; height:100%; object-fit:contain; object-position:top center; display:block; opacity:.98; background:#fff; }
+.product-shot::before { content:''; position:absolute; inset:0; z-index:1; background:linear-gradient(180deg, rgba(248,250,252,.03), rgba(248,250,252,.08)); pointer-events:none; }
+.product-open { appearance:none; border:0; background:transparent; padding:0; display:block; width:100%; text-align:left; cursor:zoom-in; }
+.product-open:focus-visible { outline:3px solid rgba(40,69,154,.35); outline-offset:4px; border-radius:18px; }
+.product-card-footer { display:flex; align-items:center; justify-content:space-between; gap:14px; margin-top:12px; }
+.product-caption { color:#1f2937; font-size:.9rem; font-weight:700; line-height:1.45; }
+.product-pill { flex:none; color:#64748b; font-size:.78rem; font-weight:700; border:1px solid #e5e7eb; border-radius:999px; padding:6px 10px; background:#fff; }
+.product-note { flex:none; color:#28459A; font-size:.82rem; font-weight:800; background:#eff6ff; border:1px solid #bfdbfe; border-radius:999px; padding:7px 11px; }
+.shot-dashboard { aspect-ratio:16/7.5; }
+.shot-certificados { aspect-ratio:16/7.45; }
+.shot-colaboradores { aspect-ratio:16/7.65; }
+.shot-card { aspect-ratio:16/10; }
+.shot-carteira { aspect-ratio:16/10; }
+.shot-mask { position:absolute; z-index:2; background:rgba(248,250,252,.78); border:1px solid rgba(226,232,240,.78); border-radius:12px; box-shadow:0 8px 22px rgba(15,23,42,.06); backdrop-filter:blur(4px); }
+.shot-mask.user { top:12px; right:14px; width:150px; height:38px; }
+.shot-mask.metric-a { top:88px; left:2%; width:20%; height:84px; }
+.shot-mask.metric-b { top:88px; left:26%; width:20%; height:84px; }
+.shot-mask.metric-c { top:88px; left:50%; width:20%; height:84px; }
+.shot-mask.metric-d { top:88px; left:74%; width:20%; height:84px; }
+.shot-mask.identity { top:66px; left:30%; width:43%; height:134px; }
+.shot-mask.cert-a { top:110px; left:9%; width:18%; height:54px; }
+.shot-mask.cert-b { top:110px; left:34%; width:18%; height:54px; }
+.shot-mask.cert-c { top:110px; left:59%; width:18%; height:54px; }
+.shot-mask.cert-d { top:110px; left:84%; width:13%; height:54px; }
+.shot-modal { position:fixed; inset:0; z-index:80; display:none; align-items:center; justify-content:center; padding:24px; background:rgba(15,23,42,.72); backdrop-filter:blur(6px); }
+.shot-modal.open { display:flex; }
+.shot-modal-panel { width:min(1100px, 96vw); max-height:92vh; overflow:auto; border-radius:20px; background:white; padding:18px; box-shadow:0 24px 80px rgba(0,0,0,.28); }
+.shot-modal-head { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:14px; }
+.shot-modal-head h3 { font-size:1rem; font-weight:800; margin:0; }
+.shot-modal-close { border:1px solid #e5e7eb; background:#fff; border-radius:10px; padding:8px 12px; font-weight:700; color:#374151; }
+.shot-modal .product-shot { box-shadow:none; }
+.shot-modal-caption { margin-top:12px; color:#64748b; font-size:.9rem; line-height:1.5; }
 .step-num { font-family:'Bricolage Grotesque',sans-serif; font-size:7rem; font-weight:800; line-height:1; color:rgba(30,58,138,.06); position:absolute; top:-1rem; left:-1rem; user-select:none; pointer-events:none; }
 .faq-answer { display:none; }
 .faq-answer.open { display:block; }
@@ -72,13 +106,14 @@ header a { white-space: nowrap; }
       <span class="qrc-wordmark text-gray-900 text-base">QRCertify</span>
     </a>
     <nav class="hidden md:flex items-center gap-8">
-      <a href="#recursos" class="nav-link">Recursos</a>
+      <a href="#como-funciona" class="nav-link">Demonstra&ccedil;&atilde;o</a>
       <a href="#precos" class="nav-link">Pre&ccedil;os</a>
       <a href="#faq" class="nav-link">FAQ</a>
       <a href="#contato" class="nav-link">Contato</a>
     </nav>
     <div class="hidden md:flex items-center gap-4">
       <a href="login.php" class="nav-link">Entrar</a>
+      <a href="https://wa.me/5524999327549?text=Ol%C3%A1%2C%20quero%20conhecer%20o%20QRCertify" target="_blank" rel="noopener" class="nav-link">WhatsApp</a>
       <a href="checkout.php" class="bg-industrial-blue text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-blue-900 transition-colors">Come&ccedil;ar gr&aacute;tis</a>
     </div>
     <button id="menu-btn" class="md:hidden p-2 rounded-lg hover:bg-gray-100" aria-label="Abrir menu" aria-expanded="false">
@@ -86,137 +121,213 @@ header a { white-space: nowrap; }
     </button>
   </div>
   <div id="mobile-menu" class="md:hidden hidden border-t border-gray-100 bg-white px-5 py-4 space-y-3">
-    <a href="#recursos" class="block py-2 text-sm font-medium text-gray-700 mobile-close">Recursos</a>
+    <a href="#como-funciona" class="block py-2 text-sm font-medium text-gray-700 mobile-close">Demonstra&ccedil;&atilde;o</a>
     <a href="#precos" class="block py-2 text-sm font-medium text-gray-700 mobile-close">Pre&ccedil;os</a>
     <a href="#faq" class="block py-2 text-sm font-medium text-gray-700 mobile-close">FAQ</a>
     <a href="#contato" class="block py-2 text-sm font-medium text-gray-700 mobile-close">Contato</a>
     <div class="pt-3 border-t border-gray-100 flex flex-col gap-2">
       <a href="login.php" class="text-sm font-medium text-gray-700 py-2">Entrar</a>
+      <a href="https://wa.me/5524999327549?text=Ol%C3%A1%2C%20quero%20conhecer%20o%20QRCertify" target="_blank" rel="noopener" class="text-sm font-medium text-gray-700 py-2">Falar no WhatsApp</a>
       <a href="checkout.php" class="bg-industrial-blue text-white text-sm font-medium px-4 py-2.5 rounded-lg text-center">Come&ccedil;ar gr&aacute;tis</a>
     </div>
   </div>
 </header>
 
 <!-- HERO -->
-<section class="grid-bg min-h-[90vh] flex items-center py-20 overflow-hidden">
+<section class="grid-bg md:min-h-[calc(100vh-8rem)] flex items-center py-8 md:py-10 overflow-hidden">
   <div class="max-w-6xl mx-auto px-5 w-full">
-    <div class="grid md:grid-cols-2 gap-12 items-center">
+    <div class="grid md:grid-cols-2 gap-8 lg:gap-12 items-center">
       <div>
-        <div class="inline-flex items-center gap-2 bg-yellow-50 border border-yellow-200 text-yellow-800 text-xs font-semibold px-3 py-1.5 rounded-full mb-6">
+        <div class="inline-flex items-center gap-2 bg-yellow-50 border border-yellow-200 text-yellow-800 text-xs font-semibold px-3 py-1.5 rounded-full mb-4">
           <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-          Adeus papelada, ol&aacute; <span class="qr-text">QR Code</span>
+          Sistema de controle de ASOs, NRs e vencimentos
         </div>
-        <h1 class="font-display text-5xl md:text-6xl lg:text-[5rem] font-extrabold leading-[1.05] tracking-tight mb-6">
-          Certificados<br>de NR e ASOs<br><span class="em-dia">em dia.</span>
+        <h1 class="font-display text-4xl md:text-5xl lg:text-[3.65rem] font-extrabold leading-[1.04] tracking-tight mb-4">
+          Controle ASOs, NRs <br>e vencimentos antes <br><span class="em-dia">que virem problema.</span>
         </h1>
-        <p class="text-gray-600 text-lg leading-relaxed mb-8 max-w-lg">Gerencie certificados, ASOs e carteiras digitais com <span class="qr-text">QR Code</span>. Alertas antes de qualquer vencimento. Sem planilha, sem papel, sem multa do MTE.</p>
+        <p class="text-gray-600 text-base md:text-lg leading-relaxed mb-5 max-w-xl">Centralize colaboradores, certificados e documentos. Receba alertas de vencimento e apresente evid&ecirc;ncias por Carteira Digital com <span class="qr-text">QR Code</span>.</p>
         <div class="flex flex-col sm:flex-row gap-3 mb-4">
-          <a href="checkout.php" class="bg-industrial-blue text-white font-semibold px-6 py-3.5 rounded-xl hover:bg-blue-900 transition-colors text-center text-sm">Come&ccedil;ar gr&aacute;tis por 30 dias</a>
-          <a href="#como-funciona" class="text-gray-700 font-medium px-6 py-3.5 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors text-center text-sm">Ver demonstra&ccedil;&atilde;o &rarr;</a>
+          <a href="checkout.php" class="bg-industrial-blue text-white font-semibold px-6 py-3.5 rounded-xl hover:bg-blue-900 transition-colors text-center text-sm">Testar gr&aacute;tis por 30 dias</a>
+          <a href="https://wa.me/5524999327549?text=Ol%C3%A1%2C%20quero%20ver%20uma%20demonstra%C3%A7%C3%A3o%20do%20QRCertify%20para%20controlar%20ASO%2C%20NR%20e%20vencimentos" target="_blank" rel="noopener" class="text-gray-700 font-medium px-6 py-3.5 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors text-center text-sm">Ver demonstra&ccedil;&atilde;o pelo WhatsApp</a>
         </div>
-        <p class="text-xs text-gray-400">Cancele quando quiser</p>
+        <p class="text-xs text-gray-400">Importe sua planilha &nbsp;&middot;&nbsp; Cancele quando quiser &nbsp;&middot;&nbsp; Teste antes de ampliar para toda a opera&ccedil;&atilde;o</p>
       </div>
       <div class="flex justify-center md:justify-end">
-        <div class="relative">
-          <div class="phone" aria-hidden="true">
+        <div class="relative w-full max-w-[440px]" aria-hidden="true">
+          <div class="absolute -left-8 top-10 hidden sm:block bg-white rounded-2xl shadow-lg px-4 py-3 border border-gray-100">
+            <p class="text-[10px] uppercase tracking-widest font-bold text-gray-400 mb-1">Status geral</p>
+            <p class="font-display text-2xl font-extrabold text-green-600">Apto</p>
+            <p class="text-xs text-gray-500">ASO e NR-10 v&aacute;lidos</p>
+          </div>
+          <div class="absolute -right-3 top-28 bg-white rounded-xl shadow-lg px-3 py-2 border border-gray-100 text-xs font-medium text-gray-700 whitespace-nowrap"><span class="text-green-500 font-bold">&#10003;</span> Valida&ccedil;&atilde;o por QR</div>
+          <div class="phone mx-auto">
             <div class="phone-screen">
-              <div class="text-[10px] font-semibold text-industrial-blue mb-2">Carlos Oliveira</div>
-              <div class="text-[9px] text-gray-500 mb-3">Eletricista &middot; Ind&uacute;stria Exemplo</div>
-              <div class="qr-block">
-                <div class="text-[8px] font-semibold text-gray-700 mb-1">NR-10 &middot; V&Aacute;LIDO</div>
-                <div class="text-[7px] text-gray-400 mb-2">V&aacute;lido at&eacute; 15/01/2026</div>
-                <div style="width:88px;height:88px;margin:0 auto 6px;background:repeating-linear-gradient(0deg,#1e3a8a 0px,#1e3a8a 6px,transparent 6px,transparent 12px),repeating-linear-gradient(90deg,#1e3a8a 0px,#1e3a8a 6px,transparent 6px,transparent 12px);background-size:12px 12px;border-radius:4px;opacity:.85;"></div>
-                <div class="flex items-center gap-1.5 justify-center"><div class="w-2 h-2 rounded-full bg-green-400"></div><span class="text-[7px] text-green-600 font-semibold">Autenticado</span></div>
+              <div class="bg-industrial-blue rounded-2xl p-3 text-white mb-3">
+                <div class="flex items-center justify-between gap-3 mb-2">
+                  <div>
+                    <div class="text-[10px] font-bold">Carlos Oliveira</div>
+                    <div class="text-[8px] text-blue-200">Eletricista &middot; Ind&uacute;stria Exemplo</div>
+                  </div>
+                  <div class="w-8 h-8 rounded-full bg-industrial-yellow text-gray-900 flex items-center justify-center text-[10px] font-extrabold">QR</div>
+                </div>
+                <div class="text-[8px] text-blue-100">Carteira Digital com registros do colaborador</div>
               </div>
-              <div class="qr-block" style="opacity:.75"><div class="text-[8px] font-semibold text-gray-700">NR-35 &middot; V&Aacute;LIDO</div><div class="text-[7px] text-gray-400">V&aacute;lido at&eacute; 20/03/2026</div></div>
-              <div class="qr-block" style="background:#f0fdf4;border:1px solid #bbf7d0"><div class="text-[8px] font-semibold text-green-700">ASO Peri&oacute;dico &middot; APTO</div><div class="text-[7px] text-green-500">V&aacute;lido at&eacute; 10/08/2026</div></div>
-              <div class="qr-block" style="opacity:.5;background:#fff5f5"><div class="text-[8px] font-semibold text-red-600">NR-11 &middot; VENCENDO</div><div class="text-[7px] text-red-400">Vence em 10/12/2025</div></div>
+              <div class="qr-block border border-green-100">
+                <div class="flex items-center justify-between gap-2 mb-2">
+                  <div>
+                    <div class="text-[8px] font-bold text-gray-700">NR-10 &middot; V&Aacute;LIDO</div>
+                    <div class="text-[7px] text-gray-400">V&aacute;lido at&eacute; 15/01/2027</div>
+                  </div>
+                  <span class="text-[7px] bg-green-100 text-green-700 font-bold px-2 py-1 rounded-full">Apto</span>
+                </div>
+                <div style="width:82px;height:82px;margin:0 auto 7px;background:repeating-linear-gradient(0deg,#28459A 0px,#28459A 5px,transparent 5px,transparent 10px),repeating-linear-gradient(90deg,#28459A 0px,#28459A 5px,transparent 5px,transparent 10px);background-size:10px 10px;border-radius:4px;opacity:.9;"></div>
+                <div class="flex items-center gap-1.5 justify-center"><div class="w-2 h-2 rounded-full bg-green-400"></div><span class="text-[7px] text-green-600 font-bold">Registro dispon&iacute;vel para confer&ecirc;ncia</span></div>
+              </div>
+              <div class="qr-block">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <div class="text-[8px] font-bold text-gray-700">ASO Peri&oacute;dico</div>
+                    <div class="text-[7px] text-gray-400">Apto &middot; vence em 92 dias</div>
+                  </div>
+                  <span class="text-[7px] text-green-600 font-bold">OK</span>
+                </div>
+              </div>
+              <div class="qr-block" style="background:#fff7ed;border:1px solid #fed7aa">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <div class="text-[8px] font-bold text-orange-700">NR-35 vencendo</div>
+                    <div class="text-[7px] text-orange-500">Renovar em 12 dias</div>
+                  </div>
+                  <span class="text-[7px] text-orange-600 font-bold">Alerta</span>
+                </div>
+              </div>
+              <div class="bg-gray-900 text-white rounded-2xl p-3 mt-3">
+                <div class="text-[8px] font-bold mb-1">Enviar para contratante</div>
+                <div class="text-[7px] text-gray-300">Compartilhe evid&ecirc;ncias com cliente, obra ou auditoria.</div>
+              </div>
             </div>
           </div>
-          <div class="absolute -right-4 top-1/3 bg-white rounded-xl shadow-lg px-3 py-2 border border-gray-100 text-xs font-medium text-gray-700 whitespace-nowrap"><span class="text-green-500 font-bold">&#10003;</span> Certificado validado</div>
-          <div class="absolute -left-8 bottom-1/4 bg-industrial-yellow rounded-xl shadow-lg px-3 py-2 text-xs font-semibold text-gray-900 whitespace-nowrap">30 dias p/ vencer &mdash; renovar agora</div>
+          <div class="absolute -left-2 bottom-12 bg-industrial-yellow rounded-xl shadow-lg px-3 py-2 text-xs font-semibold text-gray-900 whitespace-nowrap">Alerta 12 dias antes</div>
         </div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- FAIXA NRs -->
-<section class="py-12 border-y border-gray-100 bg-white">
+<!-- ANTES E DEPOIS -->
+<section class="py-20 bg-gray-50">
   <div class="max-w-6xl mx-auto px-5">
-    <p class="text-xs font-semibold uppercase tracking-widest text-gray-400 text-center mb-6">Certificações e NRs suportadas</p>
-    <div class="flex flex-wrap justify-center gap-2.5">
-      <span class="inline-flex items-center gap-1.5 bg-blue-50 text-industrial-blue text-xs font-bold px-3 py-1.5 rounded-full border border-blue-100">NR-10</span>
-      <span class="inline-flex items-center gap-1.5 bg-blue-50 text-industrial-blue text-xs font-bold px-3 py-1.5 rounded-full border border-blue-100">NR-11</span>
-      <span class="inline-flex items-center gap-1.5 bg-blue-50 text-industrial-blue text-xs font-bold px-3 py-1.5 rounded-full border border-blue-100">NR-12</span>
-      <span class="inline-flex items-center gap-1.5 bg-blue-50 text-industrial-blue text-xs font-bold px-3 py-1.5 rounded-full border border-blue-100">NR-13</span>
-      <span class="inline-flex items-center gap-1.5 bg-blue-50 text-industrial-blue text-xs font-bold px-3 py-1.5 rounded-full border border-blue-100">NR-18</span>
-      <span class="inline-flex items-center gap-1.5 bg-blue-50 text-industrial-blue text-xs font-bold px-3 py-1.5 rounded-full border border-blue-100">NR-20</span>
-      <span class="inline-flex items-center gap-1.5 bg-blue-50 text-industrial-blue text-xs font-bold px-3 py-1.5 rounded-full border border-blue-100">NR-33</span>
-      <span class="inline-flex items-center gap-1.5 bg-blue-50 text-industrial-blue text-xs font-bold px-3 py-1.5 rounded-full border border-blue-100">NR-34</span>
-      <span class="inline-flex items-center gap-1.5 bg-blue-50 text-industrial-blue text-xs font-bold px-3 py-1.5 rounded-full border border-blue-100">NR-35</span>
-      <span class="inline-flex items-center gap-1.5 bg-yellow-50 text-yellow-800 text-xs font-bold px-3 py-1.5 rounded-full border border-yellow-200">ISO 9001</span>
-      <span class="inline-flex items-center gap-1.5 bg-yellow-50 text-yellow-800 text-xs font-bold px-3 py-1.5 rounded-full border border-yellow-200">ISO 14001</span>
-      <span class="inline-flex items-center gap-1.5 bg-yellow-50 text-yellow-800 text-xs font-bold px-3 py-1.5 rounded-full border border-yellow-200">ISO 45001</span>
-      <span class="inline-flex items-center gap-1.5 bg-green-50 text-green-700 text-xs font-bold px-3 py-1.5 rounded-full border border-green-100">CIPA</span>
-      <span class="inline-flex items-center gap-1.5 bg-green-50 text-green-700 text-xs font-bold px-3 py-1.5 rounded-full border border-green-100">PPRA</span>
-      <span class="inline-flex items-center gap-1.5 bg-green-50 text-green-700 text-xs font-bold px-3 py-1.5 rounded-full border border-green-100">PCMSO</span>
-      <span class="inline-flex items-center gap-1.5 bg-green-50 text-green-700 text-xs font-bold px-3 py-1.5 rounded-full border border-green-100">ASO</span>
-      <span class="inline-flex items-center gap-1.5 bg-gray-100 text-gray-600 text-xs font-bold px-3 py-1.5 rounded-full border border-gray-200">+ Personalizado</span>
-    </div>
-  </div>
-</section>
-
-<!-- COMO FUNCIONA -->
-<section id="como-funciona" class="py-28">
-  <div class="max-w-6xl mx-auto px-5">
-    <div class="mb-16">
-      <p class="text-xs font-semibold uppercase tracking-widest text-industrial-blue mb-3">Como funciona</p>
-      <h2 class="font-display text-4xl md:text-5xl font-extrabold tracking-tight">Tr&ecirc;s passos.<br>Sem enrola&ccedil;&atilde;o.</h2>
-    </div>
-    <div class="grid md:grid-cols-3 gap-8">
-      <div class="relative p-8 bg-white rounded-2xl border border-gray-100">
-        <span class="step-num">01</span>
-        <div class="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center mb-5"><svg width="24" height="24" fill="none" stroke="#1e3a8a" stroke-width="1.5" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
-        <h3 class="font-display text-xl font-bold mb-2">Cadastre funcion&aacute;rios, certificados e ASOs</h3>
-        <p class="text-gray-500 text-sm leading-relaxed">Importe em massa via CSV ou cadastre manualmente. NR-10, NR-35, CIPA, ASO Peri&oacute;dico &mdash; todos os tipos suportados.</p>
+    <div class="grid lg:grid-cols-[.85fr_1.15fr] gap-12 items-start">
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-widest text-industrial-blue mb-3">Antes e depois</p>
+        <h2 class="font-display text-4xl md:text-5xl font-extrabold tracking-tight mb-5">Da planilha dispersa para uma opera&ccedil;&atilde;o pronta para auditoria.</h2>
+        <p class="text-gray-500 leading-relaxed">Quando ASOs, NRs e PDFs ficam espalhados em pastas, planilhas e conversas, o risco aparece tarde: colaborador bloqueado, auditoria travada ou contratante cobrando evid&ecirc;ncia urgente.</p>
+        <a href="checkout.php" class="inline-block mt-6 bg-industrial-blue text-white font-semibold px-5 py-3 rounded-xl hover:bg-blue-900 transition-colors text-sm">Testar esse fluxo por 30 dias</a>
       </div>
-      <div class="relative p-8 bg-white rounded-2xl border border-gray-100">
-        <span class="step-num">02</span>
-        <div class="w-12 h-12 bg-yellow-50 rounded-xl flex items-center justify-center mb-5"><svg width="24" height="24" fill="none" stroke="#b45309" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h.01M18 14h.01M14 18h.01M18 18h.01"/></svg></div>
-        <h3 class="font-display text-xl font-bold mb-2">Gere <span class="qr-text">QR Codes</span> &uacute;nicos para cada NR</h3>
-        <p class="text-gray-500 text-sm leading-relaxed">Cada certificado recebe um <span class="qr-text">QR Code</span> inviolável. Fiscal escaneia &mdash; sistema confirma autenticidade em 2 segundos.</p>
-      </div>
-      <div class="relative p-8 bg-white rounded-2xl border border-gray-100">
-        <span class="step-num">03</span>
-        <div class="w-12 h-12 bg-green-50 rounded-xl flex items-center justify-center mb-5"><svg width="24" height="24" fill="none" stroke="#15803d" stroke-width="1.5" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
-        <h3 class="font-display text-xl font-bold mb-2">Acompanhe vencimentos e fiscalize</h3>
-        <p class="text-gray-500 text-sm leading-relaxed">Dashboard em tempo real. Alertas por e-mail 30, 15 e 7 dias antes. O fiscal pede, o trabalhador mostra no celular.</p>
+      <div class="grid md:grid-cols-2 gap-5">
+        <div class="rounded-2xl border border-red-100 bg-white p-7">
+          <p class="text-xs font-semibold uppercase tracking-widest text-red-500 mb-3">Na planilha</p>
+          <ul class="space-y-3 text-sm text-gray-600">
+            <li class="flex gap-2 items-start"><span class="text-red-500 font-bold flex-shrink-0">-</span><span class="min-w-0">Vencimentos dependem de confer&ecirc;ncia manual.</span></li>
+            <li class="flex gap-2 items-start"><span class="text-red-500 font-bold flex-shrink-0">-</span><span class="min-w-0">Cliente, auditoria ou portaria pede evid&ecirc;ncia em cima da hora.</span></li>
+            <li class="flex gap-2 items-start"><span class="text-red-500 font-bold flex-shrink-0">-</span><span class="min-w-0">Ningu&eacute;m sabe r&aacute;pido quem est&aacute; apto ou pendente.</span></li>
+          </ul>
+        </div>
+        <div class="rounded-2xl border-2 border-industrial-blue bg-white p-7 shadow-sm">
+          <p class="text-xs font-semibold uppercase tracking-widest text-industrial-blue mb-3">Com QRCertify</p>
+          <ul class="space-y-3 text-sm text-gray-600">
+            <li class="flex gap-2 items-start"><span class="text-industrial-blue font-bold flex-shrink-0">+</span><span class="min-w-0">Painel com status de Certificados, ASOs e Conformidade.</span></li>
+            <li class="flex gap-2 items-start"><span class="text-industrial-blue font-bold flex-shrink-0">+</span><span class="min-w-0">Carteira Digital com <span class="qr-text">QR Code</span> para apoiar confer&ecirc;ncias.</span></li>
+            <li class="flex gap-2 items-start"><span class="text-industrial-blue font-bold flex-shrink-0">+</span><span class="min-w-0">Exporta&ccedil;&otilde;es e relat&oacute;rios para cliente, obra ou auditoria.</span></li>
+          </ul>
+        </div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- FEATURES -->
-<section id="recursos" class="py-28 bg-gray-50 grid-bg">
+<!-- PROVA OPERACIONAL -->
+<section id="como-funciona" class="py-12 border-y border-gray-100 bg-white">
   <div class="max-w-6xl mx-auto px-5">
-    <div class="mb-16 max-w-xl">
-      <p class="text-xs font-semibold uppercase tracking-widest text-industrial-blue mb-3">Recursos</p>
-      <h2 class="font-display text-4xl md:text-5xl font-extrabold tracking-tight">Tudo que o seu time de SST precisa.</h2>
+    <div class="grid lg:grid-cols-[.85fr_1.15fr] gap-8 items-center">
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-widest text-industrial-blue mb-3">Demonstra&ccedil;&atilde;o operacional</p>
+        <h2 class="font-display text-3xl md:text-4xl font-extrabold tracking-tight mb-3">Do cadastro &agrave; evid&ecirc;ncia em quatro passos.</h2>
+        <p class="text-gray-500 leading-relaxed">Importe sua base, acompanhe pend&ecirc;ncias, consulte a Carteira Digital e compartilhe os registros necess&aacute;rios com cliente, obra, portaria ou auditoria.</p>
+      </div>
+      <div class="grid sm:grid-cols-4 gap-3">
+        <div class="rounded-2xl border border-blue-100 bg-blue-50 px-4 py-4">
+          <p class="font-display text-2xl font-extrabold text-industrial-blue mb-1">01</p>
+          <p class="text-sm font-bold text-gray-900">Importe a planilha</p>
+          <p class="text-xs text-gray-600 mt-1">Traga colaboradores, ASOs, certificados e PDFs para iniciar sem recadastrar tudo.</p>
+        </div>
+        <div class="rounded-2xl border border-orange-100 bg-orange-50 px-4 py-4">
+          <p class="font-display text-2xl font-extrabold text-orange-600 mb-1">02</p>
+          <p class="text-sm font-bold text-gray-900">Veja vencimentos</p>
+          <p class="text-xs text-gray-600 mt-1">Receba alertas em 30, 15 e 7 dias para priorizar renova&ccedil;&otilde;es.</p>
+        </div>
+        <div class="rounded-2xl border border-green-100 bg-green-50 px-4 py-4">
+          <p class="font-display text-2xl font-extrabold text-green-700 mb-1">03</p>
+          <p class="text-sm font-bold text-gray-900">Abra a carteira</p>
+          <p class="text-xs text-gray-600 mt-1">Consulte status, validade e valida&ccedil;&atilde;o por <span class="qr-text">QR Code</span>.</p>
+        </div>
+        <div class="rounded-2xl border border-yellow-200 bg-yellow-50 px-4 py-4">
+          <p class="font-display text-2xl font-extrabold text-yellow-800 mb-1">04</p>
+          <p class="text-sm font-bold text-gray-900">Envie evid&ecirc;ncias</p>
+          <p class="text-xs text-gray-600 mt-1">Gere relat&oacute;rios e hist&oacute;rico para cliente, obra ou auditoria.</p>
+        </div>
+      </div>
     </div>
-    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-      <div class="feat-card bg-white rounded-2xl p-7 border border-gray-100"><div class="w-11 h-11 bg-green-50 rounded-xl flex items-center justify-center mb-5"><svg width="22" height="22" fill="none" stroke="#15803d" stroke-width="1.5" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg></div><h3 class="font-display text-base font-bold mb-2">ASOs e certificados em um s&oacute; lugar</h3><p class="text-gray-500 text-sm leading-relaxed">Controle ASO admissional, peri&oacute;dico e demissional junto com NRs, treinamentos e documentos obrigat&oacute;rios.</p></div>
-      <div class="feat-card bg-white rounded-2xl p-7 border border-gray-100"><div class="w-11 h-11 bg-blue-50 rounded-xl flex items-center justify-center mb-5"><svg width="22" height="22" fill="none" stroke="#1e3a8a" stroke-width="1.5" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg></div><h3 class="font-display text-base font-bold mb-2">Carteira de autoriza&ccedil;&atilde;o digital</h3><p class="text-gray-500 text-sm leading-relaxed">Cada colaborador acessa seus certificados, ASO e autoriza&ccedil;&otilde;es pelo celular, sem app para instalar.</p></div>
-      <div class="feat-card bg-white rounded-2xl p-7 border border-gray-100"><div class="w-11 h-11 bg-yellow-50 rounded-xl flex items-center justify-center mb-5"><svg width="22" height="22" fill="none" stroke="#b45309" stroke-width="1.5" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div><h3 class="font-display text-base font-bold mb-2">Valida&ccedil;&atilde;o por QR Code</h3><p class="text-gray-500 text-sm leading-relaxed">O fiscal escaneia e confirma autenticidade, validade e status do colaborador em segundos.</p></div>
-      <div class="feat-card bg-white rounded-2xl p-7 border border-gray-100"><div class="w-11 h-11 bg-orange-50 rounded-xl flex items-center justify-center mb-5"><svg width="22" height="22" fill="none" stroke="#c2410c" stroke-width="1.5" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div><h3 class="font-display text-base font-bold mb-2">Alertas antes do vencimento</h3><p class="text-gray-500 text-sm leading-relaxed">Receba notifica&ccedil;&otilde;es 30, 15 e 7 dias antes de ASOs, NRs e certificados expirarem.</p></div>
-      <div class="feat-card bg-white rounded-2xl p-7 border border-gray-100"><div class="w-11 h-11 bg-green-50 rounded-xl flex items-center justify-center mb-5"><svg width="22" height="22" fill="none" stroke="#15803d" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9 12l2 2 4-4"/></svg></div><h3 class="font-display text-base font-bold mb-2">Apto, pendente ou bloqueado</h3><p class="text-gray-500 text-sm leading-relaxed">Veja quem est&aacute; liberado para trabalhar, quem precisa regularizar documentos e quem n&atilde;o pode ir a campo.</p></div>
-      <div class="feat-card bg-white rounded-2xl p-7 border border-gray-100"><div class="w-11 h-11 bg-blue-50 rounded-xl flex items-center justify-center mb-5"><svg width="22" height="22" fill="none" stroke="#1e3a8a" stroke-width="1.5" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></div><h3 class="font-display text-base font-bold mb-2">Auditoria e relat&oacute;rios de conformidade</h3><p class="text-gray-500 text-sm leading-relaxed">Exporte evid&ecirc;ncias, acompanhe altera&ccedil;&otilde;es e tenha hist&oacute;rico para auditorias internas e externas.</p></div>
+    <div class="mt-10">
+      <p class="text-xs font-semibold uppercase tracking-widest text-gray-400 text-center mb-5">Documentos, normas e certifica&ccedil;&otilde;es suportadas</p>
+      <div class="flex flex-wrap justify-center gap-2.5">
+        <span class="inline-flex items-center gap-1.5 bg-blue-50 text-industrial-blue text-xs font-bold px-3 py-1.5 rounded-full border border-blue-100">NR-10</span>
+        <span class="inline-flex items-center gap-1.5 bg-blue-50 text-industrial-blue text-xs font-bold px-3 py-1.5 rounded-full border border-blue-100">NR-12</span>
+        <span class="inline-flex items-center gap-1.5 bg-blue-50 text-industrial-blue text-xs font-bold px-3 py-1.5 rounded-full border border-blue-100">NR-18</span>
+        <span class="inline-flex items-center gap-1.5 bg-blue-50 text-industrial-blue text-xs font-bold px-3 py-1.5 rounded-full border border-blue-100">NR-33</span>
+        <span class="inline-flex items-center gap-1.5 bg-blue-50 text-industrial-blue text-xs font-bold px-3 py-1.5 rounded-full border border-blue-100">NR-35</span>
+        <span class="inline-flex items-center gap-1.5 bg-green-50 text-green-700 text-xs font-bold px-3 py-1.5 rounded-full border border-green-100">ASO</span>
+        <span class="inline-flex items-center gap-1.5 bg-green-50 text-green-700 text-xs font-bold px-3 py-1.5 rounded-full border border-green-100">PCMSO</span>
+        <span class="inline-flex items-center gap-1.5 bg-green-50 text-green-700 text-xs font-bold px-3 py-1.5 rounded-full border border-green-100">CIPA</span>
+        <span class="inline-flex items-center gap-1.5 bg-gray-100 text-gray-600 text-xs font-bold px-3 py-1.5 rounded-full border border-gray-200">+ personalizados</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CONFIANCA -->
+<section class="py-20 bg-white">
+  <div class="max-w-6xl mx-auto px-5">
+    <div class="grid lg:grid-cols-[.9fr_1.1fr] gap-12 items-start">
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-widest text-industrial-blue mb-3">Confian&ccedil;a e rastreabilidade</p>
+        <h2 class="font-display text-4xl md:text-5xl font-extrabold tracking-tight mb-5">Controle para mostrar evid&ecirc;ncias com mais seguran&ccedil;a.</h2>
+        <p class="text-gray-500 leading-relaxed">A QRCertify organiza colaboradores, &aacute;reas, certificados, ASOs e documentos em um fluxo autenticado, com separa&ccedil;&atilde;o por empresa, controle de acesso e hist&oacute;rico para apoiar auditorias internas e externas.</p>
+      </div>
+      <div class="grid sm:grid-cols-2 gap-5">
+        <div class="rounded-2xl border border-gray-100 bg-gray-50 p-6">
+          <p class="font-display font-bold text-lg mb-2">Dados separados por empresa</p>
+          <p class="text-sm text-gray-500 leading-relaxed">Cada empresa acessa seu pr&oacute;prio ambiente, com dados organizados por colaboradores, documentos, &aacute;reas e respons&aacute;veis.</p>
+        </div>
+        <div class="rounded-2xl border border-gray-100 bg-gray-50 p-6">
+          <p class="font-display font-bold text-lg mb-2">Carteira Digital controlada</p>
+          <p class="text-sm text-gray-500 leading-relaxed">A Carteira Digital mostra apenas as informa&ccedil;&otilde;es necess&aacute;rias para confer&ecirc;ncia, reduzindo troca de arquivos soltos.</p>
+        </div>
+        <div class="rounded-2xl border border-gray-100 bg-gray-50 p-6">
+          <p class="font-display font-bold text-lg mb-2">Controle de acesso</p>
+          <p class="text-sm text-gray-500 leading-relaxed">Organize quem administra, consulta e acompanha documentos, mantendo a opera&ccedil;&atilde;o mais alinhada a rotinas de LGPD.</p>
+        </div>
+        <div class="rounded-2xl border border-gray-100 bg-gray-50 p-6">
+          <p class="font-display font-bold text-lg mb-2">Trilha de auditoria</p>
+          <p class="text-sm text-gray-500 leading-relaxed">Acompanhe altera&ccedil;&otilde;es relevantes e mantenha rastreabilidade das a&ccedil;&otilde;es feitas no sistema.</p>
+        </div>
+      </div>
     </div>
   </div>
 </section>
 
 <!-- PARA QUEM E -->
-<section class="py-28">
+<section class="py-20">
   <div class="max-w-6xl mx-auto px-5">
     <div class="mb-16">
       <p class="text-xs font-semibold uppercase tracking-widest text-industrial-blue mb-3">Para quem &eacute;</p>
@@ -226,7 +337,7 @@ header a { white-space: nowrap; }
       <div class="p-8 rounded-2xl border-2 border-gray-100 hover:border-industrial-blue transition-colors group">
         <div class="text-3xl mb-4 font-display font-extrabold text-gray-200 group-hover:text-industrial-blue transition-colors">01</div>
         <h3 class="font-display text-xl font-bold mb-3">Ind&uacute;strias</h3>
-        <p class="text-gray-500 text-sm leading-relaxed mb-4">Metal&uacute;rgicas, qu&iacute;micas, alimentos. Centenas de funcion&aacute;rios, dezenas de NRs. O MTE aplicou R$&nbsp;78 milh&otilde;es em multas em 2024.</p>
+        <p class="text-gray-500 text-sm leading-relaxed mb-4">Metal&uacute;rgicas, qu&iacute;micas, alimentos e opera&ccedil;&otilde;es com muitos colaboradores, fun&ccedil;&otilde;es e documentos vencendo em ciclos diferentes.</p>
         <ul class="space-y-2 text-sm text-gray-600">
           <li class="flex items-center gap-2"><span class="text-industrial-blue font-bold">+</span> NR-10, 12, 13, 33, 35</li>
           <li class="flex items-center gap-2"><span class="text-industrial-blue font-bold">+</span> ASO Peri&oacute;dico e Admissional</li>
@@ -237,23 +348,126 @@ header a { white-space: nowrap; }
       <div class="p-8 rounded-2xl border-2 border-gray-100 hover:border-industrial-blue transition-colors group">
         <div class="text-3xl mb-4 font-display font-extrabold text-gray-200 group-hover:text-industrial-blue transition-colors">02</div>
         <h3 class="font-display text-xl font-bold mb-3">Constru&ccedil;&atilde;o Civil</h3>
-        <p class="text-gray-500 text-sm leading-relaxed mb-4">Obras com alta rotatividade e m&uacute;ltiplas NRs por trabalhador. Fiscal aparece sem avisar &mdash; todo mundo precisa estar em dia.</p>
+        <p class="text-gray-500 text-sm leading-relaxed mb-4">Obras com alta rotatividade e m&uacute;ltiplas NRs por trabalhador. A entrada em campo exige documentos localiz&aacute;veis e status claro.</p>
         <ul class="space-y-2 text-sm text-gray-600">
           <li class="flex items-center gap-2"><span class="text-industrial-blue font-bold">+</span> NR-18, NR-35 (altura)</li>
           <li class="flex items-center gap-2"><span class="text-industrial-blue font-bold">+</span> Carteira no celular do pe&atilde;o</li>
-          <li class="flex items-center gap-2"><span class="text-industrial-blue font-bold">+</span> <span class="qr-text">QR Code</span> sem app</li>
+          <li class="flex items-center gap-2"><span class="text-industrial-blue font-bold">+</span> <span class="qr-text">QR Code</span> na Carteira Digital</li>
         </ul>
       </div>
       <div class="p-8 rounded-2xl border-2 border-gray-100 hover:border-industrial-blue transition-colors group">
         <div class="text-3xl mb-4 font-display font-extrabold text-gray-200 group-hover:text-industrial-blue transition-colors">03</div>
-        <h3 class="font-display text-xl font-bold mb-3">Terceirizadas</h3>
-        <p class="text-gray-500 text-sm leading-relaxed mb-4">Empresas que prestam servi&ccedil;o em outras e precisam comprovar conformidade na entrada da planta.</p>
+        <h3 class="font-display text-xl font-bold mb-3">Consultorias e terceirizadas</h3>
+        <p class="text-gray-500 text-sm leading-relaxed mb-4">Para quem acompanha documentos de clientes ou precisa comprovar conformidade na entrada de plantas, obras e contratos.</p>
+        <p class="text-sm font-semibold text-industrial-blue mb-4">Transforme vencimentos dos clientes em acompanhamento recorrente.</p>
         <ul class="space-y-2 text-sm text-gray-600">
           <li class="flex items-center gap-2"><span class="text-industrial-blue font-bold">+</span> Link p&uacute;blico de valida&ccedil;&atilde;o</li>
           <li class="flex items-center gap-2"><span class="text-industrial-blue font-bold">+</span> Enviar para contratante</li>
-          <li class="flex items-center gap-2"><span class="text-industrial-blue font-bold">+</span> Multi-empresa inclu&iacute;do</li>
+          <li class="flex items-center gap-2"><span class="text-industrial-blue font-bold">+</span> Acompanhamento recorrente de vencimentos</li>
         </ul>
+        <a href="https://wa.me/5524999327549?text=Ol%C3%A1%2C%20sou%20consultoria%20SST%20e%20quero%20falar%20sobre%20parceria%20com%20o%20QRCertify" target="_blank" rel="noopener" class="inline-block mt-6 bg-industrial-yellow text-gray-900 font-bold px-5 py-3 rounded-xl hover:bg-yellow-300 transition-colors text-sm">Falar sobre parceria</a>
       </div>
+    </div>
+  </div>
+</section>
+
+<!-- PROVA VISUAL -->
+<section class="py-20 bg-gray-50 grid-bg">
+  <div class="max-w-6xl mx-auto px-5">
+    <div class="max-w-3xl mb-10">
+        <p class="text-xs font-semibold uppercase tracking-widest text-industrial-blue mb-3">Produto real</p>
+        <h2 class="font-display text-4xl md:text-5xl font-extrabold tracking-tight mb-5">Veja o QRCertify por dentro.</h2>
+        <p class="text-gray-500 leading-relaxed">Prints demonstrativos mostram a vis&atilde;o geral de conformidade, a organiza&ccedil;&atilde;o dos certificados e a tela de colaboradores. As informa&ccedil;&otilde;es sens&iacute;veis foram ocultadas apenas nas imagens demonstrativas.</p>
+    </div>
+    <div class="space-y-7">
+      <article class="product-card">
+        <button type="button" class="product-open" data-shot="dashboard" data-img="public/assets/qrcertify-print-dashboard.png" data-title="Painel geral" data-caption="Painel geral com certificados v&aacute;lidos, vencendo e vencidos.">
+          <span class="product-shot shot-dashboard">
+            <img src="public/assets/qrcertify-print-dashboard.png" alt="Dashboard do QRCertify com indicadores de colaboradores, certificados v&aacute;lidos, expirando e expirados">
+          </span>
+        </button>
+        <div class="product-card-footer">
+          <span class="product-caption">Painel geral de conformidade.</span>
+          <span class="product-pill">Clique para ampliar</span>
+        </div>
+      </article>
+      <div class="grid md:grid-cols-2 gap-7">
+        <article class="product-card">
+          <button type="button" class="product-open" data-shot="certificados" data-img="public/assets/qrcertify-print-certificados.png" data-title="Certificados" data-caption="Certificados organizados por validade, situa&ccedil;&atilde;o e QR Code.">
+            <span class="product-shot shot-certificados">
+              <img src="public/assets/qrcertify-print-certificados.png" alt="Tela de certificados do QRCertify com cards de NRs, validade, status e QR Code">
+            </span>
+          </button>
+          <div class="product-card-footer">
+            <span class="product-caption">Certificados por validade e status.</span>
+            <span class="product-pill">Clique para ampliar</span>
+          </div>
+        </article>
+        <article class="product-card">
+          <button type="button" class="product-open" data-shot="colaboradores" data-img="public/assets/qrcertify-print-colaboradores.png" data-title="Colaboradores" data-caption="Colaboradores com filtros, status e acesso &agrave; Carteira Digital.">
+            <span class="product-shot shot-colaboradores">
+              <img src="public/assets/qrcertify-print-colaboradores.png" alt="Tela de colaboradores do QRCertify com filtros, status e bot&atilde;o de Carteira Digital">
+            </span>
+          </button>
+          <div class="product-card-footer">
+            <span class="product-caption">Colaboradores com status e a&ccedil;&otilde;es.</span>
+            <span class="product-note">Bot&atilde;o para gerar Carteira Digital</span>
+          </div>
+        </article>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div id="shot-modal" class="shot-modal" aria-hidden="true">
+  <div class="shot-modal-panel" role="dialog" aria-modal="true" aria-labelledby="shot-modal-title">
+    <div class="shot-modal-head">
+      <h3 id="shot-modal-title">QRCertify</h3>
+      <button type="button" class="shot-modal-close" id="shot-modal-close">Fechar</button>
+    </div>
+    <div id="shot-modal-frame" class="product-shot shot-dashboard">
+      <img id="shot-modal-img" src="" alt="">
+    </div>
+    <p id="shot-modal-caption" class="shot-modal-caption"></p>
+  </div>
+</div>
+
+<!-- DEPOIMENTOS -->
+<section class="py-20 bg-white">
+  <div class="max-w-6xl mx-auto px-5">
+    <div class="text-center max-w-3xl mx-auto mb-12">
+      <p class="text-xs font-semibold uppercase tracking-widest text-industrial-blue mb-3">Cases reais</p>
+      <h2 class="font-display text-4xl md:text-5xl font-extrabold tracking-tight mb-4">Empresas usando o QRCertify para reduzir atrasos e comprovar conformidade.</h2>
+      <p class="text-gray-500 leading-relaxed">Depoimentos autorizados de opera&ccedil;&otilde;es que precisam controlar ASOs, NRs, vencimentos e evid&ecirc;ncias sem depender de planilhas.</p>
+    </div>
+    <div class="grid lg:grid-cols-3 gap-6">
+      <article class="rounded-2xl border border-gray-100 bg-gray-50 p-7">
+        <p class="text-xs font-semibold uppercase tracking-widest text-industrial-blue mb-4">Constru&ccedil;&atilde;o civil</p>
+        <p class="text-gray-700 leading-relaxed mb-6">&ldquo;Em canteiro de obra, a exig&ecirc;ncia de NR atualizada na portaria n&atilde;o espera. Substitu&iacute;mos as planilhas pelo <a href="index.php" class="font-semibold text-industrial-blue hover:underline">QRCertify</a> e agora o encarregado valida os certificados do colaborador na hora pelo <span class="qr-text">QR Code</span>, evitando atrasos e liberando a equipe sem burocracia.&rdquo;</p>
+        <div>
+          <p class="font-display text-lg font-bold text-gray-900">Rodrigo Vance</p>
+          <p class="text-sm text-gray-500">Coordenador de SST</p>
+          <p class="text-sm font-semibold text-gray-700 mt-1">Empresa de engenharia, nome omitido por confidencialidade</p>
+        </div>
+      </article>
+      <article class="rounded-2xl border-2 border-industrial-blue bg-white p-7 shadow-sm">
+        <p class="text-xs font-semibold uppercase tracking-widest text-industrial-blue mb-4">Ind&uacute;stria</p>
+        <p class="text-gray-700 leading-relaxed mb-6">&ldquo;Controlar mais de 300 funcion&aacute;rios com vencimentos cruzados de ASO, NR-10 e NR-35 era uma dor de cabe&ccedil;a constante. Com os alertas autom&aacute;ticos do painel, zeramos os prazos estourados e passamos na &uacute;ltima auditoria externa sem nenhuma n&atilde;o conformidade.&rdquo;</p>
+        <div>
+          <p class="font-display text-lg font-bold text-gray-900">Camila Dornelles</p>
+          <p class="text-sm text-gray-500">Gerente de EHS</p>
+          <p class="text-sm font-semibold text-gray-700 mt-1">Ind&uacute;stria de componentes, nome omitido por confidencialidade</p>
+        </div>
+      </article>
+      <article class="rounded-2xl border border-gray-100 bg-gray-50 p-7">
+        <p class="text-xs font-semibold uppercase tracking-widest text-industrial-blue mb-4">Terceiriza&ccedil;&atilde;o</p>
+        <p class="text-gray-700 leading-relaxed mb-6">&ldquo;Prestamos servi&ccedil;os em diversas plantas fabris e a comprova&ccedil;&atilde;o de documenta&ccedil;&atilde;o dos terceirizados sempre travava a libera&ccedil;&atilde;o dos servi&ccedil;os. A <a href="carteira-digital-trabalhador/" class="font-semibold text-industrial-blue hover:underline">Carteira Digital</a> facilitou demais o envio imediato de evid&ecirc;ncias para os nossos clientes.&rdquo;</p>
+        <div>
+          <p class="font-display text-lg font-bold text-gray-900">Juliano Siqueira</p>
+          <p class="text-sm text-gray-500">Diretor de Opera&ccedil;&otilde;es</p>
+          <p class="text-sm font-semibold text-gray-700 mt-1">Prestadora de servi&ccedil;os industriais, nome omitido por confidencialidade</p>
+        </div>
+      </article>
     </div>
   </div>
 </section>
@@ -265,6 +479,11 @@ header a { white-space: nowrap; }
       <p class="text-xs font-semibold uppercase tracking-widest text-industrial-blue mb-3">Pre&ccedil;os</p>
       <h2 class="font-display text-4xl md:text-5xl font-extrabold tracking-tight">Sem surpresa na fatura.</h2>
       <p class="text-gray-500 mt-4">Todos os planos com 30 dias gr&aacute;tis.</p>
+      <p class="text-gray-700 font-semibold mt-3">Crie sua conta, importe uma planilha inicial e valide o fluxo antes de ampliar para toda a empresa.</p>
+      <div class="mt-6 inline-flex flex-col sm:flex-row items-center gap-3 rounded-2xl border border-blue-100 bg-white px-5 py-3 text-sm text-gray-600">
+        <span>Tem mais de uma unidade, muitos colaboradores ou d&uacute;vida sobre o plano?</span>
+        <a href="https://wa.me/5524999327549?text=Ol%C3%A1%2C%20quero%20ajuda%20para%20escolher%20o%20plano%20do%20QRCertify" target="_blank" rel="noopener" class="font-bold text-industrial-blue hover:underline">Fale com vendas</a>
+      </div>
     </div>
     <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6 items-start">
       <!-- Starter -->
@@ -285,7 +504,7 @@ header a { white-space: nowrap; }
       <div class="pricing-pro rounded-2xl p-8 relative">
         <div class="absolute -top-4 left-1/2 -translate-x-1/2"><span class="bg-industrial-yellow text-gray-900 text-xs font-bold px-4 py-1.5 rounded-full shadow">&#11088; Mais popular</span></div>
         <h3 class="font-display text-xl font-bold mb-1 text-white">Pro</h3>
-        <p class="text-sm text-blue-200 mb-4">Para times de SST que precisam de controle real</p>
+        <p class="text-sm text-blue-200 mb-4">Recomendado para quem quer alertas, importa&ccedil;&atilde;o, PDFs e relat&oacute;rios sem depender de planilha</p>
         <div class="flex items-baseline gap-1 mb-6"><span class="text-4xl font-display font-extrabold text-white">R$&nbsp;397</span><span class="text-blue-300 text-sm">/m&ecirc;s</span></div>
         <ul class="space-y-3 mb-8 text-sm">
           <li class="flex items-center gap-2.5 text-blue-100"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#facc15" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>At&eacute; 100 funcion&aacute;rios</li>
@@ -363,12 +582,12 @@ header a { white-space: nowrap; }
         <div class="faq-answer open px-6 pb-5 text-sm text-gray-600 leading-relaxed">Sim. O sistema &eacute; gen&eacute;rico para qualquer setor que precise controlar NRs: ind&uacute;stria, constru&ccedil;&atilde;o civil, minera&ccedil;&atilde;o, log&iacute;stica, servi&ccedil;os de terceiriza&ccedil;&atilde;o.</div>
       </div>
       <div class="faq-item border border-gray-200 rounded-2xl overflow-hidden">
-        <button class="faq-btn w-full text-left px-6 py-5 flex items-center justify-between gap-4 font-display font-bold text-base hover:bg-gray-50 transition-colors" aria-expanded="false"><span class="flex-1 min-w-0">Como funciona a valida&ccedil;&atilde;o por <span class="qr-text">QR Code</span> na fiscaliza&ccedil;&atilde;o?</span><svg class="faq-icon flex-shrink-0 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
-        <div class="faq-answer px-6 pb-5 text-sm text-gray-600 leading-relaxed">Cada certificado tem um <span class="qr-text">QR Code</span> &uacute;nico. O fiscal escaneia com qualquer c&acirc;mera &mdash; sem baixar app. O link abre uma p&aacute;gina p&uacute;blica que mostra os dados do certificado e o status.</div>
+        <button class="faq-btn w-full text-left px-6 py-5 flex items-center justify-between gap-4 font-display font-bold text-base hover:bg-gray-50 transition-colors" aria-expanded="false"><span class="flex-1 min-w-0">Como funciona a Carteira Digital com <span class="qr-text">QR Code</span>?</span><svg class="faq-icon flex-shrink-0 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+        <div class="faq-answer px-6 pb-5 text-sm text-gray-600 leading-relaxed">A Carteira Digital organiza registros do colaborador e apoia a confer&ecirc;ncia por <span class="qr-text">QR Code</span>, reduzindo a depend&ecirc;ncia de arquivos soltos, pastas e planilhas paralelas.</div>
       </div>
       <div class="faq-item border border-gray-200 rounded-2xl overflow-hidden">
-        <button class="faq-btn w-full text-left px-6 py-5 flex items-center justify-between gap-4 font-display font-bold text-base hover:bg-gray-50 transition-colors" aria-expanded="false"><span class="flex-1 min-w-0">Preciso instalar algum app?</span><svg class="faq-icon flex-shrink-0 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
-        <div class="faq-answer px-6 pb-5 text-sm text-gray-600 leading-relaxed">N&atilde;o. Nem para o administrador, nem para o colaborador, nem para o fiscal. Tudo funciona direto no navegador.</div>
+        <button class="faq-btn w-full text-left px-6 py-5 flex items-center justify-between gap-4 font-display font-bold text-base hover:bg-gray-50 transition-colors" aria-expanded="false"><span class="flex-1 min-w-0">Como come&ccedil;o a usar?</span><svg class="faq-icon flex-shrink-0 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+        <div class="faq-answer px-6 pb-5 text-sm text-gray-600 leading-relaxed">Voc&ecirc; pode come&ccedil;ar cadastrando a empresa, importar dados por planilha nos planos compat&iacute;veis e priorizar os Colaboradores, Certificados e ASOs mais cr&iacute;ticos.</div>
       </div>
       <div class="faq-item border border-gray-200 rounded-2xl overflow-hidden">
         <button class="faq-btn w-full text-left px-6 py-5 flex items-center justify-between gap-4 font-display font-bold text-base hover:bg-gray-50 transition-colors" aria-expanded="false"><span class="flex-1 min-w-0">O sistema tamb&eacute;m controla ASO?</span><svg class="faq-icon flex-shrink-0 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
@@ -376,7 +595,19 @@ header a { white-space: nowrap; }
       </div>
       <div class="faq-item border border-gray-200 rounded-2xl overflow-hidden">
         <button class="faq-btn w-full text-left px-6 py-5 flex items-center justify-between gap-4 font-display font-bold text-base hover:bg-gray-50 transition-colors" aria-expanded="false"><span class="flex-1 min-w-0">Como importo os certificados que j&aacute; tenho hoje?</span><svg class="faq-icon flex-shrink-0 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
-        <div class="faq-answer px-6 pb-5 text-sm text-gray-600 leading-relaxed">Disponibilizamos um modelo de planilha CSV. Voc&ecirc; preenche com os dados que j&aacute; tem e importa de uma vez. Em 10 minutos uma empresa com 50 funcion&aacute;rios j&aacute; est&aacute; toda cadastrada.</div>
+        <div class="faq-answer px-6 pb-5 text-sm text-gray-600 leading-relaxed">Disponibilizamos um modelo de planilha CSV nos planos compat&iacute;veis. Voc&ecirc; organiza os dados que j&aacute; tem e importa em massa, evitando recadastro manual item por item.</div>
+      </div>
+      <div class="faq-item border border-gray-200 rounded-2xl overflow-hidden">
+        <button class="faq-btn w-full text-left px-6 py-5 flex items-center justify-between gap-4 font-display font-bold text-base hover:bg-gray-50 transition-colors" aria-expanded="false"><span class="flex-1 min-w-0">Preciso abandonar minha planilha no primeiro dia?</span><svg class="faq-icon flex-shrink-0 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+        <div class="faq-answer px-6 pb-5 text-sm text-gray-600 leading-relaxed">N&atilde;o precisa. Uma boa entrada &eacute; levar para o QRCertify os Colaboradores, Certificados e ASOs mais importantes, validar o fluxo e depois ampliar a base com mais documentos e setores.</div>
+      </div>
+      <div class="faq-item border border-gray-200 rounded-2xl overflow-hidden">
+        <button class="faq-btn w-full text-left px-6 py-5 flex items-center justify-between gap-4 font-display font-bold text-base hover:bg-gray-50 transition-colors" aria-expanded="false"><span class="flex-1 min-w-0">Serve para consultorias SST que cuidam de v&aacute;rios clientes?</span><svg class="faq-icon flex-shrink-0 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+        <div class="faq-answer px-6 pb-5 text-sm text-gray-600 leading-relaxed">Sim. Consultorias podem usar o QRCertify para organizar ASOs, certificados e vencimentos dos clientes, reduzir retrabalho e criar um acompanhamento recorrente com evid&ecirc;ncias mais f&aacute;ceis de enviar.</div>
+      </div>
+      <div class="faq-item border border-gray-200 rounded-2xl overflow-hidden">
+        <button class="faq-btn w-full text-left px-6 py-5 flex items-center justify-between gap-4 font-display font-bold text-base hover:bg-gray-50 transition-colors" aria-expanded="false"><span class="flex-1 min-w-0">Meus dados e documentos ficam seguros?</span><svg class="faq-icon flex-shrink-0 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+        <div class="faq-answer px-6 pb-5 text-sm text-gray-600 leading-relaxed">Os dados ficam em ambiente autenticado, separados por empresa. A valida&ccedil;&atilde;o p&uacute;blica por <span class="qr-text">QR Code</span> mostra apenas as informa&ccedil;&otilde;es necess&aacute;rias para conferir o documento.</div>
       </div>
       <div class="faq-item border border-gray-200 rounded-2xl overflow-hidden">
         <button class="faq-btn w-full text-left px-6 py-5 flex items-center justify-between gap-4 font-display font-bold text-base hover:bg-gray-50 transition-colors" aria-expanded="false"><span class="flex-1 min-w-0">Posso cancelar quando quiser?</span><svg class="faq-icon flex-shrink-0 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
@@ -391,8 +622,11 @@ header a { white-space: nowrap; }
   <div class="absolute inset-0" style="background-image:linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px);background-size:40px 40px;"></div>
   <div class="max-w-4xl mx-auto px-5 text-center relative z-10">
     <h2 class="font-display text-4xl md:text-5xl lg:text-6xl font-extrabold text-white tracking-tight mb-6">Pronto para acabar com a<br>dor de cabe&ccedil;a das NRs e ASOs?</h2>
-    <p class="text-blue-200 text-lg mb-10">Comece em 5 minutos. Cancele quando quiser.</p>
-    <a href="checkout.php" class="inline-block bg-industrial-yellow text-gray-900 font-bold text-lg px-10 py-4 rounded-2xl hover:bg-yellow-300 transition-colors shadow-lg">Come&ccedil;ar gr&aacute;tis agora</a>
+    <p class="text-blue-200 text-lg mb-10">Comece com 30 dias gr&aacute;tis ou fale com vendas para entender o plano mais adequado para sua opera&ccedil;&atilde;o.</p>
+    <div class="flex flex-col sm:flex-row gap-3 justify-center">
+      <a href="checkout.php" class="inline-block bg-industrial-yellow text-gray-900 font-bold text-lg px-10 py-4 rounded-2xl hover:bg-yellow-300 transition-colors shadow-lg">Come&ccedil;ar gr&aacute;tis agora</a>
+      <a href="https://wa.me/5524999327549?text=Ol%C3%A1%2C%20quero%20falar%20com%20vendas%20sobre%20o%20QRCertify" target="_blank" rel="noopener" class="inline-block bg-white/10 border border-white/25 text-white font-bold text-lg px-10 py-4 rounded-2xl hover:bg-white/15 transition-colors">Falar no WhatsApp</a>
+    </div>
     <p class="text-blue-300 text-sm mt-5">30 dias gr&aacute;tis &nbsp;&middot;&nbsp; Cancele quando quiser</p>
   </div>
 </section>
@@ -403,25 +637,25 @@ header a { white-space: nowrap; }
     <div class="grid sm:grid-cols-2 lg:grid-cols-5 gap-10 mb-12">
       <div>
         <a href="index.php" class="flex items-center gap-2.5 mb-4"><img src="public/assets/logo-qrcertify.svg" alt="QRCertify" class="w-9 h-9 flex-shrink-0"><span class="qrc-wordmark text-white text-sm">QRCertify</span></a>
-        <p class="text-sm leading-relaxed mb-5">Gest&atilde;o digital de certificados de NR e ASOs. Sem papel, sem planilha, sem multa.</p>
+        <p class="text-sm leading-relaxed mb-5">Gest&atilde;o digital de certificados de NR e ASOs. Menos planilha, mais controle e evid&ecirc;ncias de conformidade.</p>
         <a href="https://www.instagram.com/qrcertifytech/" target="_blank" rel="noopener" aria-label="Instagram QRCertify" class="inline-flex items-center gap-2 text-sm text-gray-300 hover:text-white transition-colors"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.8"/><circle cx="17.5" cy="6.5" r="1.2" fill="currentColor"/></svg>@qrcertifytech</a>
       </div>
       <div>
         <h4 style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700" class="text-white text-sm mb-4">Produto</h4>
         <ul class="space-y-2.5 text-sm">
-          <li><a href="#recursos" class="hover:text-white transition-colors">Recursos</a></li>
-          <li><a href="#precos" class="hover:text-white transition-colors">Pre&ccedil;os</a></li>
           <li><a href="#como-funciona" class="hover:text-white transition-colors">Demonstra&ccedil;&atilde;o</a></li>
+          <li><a href="#precos" class="hover:text-white transition-colors">Pre&ccedil;os</a></li>
           <li><a href="login.php" class="hover:text-white transition-colors">Entrar no sistema</a></li>
         </ul>
       </div>
-      <div>
+      <div id="solucoes">
         <h4 style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700" class="text-white text-sm mb-4">Solu&ccedil;&otilde;es</h4>
         <ul class="space-y-2.5 text-sm">
           <li><a href="sistema-controle-aso/" class="hover:text-white transition-colors">Controle de ASO</a></li>
           <li><a href="gestao-certificados-nr/" class="hover:text-white transition-colors">Certificados de NR</a></li>
           <li><a href="carteira-digital-trabalhador/" class="hover:text-white transition-colors">Carteira digital</a></li>
           <li><a href="sistema-sst-empresas/" class="hover:text-white transition-colors">Sistema SST</a></li>
+          <li><a href="gestao-conformidade-sst/" class="hover:text-white transition-colors">Conformidade SST</a></li>
           <li><a href="controle-documentos-vencimento/" class="hover:text-white transition-colors">Vencimentos</a></li>
         </ul>
       </div>
@@ -430,7 +664,7 @@ header a { white-space: nowrap; }
         <ul class="space-y-2.5 text-sm">
           <li><a href="mailto:qrcertify@gmail.com" class="hover:text-white transition-colors">qrcertify@gmail.com</a></li>
           <li><a href="tel:+5524999327549" class="hover:text-white transition-colors">(24) 99932-7549</a></li>
-          <li><a href="https://wa.me/5524999327549?text=Ol%C3%A1%2C%20quero%20falar%20com%20vendas%20sobre%20o%20QRCertify" target="_blank" rel="noopener" class="hover:text-white transition-colors">Falar com vendas pelo WhatsApp</a></li>
+          <li><a href="https://wa.me/5524999327549?text=Ol%C3%A1%2C%20quero%20falar%20com%20suporte%20ou%20comercial%20sobre%20o%20QRCertify" target="_blank" rel="noopener" class="hover:text-white transition-colors">Falar com suporte/comercial</a></li>
         </ul>
       </div>
       <div>
@@ -465,6 +699,35 @@ document.querySelectorAll('.faq-btn').forEach(btn => {
 document.querySelectorAll('a[href^="#"]').forEach(a => {
   a.addEventListener('click', e => { const id = a.getAttribute('href').slice(1); const el = document.getElementById(id); if (el) { e.preventDefault(); el.scrollIntoView({ behavior:'smooth', block:'start' }); } });
 });
+const shotModal = document.getElementById('shot-modal');
+const shotModalFrame = document.getElementById('shot-modal-frame');
+const shotModalImg = document.getElementById('shot-modal-img');
+const shotModalTitle = document.getElementById('shot-modal-title');
+const shotModalCaption = document.getElementById('shot-modal-caption');
+const shotModalClose = document.getElementById('shot-modal-close');
+function setShotMask(type) {
+  const shotClass = ['dashboard', 'certificados', 'colaboradores'].includes(type) ? `shot-${type}` : 'shot-dashboard';
+  shotModalFrame.className = `product-shot ${shotClass}`;
+}
+document.querySelectorAll('.product-open').forEach(btn => {
+  btn.addEventListener('click', () => {
+    shotModalImg.src = btn.dataset.img;
+    shotModalImg.alt = btn.querySelector('img')?.alt || 'Print demonstrativo do QRCertify';
+    shotModalTitle.textContent = btn.dataset.title || 'QRCertify';
+    shotModalCaption.textContent = btn.dataset.caption || '';
+    setShotMask(btn.dataset.shot || 'dashboard');
+    shotModal.classList.add('open');
+    shotModal.setAttribute('aria-hidden', 'false');
+  });
+});
+function closeShotModal() {
+  shotModal.classList.remove('open');
+  shotModal.setAttribute('aria-hidden', 'true');
+  shotModalImg.src = '';
+}
+shotModalClose.addEventListener('click', closeShotModal);
+shotModal.addEventListener('click', e => { if (e.target === shotModal) closeShotModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && shotModal.classList.contains('open')) closeShotModal(); });
 const header = document.querySelector('header');
 window.addEventListener('scroll', () => { header.style.boxShadow = window.scrollY > 10 ? '0 2px 20px rgba(0,0,0,.08)' : 'none'; }, { passive: true });
 </script>
