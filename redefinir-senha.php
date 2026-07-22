@@ -53,6 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $valid) {
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+    <?php renderGoogleTagManagerHead(); ?>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Redefinir senha — QRCertify</title>
@@ -63,6 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $valid) {
 <style>body{font-family:'IBM Plex Sans',sans-serif;}</style>
 </head>
 <body class="min-h-screen flex items-center justify-center bg-gradient-to-br from-industrial-blue to-blue-900 p-4">
+<?php renderGoogleTagManagerBody(); ?>
 <div class="w-full max-w-md">
   <div class="flex justify-center mb-8">
     <div class="h-12 w-12 rounded-full bg-white flex items-center justify-center shadow-lg">

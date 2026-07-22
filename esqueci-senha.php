@@ -49,7 +49,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
+    <?php renderGoogleTagManagerHead(); ?>
+    <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Esqueci minha senha — QRCertify</title>
 <link rel="icon" type="image/svg+xml" href="<?= BASE_URL ?>/public/assets/logo-qrcertify.svg">
@@ -59,6 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <style>body{font-family:'IBM Plex Sans',sans-serif;}</style>
 </head>
 <body class="min-h-screen flex items-center justify-center bg-gradient-to-br from-industrial-blue to-blue-900 p-4">
+<?php renderGoogleTagManagerBody(); ?>
 <div class="w-full max-w-md">
   <div class="flex justify-center mb-8">
     <a href="<?= BASE_URL ?>/" class="flex items-center gap-2.5">

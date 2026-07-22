@@ -116,6 +116,7 @@ $priceLabel = 'R$ ' . number_format($planPrice, 0, ',', '.') . '/mês';
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+  <?php renderGoogleTagManagerHead(); ?>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Assinar plano | <?= e(SITE_NAME) ?></title>
@@ -124,6 +125,7 @@ $priceLabel = 'R$ ' . number_format($planPrice, 0, ',', '.') . '/mês';
   <script>tailwind.config = { theme: { extend: { colors: { 'industrial-blue': '#1e3a8a', 'industrial-yellow': '#facc15' } } } }</script>
 </head>
 <body class="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+<?php renderGoogleTagManagerBody(); ?>
   <div class="w-full max-w-md bg-white rounded-2xl shadow-lg p-8 text-center">
 
     <div class="w-16 h-16 rounded-full bg-yellow-100 flex items-center justify-center mx-auto mb-5">

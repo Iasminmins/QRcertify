@@ -42,6 +42,7 @@ $qrUrl = $certificate ? generateQRCodeUrl(getCertificatePublicUrl($certificate['
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+    <?php renderGoogleTagManagerHead(); ?>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Validação de Certificado | <?= e(SITE_NAME) ?></title>
@@ -63,6 +64,7 @@ $qrUrl = $certificate ? generateQRCodeUrl(getCertificatePublicUrl($certificate['
     </style>
 </head>
 <body class="min-h-screen bg-gray-50 flex flex-col">
+<?php renderGoogleTagManagerBody(); ?>
 
 <?php if (!$certificate): ?>
     <!-- Estado: não encontrado -->

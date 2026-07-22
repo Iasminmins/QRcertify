@@ -27,12 +27,14 @@ if (!$employee) {
     ?><!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+    <?php renderGoogleTagManagerHead(); ?>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Carteira não encontrada | <?= e(SITE_NAME) ?></title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+<?php renderGoogleTagManagerBody(); ?>
     <div class="bg-white rounded-xl shadow-lg p-8 max-w-md w-full text-center">
         <div class="h-16 w-16 mx-auto mb-4 rounded-full bg-red-100 flex items-center justify-center">
             <svg class="h-8 w-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -151,6 +153,7 @@ $verifiedAt = date('d/m/Y \à\s H:i');
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+    <?php renderGoogleTagManagerHead(); ?>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Carteira de Autorização | <?= e($employee['name']) ?></title>
@@ -190,6 +193,7 @@ $verifiedAt = date('d/m/Y \à\s H:i');
     </style>
 </head>
 <body class="min-h-screen bg-gray-50 flex flex-col">
+<?php renderGoogleTagManagerBody(); ?>
 
 <div class="flex-1 flex flex-col items-center py-6 px-4">
 

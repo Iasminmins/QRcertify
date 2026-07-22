@@ -166,6 +166,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+<?php renderGoogleTagManagerHead(); ?>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Criar conta — QRCertify</title>
@@ -197,6 +198,7 @@ tailwind.config = {
 </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
+<?php renderGoogleTagManagerBody(); ?>
 
 <!-- Header mínimo -->
 <header class="bg-white border-b border-gray-100 py-4 px-5">

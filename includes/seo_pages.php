@@ -192,6 +192,7 @@ function renderSeoPage(string $slug): void {
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+<?php renderGoogleTagManagerHead(); ?>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title><?= e($page['title']) ?></title>
@@ -230,6 +231,7 @@ a { text-decoration: none; }
 <?php renderSeoJsonLd($page, $base, $url, $logo); ?>
 </head>
 <body>
+<?php renderGoogleTagManagerBody(); ?>
 <header class="sticky top-0 z-50 bg-white/95 backdrop-blur border-b border-gray-100">
   <div class="max-w-6xl mx-auto px-5 h-16 flex items-center justify-between">
     <a href="<?= e($base) ?>/" class="flex items-center gap-2.5">

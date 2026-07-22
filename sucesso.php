@@ -16,6 +16,7 @@ $label = $planoLabel[$plano] ?? ucfirst($plano);
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+<?php renderGoogleTagManagerHead(); ?>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Conta criada! — QRCertify</title>
@@ -62,6 +63,7 @@ $label = $planoLabel[$plano] ?? ucfirst($plano);
 </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
+<?php renderGoogleTagManagerBody(); ?>
 
 <!-- Header -->
 <header class="bg-white border-b border-gray-100 py-4 px-5">

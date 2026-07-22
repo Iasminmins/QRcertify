@@ -5,6 +5,7 @@ $pageTitle = 'Política de Privacidade';
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+    <?php renderGoogleTagManagerHead(); ?>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= e($pageTitle) ?> | <?= e(SITE_NAME) ?></title>
@@ -12,6 +13,7 @@ $pageTitle = 'Política de Privacidade';
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-50 text-gray-800">
+<?php renderGoogleTagManagerBody(); ?>
     <main class="max-w-3xl mx-auto px-5 py-12">
         <a href="<?= BASE_URL ?>/" class="text-sm text-industrial-blue hover:underline">&larr; Voltar ao site</a>
         <h1 class="text-3xl font-bold text-gray-900 mt-6 mb-4">Política de Privacidade</h1>

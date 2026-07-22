@@ -112,6 +112,7 @@ if (isLoggedIn()) {
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+    <?php renderGoogleTagManagerHead(); ?>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Carteira Digital | <?= e(SITE_NAME) ?></title>
@@ -130,6 +131,7 @@ if (isLoggedIn()) {
     </style>
 </head>
 <body class="min-h-screen bg-gray-50 flex flex-col">
+<?php renderGoogleTagManagerBody(); ?>
 
 <?php if (!$employee): ?>
     <div class="flex-1 flex items-center justify-center p-4">

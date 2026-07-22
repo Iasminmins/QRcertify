@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/gtm.php';
 /**
  * Funções utilitárias do sistema
  */
