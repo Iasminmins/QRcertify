@@ -1,6 +1,12 @@
 <?php
 require_once __DIR__ . '/config/config.php';
 
+// Consome o evento antes de renderizar para impedir duplicidade em recargas.
+$signupEvent = $_SESSION['gtm_sign_up'] ?? null;
+unset($_SESSION['gtm_sign_up']);
+$shouldTrackSignup = is_array($signupEvent)
+    && isset($signupEvent['method'], $signupEvent['selected_plan']);
+
 // Só acessa quem veio do cadastro
 $nome  = $_GET['nome']  ?? 'usuário';
 $plano = $_GET['plano'] ?? 'starter';
@@ -64,6 +70,22 @@ $label = $planoLabel[$plano] ?? ucfirst($plano);
 </head>
 <body class="bg-gray-50 min-h-screen">
 <?php renderGoogleTagManagerBody(); ?>
+<?php if ($shouldTrackSignup): ?>
+<script>
+window.dataLayer = window.dataLayer || [];
+window.dataLayer.push({
+    event: 'sign_up',
+    method: <?= json_encode(
+        $signupEvent['method'],
+        JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT
+    ) ?>,
+    selected_plan: <?= json_encode(
+        $signupEvent['selected_plan'],
+        JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT
+    ) ?>
+});
+</script>
+<?php endif; ?>
 
 <!-- Header -->
 <header class="bg-white border-b border-gray-100 py-4 px-5">

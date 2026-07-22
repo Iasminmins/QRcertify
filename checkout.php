@@ -130,6 +130,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 $db->commit();
 
+                // Agenda o evento sign_up para ser consumido uma unica vez
+                // no primeiro carregamento da pagina de sucesso.
+                $_SESSION['gtm_sign_up'] = [
+                    'method'        => 'email',
+                    'selected_plan' => $plan,
+                ];
+
                 auditLog('register', "company#{$companyId}", json_encode([
                     'plan'           => $plan,
                     'email'          => $email,
