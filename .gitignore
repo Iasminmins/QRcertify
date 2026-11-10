@@ -13,6 +13,8 @@ uploads/documents/*
 !uploads/photos/.gitkeep
 !uploads/asos/.gitkeep
 !uploads/documents/.gitkeep
+!uploads/asos/.htaccess
+!uploads/documents/.htaccess
 
 # ── Cache / logs ──────────────────────────────────────────────
 *.log

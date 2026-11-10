@@ -49,6 +49,7 @@ $base = BASE_URL;
             <div class="nav-section-label">Plataforma</div>
             <?php navLink("{$base}/superadmin/dashboard.php",  $icons['dashboard'],    'Dashboard') ?>
             <?php navLink("{$base}/superadmin/companies.php",  $icons['companies'],    'Empresas') ?>
+            <?php navLink("{$base}/superadmin/manutencao.php", $icons['settings'],     'Manutenção') ?>
 
         <?php elseif ($role === 'admin'): ?>
             <div class="nav-section-label">Gestão</div>

@@ -32,9 +32,15 @@ foreach ($statsQueries as $key => $sql) {
     $stats[$key] = (int) $stmt->fetchColumn();
 }
 
-$stmtViews = $db->prepare('SELECT COUNT(*) FROM public_views WHERE company_id = ? AND viewed_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)');
-$stmtViews->execute([$companyId]);
-$qrViews30Days = (int)$stmtViews->fetchColumn();
+// Se a migração 023 ainda não rodou, o card mostra 0 em vez de quebrar o dashboard.
+$qrViews30Days = 0;
+try {
+    $stmtViews = $db->prepare('SELECT COUNT(*) FROM public_views WHERE company_id = ? AND viewed_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)');
+    $stmtViews->execute([$companyId]);
+    $qrViews30Days = (int)$stmtViews->fetchColumn();
+} catch (Throwable $e) {
+    $qrViews30Days = 0;
+}
 
 // ── ASO: atualiza status e busca indicadores ──────────────────────────────────
 $db->prepare(
