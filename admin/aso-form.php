@@ -104,6 +104,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $fileOrigName= $aso['file_name']    ?? null; // guarda nome original para employee_documents
     $fileExt     = $aso['file_ext']     ?? null;
     $fileSize    = $aso['file_size']    ?? 0;
+    $fileSha256  = $aso['file_sha256']  ?? null;
     $newFileUploaded = false;
 
     // Validações
@@ -148,6 +149,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $fileOrigName    = $up['name'];
                     $fileExt         = $ext;
                     $fileSize        = $up['size'];
+                    $fileSha256      = hash_file('sha256', $asoDir . $filename) ?: null;
                     $newFileUploaded = true;
                 } else {
                     $errors[] = 'Falha ao salvar o arquivo.';
@@ -182,9 +184,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                  risks_physical=?, risks_chemical=?, risks_biological=?, risks_ergonomic=?, risks_accident=?, risks_other=?,
                  exams_done=?, exams_other=?,
                  next_exam_date=?, sesmt_name=?, sesmt_register=?,
-                 file_path=?, notes=?, updated_at=NOW()
+                 file_path=?, file_sha256=?, notes=?, updated_at=NOW()
                  WHERE id=? AND company_id=?'
-            )->execute(array_merge($fields, [$id, $companyId]));
+            )->execute(array_merge(array_slice($fields, 0, -2), [$filePath, $fileSha256, $notes, $id, $companyId]));
             auditLog('aso.update', "aso #{$id}", json_encode(['employee_id' => $employeeId]));
 
             // ── Espelha arquivo em employee_documents (se novo upload) ──────
@@ -197,11 +199,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $existDoc->execute([$employeeId, $companyId]);
                 $edRow = $existDoc->fetch();
                 if ($edRow) {
-                    $db->prepare('UPDATE employee_documents SET title=?, file_path=?, file_name=?, file_ext=?, file_size=?, issue_date=?, expiry_date=?, status=?, updated_at=NOW() WHERE id=?')
-                       ->execute([$docTitle, $filePath, $fileOrigName, $fileExt, $fileSize, $examDate, $expirationDate, $docSt2, $edRow['id']]);
+                    $db->prepare('UPDATE employee_documents SET title=?, file_path=?, file_sha256=?, file_name=?, file_ext=?, file_size=?, issue_date=?, expiry_date=?, status=?, updated_at=NOW() WHERE id=?')
+                       ->execute([$docTitle, $filePath, $fileSha256, $fileOrigName, $fileExt, $fileSize, $examDate, $expirationDate, $docSt2, $edRow['id']]);
                 } else {
-                    $db->prepare('INSERT INTO employee_documents (company_id,employee_id,doc_type,title,description,file_path,file_name,file_ext,file_size,issue_date,expiry_date,status,uploaded_by) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)')
-                       ->execute([$companyId,$employeeId,'aso',$docTitle,'Documento ASO gerado pelo formulário de Saúde Ocupacional.',$filePath,$fileOrigName,$fileExt,$fileSize,$examDate,$expirationDate,$docSt2,$user['id']]);
+                    $db->prepare('INSERT INTO employee_documents (company_id,employee_id,doc_type,title,description,file_path,file_sha256,file_name,file_ext,file_size,issue_date,expiry_date,status,uploaded_by) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)')
+                       ->execute([$companyId,$employeeId,'aso',$docTitle,'Documento ASO gerado pelo formulário de Saúde Ocupacional.',$filePath,$fileSha256,$fileOrigName,$fileExt,$fileSize,$examDate,$expirationDate,$docSt2,$user['id']]);
                 }
             }
 
@@ -217,9 +219,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                   risks_physical, risks_chemical, risks_biological, risks_ergonomic, risks_accident, risks_other,
                   exams_done, exams_other,
                   next_exam_date, sesmt_name, sesmt_register,
-                  file_path, notes, created_by)
-                 VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'
-            )->execute(array_merge([$companyId, $employeeId], $fields, [$user['id']]));
+                 file_path, file_sha256, notes, created_by)
+                 VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'
+            )->execute(array_merge([$companyId, $employeeId], array_slice($fields, 0, -2), [$filePath, $fileSha256, $notes, $user['id']]));
             $newId = $db->lastInsertId();
             auditLog('aso.create', "aso #{$newId}", json_encode(['employee_id' => $employeeId]));
 
@@ -228,8 +230,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $asoTypeLabel = $asoTypes[$asoType] ?? 'ASO';
                 $docTitle     = 'ASO ' . $asoTypeLabel . ' – ' . $employee['name'] . ' (' . date('d/m/Y', strtotime($examDate)) . ')';
                 $docSt2       = match($docStatus) { 'vencido' => 'vencido', 'vencendo' => 'vencendo', default => 'valido' };
-                $db->prepare('INSERT INTO employee_documents (company_id,employee_id,doc_type,title,description,file_path,file_name,file_ext,file_size,issue_date,expiry_date,status,uploaded_by) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)')
-                   ->execute([$companyId,$employeeId,'aso',$docTitle,'Documento ASO gerado pelo formulário de Saúde Ocupacional.',$filePath,$fileOrigName,$fileExt,$fileSize,$examDate,$expirationDate,$docSt2,$user['id']]);
+                $db->prepare('INSERT INTO employee_documents (company_id,employee_id,doc_type,title,description,file_path,file_sha256,file_name,file_ext,file_size,issue_date,expiry_date,status,uploaded_by) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)')
+                   ->execute([$companyId,$employeeId,'aso',$docTitle,'Documento ASO gerado pelo formulário de Saúde Ocupacional.',$filePath,$fileSha256,$fileOrigName,$fileExt,$fileSize,$examDate,$expirationDate,$docSt2,$user['id']]);
             }
 
             setFlash('success', 'ASO cadastrado com sucesso.' . ($newFileUploaded ? ' Documento também salvo em Documentos.' : ''));

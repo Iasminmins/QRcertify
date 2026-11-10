@@ -41,6 +41,7 @@ if ($hash !== '') {
 
 if ($employee) {
     $employeeId = (int) $employee['id'];
+    recordPublicView($db, 'employee', $employeeId, (int)$employee['company_id']);
 
     $db->prepare(
         'UPDATE certificates
@@ -215,6 +216,7 @@ if (isLoggedIn()) {
                                     <p class="text-xs font-bold text-industrial-blue"><?= e($cert['type']) ?></p>
                                     <p class="text-sm font-semibold text-gray-900 truncate"><?= e($cert['title']) ?></p>
                                     <p class="text-xs text-gray-500 mt-1">Validade: <?= formatDate($cert['expiry_date']) ?></p>
+                            <?php if (empty($cert['document'])): ?><p class="text-xs text-amber-700 mt-1">Sem comprovante anexado</p><?php endif; ?>
                                 </div>
                                 <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium border flex-shrink-0 <?= $badge['class'] ?>">
                                     <?= e($badge['label']) ?>

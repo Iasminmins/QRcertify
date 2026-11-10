@@ -204,6 +204,16 @@ function generateHash(): string {
     return bin2hex(random_bytes(32));
 }
 
+/** Registra uma consulta pública sem armazenar dados do visitante. */
+function recordPublicView(PDO $db, string $entityType, int $entityId, int $companyId): void {
+    try {
+        $stmt = $db->prepare('INSERT INTO public_views (entity_type, entity_id, company_id) VALUES (?, ?, ?)');
+        $stmt->execute([$entityType, $entityId, $companyId]);
+    } catch (Throwable $e) {
+        // A falha de telemetria não deve impedir a abertura de uma página pública.
+    }
+}
+
 /**
  * Valida CPF com cálculo dos dígitos verificadores.
  */
@@ -317,15 +327,15 @@ function paginate(array $items, int $page = 1, int $perPage = 20): array {
  * @param array  $fileInput   $_FILES['campo']
  * @param string $type        'photo' | 'certificate'
  * @param string|null $oldPath Caminho anterior (para deletar)
- * @return array ['ok' => bool, 'path' => string|null, 'error' => string|null]
+ * @return array ['ok' => bool, 'path' => string|null, 'error' => string|null, 'sha256' => string|null]
  */
 function uploadFile(array $fileInput, string $type, ?string $oldPath = null): array {
     if (empty($fileInput['tmp_name']) || $fileInput['error'] === UPLOAD_ERR_NO_FILE) {
-        return ['ok' => true, 'path' => null, 'error' => null]; // sem arquivo — ok
+        return ['ok' => true, 'path' => null, 'error' => null, 'sha256' => null]; // sem arquivo — ok
     }
 
     if ($fileInput['error'] !== UPLOAD_ERR_OK) {
-        return ['ok' => false, 'path' => null, 'error' => 'Erro no upload (código ' . $fileInput['error'] . ').'];
+        return ['ok' => false, 'path' => null, 'error' => 'Erro no upload (código ' . $fileInput['error'] . ').', 'sha256' => null];
     }
 
     $config = [
@@ -344,7 +354,7 @@ function uploadFile(array $fileInput, string $type, ?string $oldPath = null): ar
     ];
 
     if (!isset($config[$type])) {
-        return ['ok' => false, 'path' => null, 'error' => 'Tipo de upload inválido.'];
+        return ['ok' => false, 'path' => null, 'error' => 'Tipo de upload inválido.', 'sha256' => null];
     }
 
     $c    = $config[$type];
@@ -354,19 +364,19 @@ function uploadFile(array $fileInput, string $type, ?string $oldPath = null): ar
     // Valida tamanho
     if ($size > $c['maxBytes']) {
         $mb = round($c['maxBytes'] / 1024 / 1024);
-        return ['ok' => false, 'path' => null, 'error' => "Arquivo muito grande (máximo {$mb} MB)."];
+        return ['ok' => false, 'path' => null, 'error' => "Arquivo muito grande (máximo {$mb} MB).", 'sha256' => null];
     }
 
     // Valida extensão
     if (!in_array($ext, $c['exts'], true)) {
-        return ['ok' => false, 'path' => null, 'error' => 'Extensão não permitida: .' . $ext];
+        return ['ok' => false, 'path' => null, 'error' => 'Extensão não permitida: .' . $ext, 'sha256' => null];
     }
 
     // Valida MIME real (lê o arquivo, não confia no cliente)
     $finfo    = new \finfo(FILEINFO_MIME_TYPE);
     $realMime = $finfo->file($fileInput['tmp_name']);
     if (!in_array($realMime, $c['mimes'], true)) {
-        return ['ok' => false, 'path' => null, 'error' => 'Tipo de arquivo não permitido.'];
+        return ['ok' => false, 'path' => null, 'error' => 'Tipo de arquivo não permitido.', 'sha256' => null];
     }
 
     // Gera nome único e move
@@ -374,7 +384,7 @@ function uploadFile(array $fileInput, string $type, ?string $oldPath = null): ar
     $destPath = $c['dir'] . $filename;
 
     if (!move_uploaded_file($fileInput['tmp_name'], $destPath)) {
-        return ['ok' => false, 'path' => null, 'error' => 'Falha ao salvar o arquivo. Verifique as permissões da pasta.'];
+        return ['ok' => false, 'path' => null, 'error' => 'Falha ao salvar o arquivo. Verifique as permissões da pasta.', 'sha256' => null];
     }
 
     // Remove arquivo antigo se existir
@@ -385,7 +395,7 @@ function uploadFile(array $fileInput, string $type, ?string $oldPath = null): ar
 
     // Retorna caminho relativo (a partir da raiz do projeto)
     $relPath = 'uploads/' . $type . 's/' . $filename;
-    return ['ok' => true, 'path' => $relPath, 'error' => null];
+    return ['ok' => true, 'path' => $relPath, 'error' => null, 'sha256' => hash_file('sha256', $destPath) ?: null];
 }
 
 /**

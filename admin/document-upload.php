@@ -60,6 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $fileName = $doc['file_name'] ?? null;
     $fileExt  = $doc['file_ext']  ?? null;
     $fileSize = $doc['file_size'] ?? 0;
+    $fileSha256 = $doc['file_sha256'] ?? null;
 
     // Upload de arquivo novo
     if (!empty($_FILES['file']['name'])) {
@@ -76,7 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $errors[] = 'Arquivo muito grande. Máximo: 20 MB.';
         } else {
             $destDir  = __DIR__ . '/../uploads/documents/';
-            $newName  = uniqid('doc_', true) . '.' . $ext;
+            $newName  = bin2hex(random_bytes(16)) . '.' . $ext;
             $destPath = $destDir . $newName;
             if (move_uploaded_file($tmpPath, $destPath)) {
                 // Remove arquivo antigo se existir
@@ -86,6 +87,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $filePath = 'uploads/documents/' . $newName;
                 $fileName = $origName;
                 $fileExt  = $ext;
+                $fileSha256 = hash_file('sha256', $destPath) ?: null;
             } else {
                 $errors[] = 'Erro ao salvar o arquivo. Verifique as permissões.';
             }
@@ -117,13 +119,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'UPDATE employee_documents
                  SET employee_id=?, doc_type=?, title=?, description=?,
                      issue_date=?, expiry_date=?, status=?,
-                     file_path=?, file_name=?, file_ext=?, file_size=?,
+                     file_path=?, file_sha256=?, file_name=?, file_ext=?, file_size=?,
                      updated_at=NOW()
                  WHERE id=? AND company_id=?'
             )->execute([
                 $employeeId, $docType, $title, $description,
                 $issueDate, $expiryDate, $status,
-                $filePath, $fileName, $fileExt, $fileSize,
+                $filePath, $fileSha256, $fileName, $fileExt, $fileSize,
                 $id, $companyId
             ]);
             setFlash('success', 'Documento atualizado com sucesso!');
@@ -131,12 +133,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $db->prepare(
                 'INSERT INTO employee_documents
                  (company_id, employee_id, doc_type, title, description,
-                  file_path, file_name, file_ext, file_size,
+                  file_path, file_sha256, file_name, file_ext, file_size,
                   issue_date, expiry_date, status, uploaded_by)
-                 VALUES (?,?,?,?,?, ?,?,?,?, ?,?,?,?)'
+                 VALUES (?,?,?,?,?, ?,?,?,?,?, ?,?,?,?)'
             )->execute([
                 $companyId, $employeeId, $docType, $title, $description,
-                $filePath, $fileName, $fileExt, $fileSize,
+                $filePath, $fileSha256, $fileName, $fileExt, $fileSize,
                 $issueDate, $expiryDate, $status, $user['id']
             ]);
             setFlash('success', 'Documento adicionado com sucesso!');

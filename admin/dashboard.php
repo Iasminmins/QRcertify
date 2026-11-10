@@ -32,6 +32,10 @@ foreach ($statsQueries as $key => $sql) {
     $stats[$key] = (int) $stmt->fetchColumn();
 }
 
+$stmtViews = $db->prepare('SELECT COUNT(*) FROM public_views WHERE company_id = ? AND viewed_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)');
+$stmtViews->execute([$companyId]);
+$qrViews30Days = (int)$stmtViews->fetchColumn();
+
 // ── ASO: atualiza status e busca indicadores ──────────────────────────────────
 $db->prepare(
     'UPDATE employee_asos a
@@ -172,7 +176,7 @@ function dismissOnboarding() {
 <?php renderFlashes(); ?>
 
 <!-- ── Cards de estatísticas ─────────────────────────────────────────────── -->
-<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
 
     <a href="<?= BASE_URL ?>/admin/employees.php"
        class="bg-white p-5 rounded-lg shadow-sm border hover:shadow-md hover:border-blue-200 transition group cursor-pointer">
@@ -239,6 +243,12 @@ function dismissOnboarding() {
             </div>
         </div>
     </a>
+
+    <div class="bg-white p-5 rounded-lg shadow-sm border">
+        <p class="text-sm text-gray-600">Total de consultas por QR Code nos últimos 30 dias</p>
+        <p class="text-3xl font-bold text-industrial-blue mt-1"><?= $qrViews30Days ?></p>
+        <p class="text-xs text-gray-400 mt-1">consultas públicas da empresa</p>
+    </div>
 
 </div>
 

@@ -33,6 +33,7 @@ if ($hash !== '') {
         $stmt = $db->prepare('SELECT name FROM companies WHERE id = ?');
         $stmt->execute([$certificate['company_id']]);
         $company = $stmt->fetch();
+        recordPublicView($db, 'certificate', (int)$certificate['id'], (int)$certificate['company_id']);
     }
 }
 
@@ -168,6 +169,22 @@ $qrUrl = $certificate ? generateQRCodeUrl(getCertificatePublicUrl($certificate['
                 <div class="p-3 bg-gray-50 rounded-lg">
                     <p class="text-xs text-gray-500 mb-0.5">Empresa</p>
                     <p class="text-sm font-medium"><?= e($company['name']) ?></p>
+                </div>
+                <?php endif; ?>
+
+                <?php if (!empty($certificate['created_at'])): ?>
+                <p class="text-xs text-gray-500">Registrado por <?= e($company['name'] ?? 'empresa') ?> em <?= e(formatDate($certificate['created_at'])) ?></p>
+                <?php endif; ?>
+
+                <?php if (empty($certificate['document'])): ?>
+                <p class="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-md px-3 py-2">Sem comprovante anexado</p>
+                <?php endif; ?>
+
+                <?php if (!empty($certificate['file_sha256'])): ?>
+                <div class="p-3 bg-gray-50 rounded-lg">
+                    <p class="text-xs font-medium text-gray-700">Código de integridade do arquivo (SHA-256)</p>
+                    <p class="text-xs font-mono break-all text-gray-600 mt-1"><?= e($certificate['file_sha256']) ?></p>
+                    <p class="text-xs text-gray-500 mt-1">Se o PDF em mãos gerar um código diferente, o arquivo foi alterado.</p>
                 </div>
                 <?php endif; ?>
 

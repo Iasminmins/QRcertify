@@ -51,6 +51,7 @@ if (!$employee) {
 }
 
 $employeeId = (int) $employee['id'];
+recordPublicView($db, 'authorization', $employeeId, (int)$employee['company_id']);
 
 // Atualiza status dos certificados
 $db->prepare(
@@ -319,6 +320,7 @@ $verifiedAt = date('d/m/Y \à\s H:i');
                                 <?= formatDate($cert['expiry_date']) ?>
                             </span>
                         </div>
+                        <?php if (empty($cert['document'])): ?><p class="text-[9px] text-amber-700 px-4 pb-1">Sem comprovante anexado</p><?php endif; ?>
                         <?php endforeach; ?>
                     <?php endif; ?>
                 </div>

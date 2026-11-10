@@ -92,8 +92,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         'SELECT id FROM employees WHERE company_id=? AND cpf=? AND status="active" LIMIT 1'
                     );
                     $stmtIns = $db->prepare(
-                        'INSERT INTO certificates (employee_id,title,type,issued_date,expiry_date,status,hash)
-                         VALUES (?,?,?,?,?,?,?)'
+                        'INSERT INTO certificates (employee_id,title,type,issued_date,expiry_date,status,hash,created_by)
+                         VALUES (?,?,?,?,?,?,?,?)'
                     );
 
                     $lineNum = 1;
@@ -133,7 +133,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             $status = getCertStatus($validad);
                             $hash   = generateHash();
 
-                            $stmtIns->execute([$emp['id'], $titulo, $tipo, $emissao, $validad, $status, $hash]);
+                            $stmtIns->execute([$emp['id'], $titulo, $tipo, $emissao, $validad, $status, $hash, $user['id']]);
                             $imported++;
                         }
                         $db->commit();

@@ -76,6 +76,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $newDocName  = null;
         $newDocExt   = null;
         $newDocSize  = 0;
+        $newDocSha256 = null;
         $fileUploaded = false;
 
         if (!empty($_FILES['document_upload']['name'])) {
@@ -90,6 +91,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $newDocName   = $_FILES['document_upload']['name'];
                     $newDocExt    = strtolower(pathinfo($newDocName, PATHINFO_EXTENSION));
                     $newDocSize   = $_FILES['document_upload']['size'];
+                    $newDocSha256 = $up['sha256'];
                     $fileUploaded = true;
                 }
             }
@@ -103,12 +105,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $db->prepare(
                     'UPDATE certificates
                      SET title=?, type=?, employee_id=?, issued_date=?, expiry_date=?,
-                         status=?, document=?
+                         status=?, document=?, file_sha256=?
                      WHERE id=?'
                 )->execute([
                     $cert['title'], $cert['type'], $cert['employee_id'],
                     $cert['issued_date'], $cert['expiry_date'], $status,
-                    $docPath, $id
+                    $docPath, $fileUploaded ? $newDocSha256 : ($cert['file_sha256'] ?? null), $id
                 ]);
                 auditLog('cert.update', "cert #{$id}", json_encode(['title' => $cert['title']]));
 
@@ -120,11 +122,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $existDoc->execute([$cert['employee_id'], $companyId, $docTitle]);
                     $edRow = $existDoc->fetch();
                     if ($edRow) {
-                        $db->prepare('UPDATE employee_documents SET file_path=?,file_name=?,file_ext=?,file_size=?,issue_date=?,expiry_date=?,status=?,updated_at=NOW() WHERE id=?')
-                           ->execute([$newDocPath,$newDocName,$newDocExt,$newDocSize,$cert['issued_date'],$cert['expiry_date'],$docSt2,$edRow['id']]);
+                        $db->prepare('UPDATE employee_documents SET file_path=?,file_sha256=?,file_name=?,file_ext=?,file_size=?,issue_date=?,expiry_date=?,status=?,updated_at=NOW() WHERE id=?')
+                           ->execute([$newDocPath,$newDocSha256,$newDocName,$newDocExt,$newDocSize,$cert['issued_date'],$cert['expiry_date'],$docSt2,$edRow['id']]);
                     } else {
-                        $db->prepare('INSERT INTO employee_documents (company_id,employee_id,doc_type,title,description,file_path,file_name,file_ext,file_size,issue_date,expiry_date,status,uploaded_by) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)')
-                           ->execute([$companyId,$cert['employee_id'],'certificado_assinado',$docTitle,'Documento do certificado ' . $cert['type'] . '.',$newDocPath,$newDocName,$newDocExt,$newDocSize,$cert['issued_date'],$cert['expiry_date'],$docSt2,$user['id']]);
+                        $db->prepare('INSERT INTO employee_documents (company_id,employee_id,doc_type,title,description,file_path,file_sha256,file_name,file_ext,file_size,issue_date,expiry_date,status,uploaded_by) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)')
+                           ->execute([$companyId,$cert['employee_id'],'certificado_assinado',$docTitle,'Documento do certificado ' . $cert['type'] . '.',$newDocPath,$newDocSha256,$newDocName,$newDocExt,$newDocSize,$cert['issued_date'],$cert['expiry_date'],$docSt2,$user['id']]);
                     }
                 }
                 setFlash('success', 'Certificado atualizado!' . ($fileUploaded ? ' Documento salvo em Documentos.' : ''));
@@ -132,11 +134,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $hash = generateHash();
                 $db->prepare(
                     'INSERT INTO certificates
-                       (employee_id, title, type, issued_date, expiry_date, status, hash, document)
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+                       (employee_id, title, type, issued_date, expiry_date, status, hash, document, file_sha256, created_by)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
                 )->execute([
                     $cert['employee_id'], $cert['title'], $cert['type'],
-                    $cert['issued_date'], $cert['expiry_date'], $status, $hash, $docPath
+                    $cert['issued_date'], $cert['expiry_date'], $status, $hash, $docPath, $newDocSha256, $user['id']
                 ]);
                 $newId = $db->lastInsertId();
                 auditLog('cert.create', "cert #{$newId}", json_encode(['title' => $cert['title']]));
@@ -145,8 +147,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if ($fileUploaded && $newDocPath) {
                     $docSt2   = $status === 'expired' ? 'vencido' : ($status === 'expiring' ? 'vencendo' : 'valido');
                     $docTitle = $cert['type'] . ' – ' . $cert['title'];
-                    $db->prepare('INSERT INTO employee_documents (company_id,employee_id,doc_type,title,description,file_path,file_name,file_ext,file_size,issue_date,expiry_date,status,uploaded_by) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)')
-                       ->execute([$companyId,$cert['employee_id'],'certificado_assinado',$docTitle,'Documento do certificado ' . $cert['type'] . '.',$newDocPath,$newDocName,$newDocExt,$newDocSize,$cert['issued_date'],$cert['expiry_date'],$docSt2,$user['id']]);
+                    $db->prepare('INSERT INTO employee_documents (company_id,employee_id,doc_type,title,description,file_path,file_sha256,file_name,file_ext,file_size,issue_date,expiry_date,status,uploaded_by) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)')
+                       ->execute([$companyId,$cert['employee_id'],'certificado_assinado',$docTitle,'Documento do certificado ' . $cert['type'] . '.',$newDocPath,$newDocSha256,$newDocName,$newDocExt,$newDocSize,$cert['issued_date'],$cert['expiry_date'],$docSt2,$user['id']]);
                 }
                 setFlash('success', 'Certificado cadastrado! QR Code gerado.' . ($fileUploaded ? ' Documento salvo em Documentos.' : ''));
             }

@@ -7,8 +7,12 @@ config/database.php
 # ── Uploads de usuários ───────────────────────────────────────
 uploads/certificates/*
 uploads/photos/*
+uploads/asos/*
+uploads/documents/*
 !uploads/certificates/.gitkeep
 !uploads/photos/.gitkeep
+!uploads/asos/.gitkeep
+!uploads/documents/.gitkeep
 
 # ── Cache / logs ──────────────────────────────────────────────
 *.log
